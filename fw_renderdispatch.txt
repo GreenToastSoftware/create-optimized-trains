@@ -1,0 +1,38 @@
+﻿Compiled from "VisualizationManagerImpl.java"
+class dev.engine_room.flywheel.impl.visualization.VisualizationManagerImpl$RenderDispatcherImpl implements dev.engine_room.flywheel.api.visualization.VisualizationManager$RenderDispatcher {
+  final dev.engine_room.flywheel.impl.visualization.VisualizationManagerImpl this$0;
+
+  private dev.engine_room.flywheel.impl.visualization.VisualizationManagerImpl$RenderDispatcherImpl(dev.engine_room.flywheel.impl.visualization.VisualizationManagerImpl);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: putfield      #19                 // Field this$0:Ldev/engine_room/flywheel/impl/visualization/VisualizationManagerImpl;
+         5: aload_0
+         6: invokespecial #22                 // Method java/lang/Object."<init>":()V
+         9: return
+
+  public void onStartLevelRender(dev.engine_room.flywheel.api.backend.RenderContext);
+    Code:
+         0: aload_0
+         1: getfield      #19                 // Field this$0:Ldev/engine_room/flywheel/impl/visualization/VisualizationManagerImpl;
+         4: aload_1
+         5: invokevirtual #30                 // Method dev/engine_room/flywheel/impl/visualization/VisualizationManagerImpl.beginFrame:(Ldev/engine_room/flywheel/api/backend/RenderContext;)V
+         8: return
+
+  public void afterEntities(dev.engine_room.flywheel.api.backend.RenderContext);
+    Code:
+         0: aload_0
+         1: getfield      #19                 // Field this$0:Ldev/engine_room/flywheel/impl/visualization/VisualizationManagerImpl;
+         4: aload_1
+         5: invokevirtual #35                 // Method dev/engine_room/flywheel/impl/visualization/VisualizationManagerImpl.render:(Ldev/engine_room/flywheel/api/backend/RenderContext;)V
+         8: return
+
+  public void beforeCrumbling(dev.engine_room.flywheel.api.backend.RenderContext, it.unimi.dsi.fastutil.longs.Long2ObjectMap<java.util.SortedSet<net.minecraft.server.level.BlockDestructionProgress>>);
+    Code:
+         0: aload_0
+         1: getfield      #19                 // Field this$0:Ldev/engine_room/flywheel/impl/visualization/VisualizationManagerImpl;
+         4: aload_1
+         5: aload_2
+         6: invokevirtual #42                 // Method dev/engine_room/flywheel/impl/visualization/VisualizationManagerImpl.renderCrumbling:(Ldev/engine_room/flywheel/api/backend/RenderContext;Lit/unimi/dsi/fastutil/longs/Long2ObjectMap;)V
+         9: return
+}

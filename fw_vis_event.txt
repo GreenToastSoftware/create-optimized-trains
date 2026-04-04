@@ -1,0 +1,52 @@
+﻿Compiled from "VisualizationEventHandler.java"
+public final class dev.engine_room.flywheel.impl.visualization.VisualizationEventHandler {
+  private dev.engine_room.flywheel.impl.visualization.VisualizationEventHandler();
+    Code:
+         0: aload_0
+         1: invokespecial #9                  // Method java/lang/Object."<init>":()V
+         4: return
+
+  public static void onClientTick(net.minecraft.client.Minecraft, net.minecraft.world.level.Level);
+    Code:
+         0: aload_0
+         1: getfield      #21                 // Field net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+         4: ifnonnull     8
+         7: return
+         8: aload_1
+         9: invokestatic  #27                 // Method dev/engine_room/flywheel/impl/visualization/VisualizationManagerImpl.get:(Lnet/minecraft/world/level/LevelAccessor;)Ldev/engine_room/flywheel/impl/visualization/VisualizationManagerImpl;
+        12: astore_2
+        13: aload_2
+        14: ifnonnull     18
+        17: return
+        18: aload_2
+        19: invokevirtual #30                 // Method dev/engine_room/flywheel/impl/visualization/VisualizationManagerImpl.tick:()V
+        22: return
+
+  public static void onEntityJoinLevel(net.minecraft.world.level.Level, net.minecraft.world.entity.Entity);
+    Code:
+         0: aload_0
+         1: invokestatic  #42                 // InterfaceMethod dev/engine_room/flywheel/api/visualization/VisualizationManager.get:(Lnet/minecraft/world/level/LevelAccessor;)Ldev/engine_room/flywheel/api/visualization/VisualizationManager;
+         4: astore_2
+         5: aload_2
+         6: ifnonnull     10
+         9: return
+        10: aload_2
+        11: invokeinterface #46,  1           // InterfaceMethod dev/engine_room/flywheel/api/visualization/VisualizationManager.entities:()Ldev/engine_room/flywheel/api/visualization/VisualManager;
+        16: aload_1
+        17: invokeinterface #52,  2           // InterfaceMethod dev/engine_room/flywheel/api/visualization/VisualManager.queueAdd:(Ljava/lang/Object;)V
+        22: return
+
+  public static void onEntityLeaveLevel(net.minecraft.world.level.Level, net.minecraft.world.entity.Entity);
+    Code:
+         0: aload_0
+         1: invokestatic  #42                 // InterfaceMethod dev/engine_room/flywheel/api/visualization/VisualizationManager.get:(Lnet/minecraft/world/level/LevelAccessor;)Ldev/engine_room/flywheel/api/visualization/VisualizationManager;
+         4: astore_2
+         5: aload_2
+         6: ifnonnull     10
+         9: return
+        10: aload_2
+        11: invokeinterface #46,  1           // InterfaceMethod dev/engine_room/flywheel/api/visualization/VisualizationManager.entities:()Ldev/engine_room/flywheel/api/visualization/VisualManager;
+        16: aload_1
+        17: invokeinterface #58,  2           // InterfaceMethod dev/engine_room/flywheel/api/visualization/VisualManager.queueRemove:(Ljava/lang/Object;)V
+        22: return
+}

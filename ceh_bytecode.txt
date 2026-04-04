@@ -1,0 +1,83 @@
+Compiled from "CarriageEntityHandler.java"
+public class com.simibubi.create.content.trains.entity.CarriageEntityHandler {
+  public com.simibubi.create.content.trains.entity.CarriageEntityHandler();
+    Code:
+         0: aload_0
+         1: invokespecial #14                 // Method java/lang/Object."<init>":()V
+         4: return
+
+  public static void onEntityEnterSection(net.minecraftforge.event.entity.EntityEvent$EnteringSection);
+    Code:
+         0: aload_0
+         1: invokevirtual #22                 // Method net/minecraftforge/event/entity/EntityEvent$EnteringSection.didChunkChange:()Z
+         4: ifne          8
+         7: return
+         8: aload_0
+         9: invokevirtual #26                 // Method net/minecraftforge/event/entity/EntityEvent$EnteringSection.getEntity:()Lnet/minecraft/world/entity/Entity;
+        12: astore_1
+        13: aload_1
+        14: instanceof    #28                 // class com/simibubi/create/content/trains/entity/CarriageContraptionEntity
+        17: ifeq          28
+        20: aload_1
+        21: checkcast     #28                 // class com/simibubi/create/content/trains/entity/CarriageContraptionEntity
+        24: astore_2
+        25: goto          29
+        28: return
+        29: aload_0
+        30: invokevirtual #34                 // Method net/minecraftforge/event/entity/EntityEvent$EnteringSection.getNewPos:()Lnet/minecraft/core/SectionPos;
+        33: astore_3
+        34: aload_1
+        35: invokevirtual #38                 // Method net/minecraft/world/entity/Entity.level:()Lnet/minecraft/world/level/Level;
+        38: astore        4
+        40: aload         4
+        42: getfield      #44                 // Field net/minecraft/world/level/Level.isClientSide:Z
+        45: ifeq          49
+        48: return
+        49: aload         4
+        51: aload_3
+        52: invokevirtual #50                 // Method net/minecraft/core/SectionPos.center:()Lnet/minecraft/core/BlockPos;
+        55: invokestatic  #54                 // Method isActiveChunk:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)Z
+        58: ifne          66
+        61: aload_2
+        62: iconst_1
+        63: putfield      #57                 // Field com/simibubi/create/content/trains/entity/CarriageContraptionEntity.leftTickingChunks:Z
+        66: return
+
+  public static void validateCarriageEntity(com.simibubi.create.content.trains.entity.CarriageContraptionEntity);
+    Code:
+         0: aload_0
+         1: invokevirtual #71                 // Method com/simibubi/create/content/trains/entity/CarriageContraptionEntity.isAlive:()Z
+         4: ifne          8
+         7: return
+         8: aload_0
+         9: invokevirtual #72                 // Method com/simibubi/create/content/trains/entity/CarriageContraptionEntity.level:()Lnet/minecraft/world/level/Level;
+        12: astore_1
+        13: aload_1
+        14: getfield      #44                 // Field net/minecraft/world/level/Level.isClientSide:Z
+        17: ifeq          21
+        20: return
+        21: aload_1
+        22: aload_0
+        23: invokevirtual #75                 // Method com/simibubi/create/content/trains/entity/CarriageContraptionEntity.blockPosition:()Lnet/minecraft/core/BlockPos;
+        26: invokestatic  #54                 // Method isActiveChunk:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)Z
+        29: ifne          37
+        32: aload_0
+        33: iconst_1
+        34: putfield      #57                 // Field com/simibubi/create/content/trains/entity/CarriageContraptionEntity.leftTickingChunks:Z
+        37: return
+
+  public static boolean isActiveChunk(net.minecraft.world.level.Level, net.minecraft.core.BlockPos);
+    Code:
+         0: aload_0
+         1: instanceof    #77                 // class net/minecraft/server/level/ServerLevel
+         4: ifeq          18
+         7: aload_0
+         8: checkcast     #77                 // class net/minecraft/server/level/ServerLevel
+        11: astore_2
+        12: aload_2
+        13: aload_1
+        14: invokevirtual #81                 // Method net/minecraft/server/level/ServerLevel.isPositionEntityTicking:(Lnet/minecraft/core/BlockPos;)Z
+        17: ireturn
+        18: iconst_0
+        19: ireturn
+}

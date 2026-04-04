@@ -1,0 +1,174 @@
+Compiled from "ContraptionHandler.java"
+public class com.simibubi.create.content.contraptions.ContraptionHandler {
+  public static net.createmod.catnip.data.WorldAttached<java.util.Map<java.lang.Integer, java.lang.ref.WeakReference<com.simibubi.create.content.contraptions.AbstractContraptionEntity>>> loadedContraptions;
+
+  static net.createmod.catnip.data.WorldAttached<java.util.List<com.simibubi.create.content.contraptions.AbstractContraptionEntity>> queuedAdditions;
+
+  public com.simibubi.create.content.contraptions.ContraptionHandler();
+    Code:
+         0: aload_0
+         1: invokespecial #19                 // Method java/lang/Object."<init>":()V
+         4: return
+
+  public static void tick(net.minecraft.world.level.Level);
+    Code:
+         0: getstatic     #25                 // Field loadedContraptions:Lnet/createmod/catnip/data/WorldAttached;
+         3: aload_0
+         4: invokevirtual #31                 // Method net/createmod/catnip/data/WorldAttached.get:(Lnet/minecraft/world/level/LevelAccessor;)Ljava/lang/Object;
+         7: checkcast     #33                 // class java/util/Map
+        10: astore_1
+        11: getstatic     #35                 // Field queuedAdditions:Lnet/createmod/catnip/data/WorldAttached;
+        14: aload_0
+        15: invokevirtual #31                 // Method net/createmod/catnip/data/WorldAttached.get:(Lnet/minecraft/world/level/LevelAccessor;)Ljava/lang/Object;
+        18: checkcast     #37                 // class java/util/List
+        21: astore_2
+        22: aload_2
+        23: invokeinterface #41,  1           // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+        28: astore_3
+        29: aload_3
+        30: invokeinterface #47,  1           // InterfaceMethod java/util/Iterator.hasNext:()Z
+        35: ifeq          76
+        38: aload_3
+        39: invokeinterface #51,  1           // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+        44: checkcast     #53                 // class com/simibubi/create/content/contraptions/AbstractContraptionEntity
+        47: astore        4
+        49: aload_1
+        50: aload         4
+        52: invokevirtual #57                 // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity.getId:()I
+        55: invokestatic  #63                 // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+        58: new           #65                 // class java/lang/ref/WeakReference
+        61: dup
+        62: aload         4
+        64: invokespecial #68                 // Method java/lang/ref/WeakReference."<init>":(Ljava/lang/Object;)V
+        67: invokeinterface #72,  3           // InterfaceMethod java/util/Map.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+        72: pop
+        73: goto          29
+        76: aload_2
+        77: invokeinterface #75,  1           // InterfaceMethod java/util/List.clear:()V
+        82: aload_1
+        83: invokeinterface #79,  1           // InterfaceMethod java/util/Map.values:()Ljava/util/Collection;
+        88: astore_3
+        89: aload_3
+        90: invokeinterface #82,  1           // InterfaceMethod java/util/Collection.iterator:()Ljava/util/Iterator;
+        95: astore        4
+        97: aload         4
+        99: invokeinterface #47,  1           // InterfaceMethod java/util/Iterator.hasNext:()Z
+       104: ifeq          182
+       107: aload         4
+       109: invokeinterface #51,  1           // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+       114: checkcast     #65                 // class java/lang/ref/WeakReference
+       117: astore        5
+       119: aload         5
+       121: invokevirtual #84                 // Method java/lang/ref/WeakReference.get:()Ljava/lang/Object;
+       124: checkcast     #53                 // class com/simibubi/create/content/contraptions/AbstractContraptionEntity
+       127: astore        6
+       129: aload         6
+       131: ifnull        142
+       134: aload         6
+       136: invokevirtual #87                 // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity.isAliveOrStale:()Z
+       139: ifne          152
+       142: aload         4
+       144: invokeinterface #90,  1           // InterfaceMethod java/util/Iterator.remove:()V
+       149: goto          97
+       152: aload         6
+       154: invokevirtual #93                 // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity.isAlive:()Z
+       157: ifne          174
+       160: aload         6
+       162: dup
+       163: getfield      #97                 // Field com/simibubi/create/content/contraptions/AbstractContraptionEntity.staleTicks:I
+       166: iconst_1
+       167: isub
+       168: putfield      #97                 // Field com/simibubi/create/content/contraptions/AbstractContraptionEntity.staleTicks:I
+       171: goto          97
+       174: aload         6
+       176: invokestatic  #103                // Method com/simibubi/create/content/contraptions/ContraptionCollider.collideEntities:(Lcom/simibubi/create/content/contraptions/AbstractContraptionEntity;)V
+       179: goto          97
+       182: return
+
+  public static void addSpawnedContraptionsToCollisionList(net.minecraft.world.entity.Entity, net.minecraft.world.level.Level);
+    Code:
+         0: aload_0
+         1: instanceof    #53                 // class com/simibubi/create/content/contraptions/AbstractContraptionEntity
+         4: ifeq          27
+         7: getstatic     #35                 // Field queuedAdditions:Lnet/createmod/catnip/data/WorldAttached;
+        10: aload_1
+        11: invokevirtual #31                 // Method net/createmod/catnip/data/WorldAttached.get:(Lnet/minecraft/world/level/LevelAccessor;)Ljava/lang/Object;
+        14: checkcast     #37                 // class java/util/List
+        17: aload_0
+        18: checkcast     #53                 // class com/simibubi/create/content/contraptions/AbstractContraptionEntity
+        21: invokeinterface #126,  2          // InterfaceMethod java/util/List.add:(Ljava/lang/Object;)Z
+        26: pop
+        27: return
+
+  public static void entitiesWhoJustDismountedGetSentToTheRightLocation(net.minecraft.world.entity.LivingEntity, net.minecraft.world.level.Level);
+    Code:
+         0: aload_1
+         1: getfield      #136                // Field net/minecraft/world/level/Level.isClientSide:Z
+         4: ifne          8
+         7: return
+         8: aload_0
+         9: invokevirtual #142                // Method net/minecraft/world/entity/LivingEntity.getPersistentData:()Lnet/minecraft/nbt/CompoundTag;
+        12: astore_2
+        13: aload_2
+        14: ldc           #144                // String ContraptionDismountLocation
+        16: invokevirtual #150                // Method net/minecraft/nbt/CompoundTag.contains:(Ljava/lang/String;)Z
+        19: ifne          23
+        22: return
+        23: aload_2
+        24: ldc           #144                // String ContraptionDismountLocation
+        26: bipush        6
+        28: invokevirtual #154                // Method net/minecraft/nbt/CompoundTag.getList:(Ljava/lang/String;I)Lnet/minecraft/nbt/ListTag;
+        31: invokestatic  #160                // Method net/createmod/catnip/math/VecHelper.readNBT:(Lnet/minecraft/nbt/ListTag;)Lnet/minecraft/world/phys/Vec3;
+        34: astore_3
+        35: aload_0
+        36: invokevirtual #164                // Method net/minecraft/world/entity/LivingEntity.getVehicle:()Lnet/minecraft/world/entity/Entity;
+        39: ifnonnull     66
+        42: aload_0
+        43: aload_3
+        44: getfield      #170                // Field net/minecraft/world/phys/Vec3.x:D
+        47: aload_3
+        48: getfield      #173                // Field net/minecraft/world/phys/Vec3.y:D
+        51: aload_3
+        52: getfield      #176                // Field net/minecraft/world/phys/Vec3.z:D
+        55: aload_0
+        56: invokevirtual #180                // Method net/minecraft/world/entity/LivingEntity.getYRot:()F
+        59: aload_0
+        60: invokevirtual #183                // Method net/minecraft/world/entity/LivingEntity.getXRot:()F
+        63: invokevirtual #187                // Method net/minecraft/world/entity/LivingEntity.absMoveTo:(DDDFF)V
+        66: aload_2
+        67: ldc           #144                // String ContraptionDismountLocation
+        69: invokevirtual #190                // Method net/minecraft/nbt/CompoundTag.remove:(Ljava/lang/String;)V
+        72: aload_0
+        73: iconst_0
+        74: invokevirtual #194                // Method net/minecraft/world/entity/LivingEntity.setOnGround:(Z)V
+        77: return
+
+  private static java.util.List lambda$static$1(net.minecraft.world.level.LevelAccessor);
+    Code:
+         0: new           #204                // class it/unimi/dsi/fastutil/objects/ObjectArrayList
+         3: dup
+         4: invokespecial #205                // Method it/unimi/dsi/fastutil/objects/ObjectArrayList."<init>":()V
+         7: invokestatic  #211                // Method it/unimi/dsi/fastutil/objects/ObjectLists.synchronize:(Lit/unimi/dsi/fastutil/objects/ObjectList;)Lit/unimi/dsi/fastutil/objects/ObjectList;
+        10: areturn
+
+  private static java.util.Map lambda$static$0(net.minecraft.world.level.LevelAccessor);
+    Code:
+         0: new           #217                // class java/util/HashMap
+         3: dup
+         4: invokespecial #218                // Method java/util/HashMap."<init>":()V
+         7: areturn
+
+  static {};
+    Code:
+         0: new           #27                 // class net/createmod/catnip/data/WorldAttached
+         3: dup
+         4: invokedynamic #236,  0            // InvokeDynamic #0:apply:()Ljava/util/function/Function;
+         9: invokespecial #239                // Method net/createmod/catnip/data/WorldAttached."<init>":(Ljava/util/function/Function;)V
+        12: putstatic     #25                 // Field loadedContraptions:Lnet/createmod/catnip/data/WorldAttached;
+        15: new           #27                 // class net/createmod/catnip/data/WorldAttached
+        18: dup
+        19: invokedynamic #244,  0            // InvokeDynamic #1:apply:()Ljava/util/function/Function;
+        24: invokespecial #239                // Method net/createmod/catnip/data/WorldAttached."<init>":(Ljava/util/function/Function;)V
+        27: putstatic     #35                 // Field queuedAdditions:Lnet/createmod/catnip/data/WorldAttached;
+        30: return
+}

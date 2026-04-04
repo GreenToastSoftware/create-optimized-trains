@@ -1,0 +1,397 @@
+Compiled from "ContraptionEntityRenderer.java"
+public class com.simibubi.create.content.contraptions.render.ContraptionEntityRenderer<C extends com.simibubi.create.content.contraptions.AbstractContraptionEntity> extends net.minecraft.client.renderer.entity.EntityRenderer<C> {
+  public static final net.createmod.catnip.render.SuperByteBufferCache$Compartment<org.apache.commons.lang3.tuple.Pair<com.simibubi.create.content.contraptions.Contraption, net.minecraft.client.renderer.RenderType>> CONTRAPTION;
+
+  private static final java.lang.ThreadLocal<com.simibubi.create.content.contraptions.render.ContraptionEntityRenderer$ThreadLocalObjects> THREAD_LOCAL_OBJECTS;
+
+  public com.simibubi.create.content.contraptions.render.ContraptionEntityRenderer(net.minecraft.client.renderer.entity.EntityRendererProvider$Context);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: invokespecial #44                 // Method net/minecraft/client/renderer/entity/EntityRenderer."<init>":(Lnet/minecraft/client/renderer/entity/EntityRendererProvider$Context;)V
+         5: return
+
+  public static net.createmod.catnip.render.SuperByteBuffer getBuffer(com.simibubi.create.content.contraptions.Contraption, com.simibubi.create.foundation.virtualWorld.VirtualRenderWorld, net.minecraft.client.renderer.RenderType);
+    Code:
+         0: invokestatic  #55                 // Method net/createmod/catnip/render/SuperByteBufferCache.getInstance:()Lnet/createmod/catnip/render/SuperByteBufferCache;
+         3: getstatic     #57                 // Field CONTRAPTION:Lnet/createmod/catnip/render/SuperByteBufferCache$Compartment;
+         6: aload_0
+         7: aload_2
+         8: invokestatic  #63                 // Method org/apache/commons/lang3/tuple/Pair.of:(Ljava/lang/Object;Ljava/lang/Object;)Lorg/apache/commons/lang3/tuple/Pair;
+        11: aload_0
+        12: aload_1
+        13: aload_2
+        14: invokedynamic #82,  0             // InvokeDynamic #0:call:(Lcom/simibubi/create/content/contraptions/Contraption;Lcom/simibubi/create/foundation/virtualWorld/VirtualRenderWorld;Lnet/minecraft/client/renderer/RenderType;)Ljava/util/concurrent/Callable;
+        19: invokevirtual #86                 // Method net/createmod/catnip/render/SuperByteBufferCache.get:(Lnet/createmod/catnip/render/SuperByteBufferCache$Compartment;Ljava/lang/Object;Ljava/util/concurrent/Callable;)Lnet/createmod/catnip/render/SuperByteBuffer;
+        22: areturn
+
+  private static net.createmod.catnip.render.SuperByteBuffer buildStructureBuffer(com.simibubi.create.content.contraptions.Contraption, com.simibubi.create.foundation.virtualWorld.VirtualRenderWorld, net.minecraft.client.renderer.RenderType);
+    Code:
+         0: invokestatic  #98                 // Method net/minecraft/client/Minecraft.getInstance:()Lnet/minecraft/client/Minecraft;
+         3: invokevirtual #102                // Method net/minecraft/client/Minecraft.getBlockRenderer:()Lnet/minecraft/client/renderer/block/BlockRenderDispatcher;
+         6: astore_3
+         7: aload_3
+         8: invokevirtual #108                // Method net/minecraft/client/renderer/block/BlockRenderDispatcher.getModelRenderer:()Lnet/minecraft/client/renderer/block/ModelBlockRenderer;
+        11: astore        4
+        13: getstatic     #110                // Field THREAD_LOCAL_OBJECTS:Ljava/lang/ThreadLocal;
+        16: invokevirtual #114                // Method java/lang/ThreadLocal.get:()Ljava/lang/Object;
+        19: checkcast     #8                  // class com/simibubi/create/content/contraptions/render/ContraptionEntityRenderer$ThreadLocalObjects
+        22: astore        5
+        24: aload         5
+        26: getfield      #118                // Field com/simibubi/create/content/contraptions/render/ContraptionEntityRenderer$ThreadLocalObjects.poseStack:Lcom/mojang/blaze3d/vertex/PoseStack;
+        29: astore        6
+        31: aload         5
+        33: getfield      #122                // Field com/simibubi/create/content/contraptions/render/ContraptionEntityRenderer$ThreadLocalObjects.random:Lnet/minecraft/util/RandomSource;
+        36: astore        7
+        38: aload_0
+        39: invokevirtual #128                // Method com/simibubi/create/content/contraptions/Contraption.getOrCreateClientContraptionLazy:()Lcom/simibubi/create/content/contraptions/render/ClientContraption;
+        42: astore        8
+        44: aload         8
+        46: invokevirtual #132                // Method com/simibubi/create/content/contraptions/render/ClientContraption.getRenderedBlocks:()Lcom/simibubi/create/content/contraptions/render/ClientContraption$RenderedBlocks;
+        49: astore        9
+        51: aload         5
+        53: getfield      #136                // Field com/simibubi/create/content/contraptions/render/ContraptionEntityRenderer$ThreadLocalObjects.sbbBuilder:Lnet/createmod/catnip/render/ShadedBlockSbbBuilder;
+        56: astore        10
+        58: aload         10
+        60: invokevirtual #142                // Method net/createmod/catnip/render/ShadedBlockSbbBuilder.begin:()V
+        63: invokestatic  #147                // Method net/minecraft/client/renderer/block/ModelBlockRenderer.enableCaching:()V
+        66: aload         9
+        68: invokevirtual #151                // Method com/simibubi/create/content/contraptions/render/ClientContraption$RenderedBlocks.positions:()Ljava/lang/Iterable;
+        71: invokeinterface #157,  1          // InterfaceMethod java/lang/Iterable.iterator:()Ljava/util/Iterator;
+        76: astore        11
+        78: aload         11
+        80: invokeinterface #171,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+        85: ifeq          262
+        88: aload         11
+        90: invokeinterface #174,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+        95: checkcast     #176                // class net/minecraft/core/BlockPos
+        98: astore        12
+       100: aload         9
+       102: invokevirtual #180                // Method com/simibubi/create/content/contraptions/render/ClientContraption$RenderedBlocks.lookup:()Ljava/util/function/Function;
+       105: aload         12
+       107: invokeinterface #186,  2          // InterfaceMethod java/util/function/Function.apply:(Ljava/lang/Object;)Ljava/lang/Object;
+       112: checkcast     #188                // class net/minecraft/world/level/block/state/BlockState
+       115: astore        13
+       117: aload         13
+       119: invokevirtual #192                // Method net/minecraft/world/level/block/state/BlockState.getRenderShape:()Lnet/minecraft/world/level/block/RenderShape;
+       122: getstatic     #198                // Field net/minecraft/world/level/block/RenderShape.MODEL:Lnet/minecraft/world/level/block/RenderShape;
+       125: if_acmpne     259
+       128: aload_3
+       129: aload         13
+       131: invokevirtual #202                // Method net/minecraft/client/renderer/block/BlockRenderDispatcher.getBlockModel:(Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/client/resources/model/BakedModel;
+       134: astore        14
+       136: aload         8
+       138: aload         12
+       140: invokevirtual #206                // Method com/simibubi/create/content/contraptions/render/ClientContraption.getModelData:(Lnet/minecraft/core/BlockPos;)Lnet/minecraftforge/client/model/data/ModelData;
+       143: astore        15
+       145: aload         14
+       147: aload_1
+       148: aload         12
+       150: aload         13
+       152: aload         15
+       154: invokeinterface #211,  5          // InterfaceMethod net/minecraft/client/resources/model/BakedModel.getModelData:(Lnet/minecraft/world/level/BlockAndTintGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraftforge/client/model/data/ModelData;)Lnet/minecraftforge/client/model/data/ModelData;
+       159: astore        15
+       161: aload         13
+       163: aload         12
+       165: invokevirtual #215                // Method net/minecraft/world/level/block/state/BlockState.getSeed:(Lnet/minecraft/core/BlockPos;)J
+       168: lstore        16
+       170: aload         7
+       172: lload         16
+       174: invokeinterface #219,  3          // InterfaceMethod net/minecraft/util/RandomSource.setSeed:(J)V
+       179: aload         14
+       181: aload         13
+       183: aload         7
+       185: aload         15
+       187: invokeinterface #223,  4          // InterfaceMethod net/minecraft/client/resources/model/BakedModel.getRenderTypes:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/util/RandomSource;Lnet/minecraftforge/client/model/data/ModelData;)Lnet/minecraftforge/client/ChunkRenderTypeSet;
+       192: aload_2
+       193: invokevirtual #229                // Method net/minecraftforge/client/ChunkRenderTypeSet.contains:(Lnet/minecraft/client/renderer/RenderType;)Z
+       196: ifeq          259
+       199: aload         6
+       201: invokevirtual #232                // Method com/mojang/blaze3d/vertex/PoseStack.pushPose:()V
+       204: aload         6
+       206: aload         12
+       208: invokevirtual #236                // Method net/minecraft/core/BlockPos.getX:()I
+       211: i2f
+       212: aload         12
+       214: invokevirtual #239                // Method net/minecraft/core/BlockPos.getY:()I
+       217: i2f
+       218: aload         12
+       220: invokevirtual #242                // Method net/minecraft/core/BlockPos.getZ:()I
+       223: i2f
+       224: invokevirtual #246                // Method com/mojang/blaze3d/vertex/PoseStack.translate:(FFF)V
+       227: aload         4
+       229: aload_1
+       230: aload         14
+       232: aload         13
+       234: aload         12
+       236: aload         6
+       238: aload         10
+       240: iconst_1
+       241: aload         7
+       243: lload         16
+       245: getstatic     #252                // Field net/minecraft/client/renderer/texture/OverlayTexture.NO_OVERLAY:I
+       248: aload         15
+       250: aload_2
+       251: invokevirtual #256                // Method net/minecraft/client/renderer/block/ModelBlockRenderer.tesselateBlock:(Lnet/minecraft/world/level/BlockAndTintGetter;Lnet/minecraft/client/resources/model/BakedModel;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;ZLnet/minecraft/util/RandomSource;JILnet/minecraftforge/client/model/data/ModelData;Lnet/minecraft/client/renderer/RenderType;)V
+       254: aload         6
+       256: invokevirtual #259                // Method com/mojang/blaze3d/vertex/PoseStack.popPose:()V
+       259: goto          78
+       262: invokestatic  #262                // Method net/minecraft/client/renderer/block/ModelBlockRenderer.clearCache:()V
+       265: aload         10
+       267: invokevirtual #265                // Method net/createmod/catnip/render/ShadedBlockSbbBuilder.end:()Lnet/createmod/catnip/render/SuperByteBuffer;
+       270: areturn
+
+  public net.minecraft.resources.ResourceLocation getTextureLocation(C);
+    Code:
+         0: aconst_null
+         1: areturn
+
+  public boolean shouldRender(C, net.minecraft.client.renderer.culling.Frustum, double, double, double);
+    Code:
+         0: aload_1
+         1: invokevirtual #301                // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity.getContraption:()Lcom/simibubi/create/content/contraptions/Contraption;
+         4: ifnonnull     9
+         7: iconst_0
+         8: ireturn
+         9: aload_1
+        10: invokevirtual #304                // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity.isAliveOrStale:()Z
+        13: ifne          18
+        16: iconst_0
+        17: ireturn
+        18: aload_1
+        19: invokevirtual #307                // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity.isReadyForRender:()Z
+        22: ifne          27
+        25: iconst_0
+        26: ireturn
+        27: aload_0
+        28: aload_1
+        29: aload_2
+        30: dload_3
+        31: dload         5
+        33: dload         7
+        35: invokespecial #310                // Method net/minecraft/client/renderer/entity/EntityRenderer.shouldRender:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/client/renderer/culling/Frustum;DDD)Z
+        38: ireturn
+
+  public void render(C, float, float, com.mojang.blaze3d.vertex.PoseStack, net.minecraft.client.renderer.MultiBufferSource, int);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: fload_2
+         3: fload_3
+         4: aload         4
+         6: aload         5
+         8: iload         6
+        10: invokespecial #322                // Method net/minecraft/client/renderer/entity/EntityRenderer.render:(Lnet/minecraft/world/entity/Entity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V
+        13: aload_1
+        14: invokevirtual #301                // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity.getContraption:()Lcom/simibubi/create/content/contraptions/Contraption;
+        17: astore        7
+        19: aload         7
+        21: ifnonnull     25
+        24: return
+        25: aload_1
+        26: invokevirtual #326                // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity.level:()Lnet/minecraft/world/level/Level;
+        29: astore        8
+        31: aload         7
+        33: invokevirtual #128                // Method com/simibubi/create/content/contraptions/Contraption.getOrCreateClientContraptionLazy:()Lcom/simibubi/create/content/contraptions/render/ClientContraption;
+        36: astore        9
+        38: aload         9
+        40: invokevirtual #330                // Method com/simibubi/create/content/contraptions/render/ClientContraption.getRenderLevel:()Lcom/simibubi/create/foundation/virtualWorld/VirtualRenderWorld;
+        43: astore        10
+        45: aload         9
+        47: invokevirtual #334                // Method com/simibubi/create/content/contraptions/render/ClientContraption.getMatrices:()Lcom/simibubi/create/content/contraptions/render/ContraptionMatrices;
+        50: astore        11
+        52: aload         11
+        54: aload         4
+        56: aload_1
+        57: invokevirtual #340                // Method com/simibubi/create/content/contraptions/render/ContraptionMatrices.setup:(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/simibubi/create/content/contraptions/AbstractContraptionEntity;)V
+        60: aload         8
+        62: invokestatic  #346                // InterfaceMethod dev/engine_room/flywheel/api/visualization/VisualizationManager.supportsVisualization:(Lnet/minecraft/world/level/LevelAccessor;)Z
+        65: ifne          171
+        68: invokestatic  #350                // Method net/minecraft/client/renderer/RenderType.chunkBufferLayers:()Ljava/util/List;
+        71: invokeinterface #353,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+        76: astore        12
+        78: aload         12
+        80: invokeinterface #171,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+        85: ifeq          171
+        88: aload         12
+        90: invokeinterface #174,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+        95: checkcast     #161                // class net/minecraft/client/renderer/RenderType
+        98: astore        13
+       100: aload         7
+       102: aload         10
+       104: aload         13
+       106: invokestatic  #359                // Method getBuffer:(Lcom/simibubi/create/content/contraptions/Contraption;Lcom/simibubi/create/foundation/virtualWorld/VirtualRenderWorld;Lnet/minecraft/client/renderer/RenderType;)Lnet/createmod/catnip/render/SuperByteBuffer;
+       109: astore        14
+       111: aload         14
+       113: invokeinterface #364,  1          // InterfaceMethod net/createmod/catnip/render/SuperByteBuffer.isEmpty:()Z
+       118: ifne          168
+       121: aload         5
+       123: aload         13
+       125: invokeinterface #367,  2          // InterfaceMethod net/minecraft/client/renderer/MultiBufferSource.getBuffer:(Lnet/minecraft/client/renderer/RenderType;)Lcom/mojang/blaze3d/vertex/VertexConsumer;
+       130: astore        15
+       132: aload         14
+       134: aload         11
+       136: invokevirtual #371                // Method com/simibubi/create/content/contraptions/render/ContraptionMatrices.getModel:()Lcom/mojang/blaze3d/vertex/PoseStack;
+       139: invokeinterface #375,  2          // InterfaceMethod net/createmod/catnip/render/SuperByteBuffer.transform:(Lcom/mojang/blaze3d/vertex/PoseStack;)Ldev/engine_room/flywheel/lib/transform/Transform;
+       144: checkcast     #361                // class net/createmod/catnip/render/SuperByteBuffer
+       147: aload         8
+       149: aload         11
+       151: invokevirtual #379                // Method com/simibubi/create/content/contraptions/render/ContraptionMatrices.getWorld:()Lorg/joml/Matrix4f;
+       154: invokeinterface #383,  3          // InterfaceMethod net/createmod/catnip/render/SuperByteBuffer.useLevelLight:(Lnet/minecraft/world/level/BlockAndTintGetter;Lorg/joml/Matrix4f;)Lnet/createmod/catnip/render/SuperByteBuffer;
+       159: aload         4
+       161: aload         15
+       163: invokeinterface #387,  3          // InterfaceMethod net/createmod/catnip/render/SuperByteBuffer.renderInto:(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;)V
+       168: goto          78
+       171: aload         9
+       173: invokevirtual #391                // Method com/simibubi/create/content/contraptions/render/ClientContraption.getAndAdjustShouldRenderBlockEntities:()Ljava/util/BitSet;
+       176: astore        12
+       178: aload         9
+       180: getfield      #395                // Field com/simibubi/create/content/contraptions/render/ClientContraption.scratchErroredBlockEntities:Ljava/util/BitSet;
+       183: invokevirtual #400                // Method java/util/BitSet.clear:()V
+       186: aload         9
+       188: getfield      #404                // Field com/simibubi/create/content/contraptions/render/ClientContraption.renderedBlockEntityView:Ljava/util/List;
+       191: aload         12
+       193: aload         9
+       195: getfield      #395                // Field com/simibubi/create/content/contraptions/render/ClientContraption.scratchErroredBlockEntities:Ljava/util/BitSet;
+       198: aload         10
+       200: aload         8
+       202: aload         11
+       204: invokevirtual #407                // Method com/simibubi/create/content/contraptions/render/ContraptionMatrices.getModelViewProjection:()Lcom/mojang/blaze3d/vertex/PoseStack;
+       207: aload         11
+       209: invokevirtual #410                // Method com/simibubi/create/content/contraptions/render/ContraptionMatrices.getLight:()Lorg/joml/Matrix4f;
+       212: aload         5
+       214: invokestatic  #416                // Method net/createmod/catnip/animation/AnimationTickHolder.getPartialTicks:()F
+       217: invokestatic  #422                // Method com/simibubi/create/foundation/render/BlockEntityRenderHelper.renderBlockEntities:(Ljava/util/List;Ljava/util/BitSet;Ljava/util/BitSet;Lcom/simibubi/create/foundation/virtualWorld/VirtualRenderWorld;Lnet/minecraft/world/level/Level;Lcom/mojang/blaze3d/vertex/PoseStack;Lorg/joml/Matrix4f;Lnet/minecraft/client/renderer/MultiBufferSource;F)V
+       220: aload         9
+       222: getfield      #425                // Field com/simibubi/create/content/contraptions/render/ClientContraption.shouldRenderBlockEntities:Ljava/util/BitSet;
+       225: aload         9
+       227: getfield      #395                // Field com/simibubi/create/content/contraptions/render/ClientContraption.scratchErroredBlockEntities:Ljava/util/BitSet;
+       230: invokevirtual #429                // Method java/util/BitSet.andNot:(Ljava/util/BitSet;)V
+       233: aload         8
+       235: aload         10
+       237: aload         7
+       239: aload         11
+       241: aload         5
+       243: invokestatic  #433                // Method renderActors:(Lnet/minecraft/world/level/Level;Lcom/simibubi/create/foundation/virtualWorld/VirtualRenderWorld;Lcom/simibubi/create/content/contraptions/Contraption;Lcom/simibubi/create/content/contraptions/render/ContraptionMatrices;Lnet/minecraft/client/renderer/MultiBufferSource;)V
+       246: aload         11
+       248: invokevirtual #434                // Method com/simibubi/create/content/contraptions/render/ContraptionMatrices.clear:()V
+       251: return
+
+  private static void renderActors(net.minecraft.world.level.Level, com.simibubi.create.foundation.virtualWorld.VirtualRenderWorld, com.simibubi.create.content.contraptions.Contraption, com.simibubi.create.content.contraptions.render.ContraptionMatrices, net.minecraft.client.renderer.MultiBufferSource);
+    Code:
+         0: aload_3
+         1: invokevirtual #371                // Method com/simibubi/create/content/contraptions/render/ContraptionMatrices.getModel:()Lcom/mojang/blaze3d/vertex/PoseStack;
+         4: astore        5
+         6: aload_2
+         7: invokevirtual #451                // Method com/simibubi/create/content/contraptions/Contraption.getActors:()Ljava/util/List;
+        10: invokeinterface #353,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+        15: astore        6
+        17: aload         6
+        19: invokeinterface #171,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+        24: ifeq          159
+        27: aload         6
+        29: invokeinterface #174,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+        34: checkcast     #59                 // class org/apache/commons/lang3/tuple/Pair
+        37: astore        7
+        39: aload         7
+        41: invokevirtual #454                // Method org/apache/commons/lang3/tuple/Pair.getRight:()Ljava/lang/Object;
+        44: checkcast     #456                // class com/simibubi/create/content/contraptions/behaviour/MovementContext
+        47: astore        8
+        49: aload         8
+        51: ifnonnull     57
+        54: goto          17
+        57: aload         8
+        59: getfield      #459                // Field com/simibubi/create/content/contraptions/behaviour/MovementContext.world:Lnet/minecraft/world/level/Level;
+        62: ifnonnull     71
+        65: aload         8
+        67: aload_0
+        68: putfield      #459                // Field com/simibubi/create/content/contraptions/behaviour/MovementContext.world:Lnet/minecraft/world/level/Level;
+        71: aload         7
+        73: invokevirtual #462                // Method org/apache/commons/lang3/tuple/Pair.getLeft:()Ljava/lang/Object;
+        76: checkcast     #26                 // class net/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplate$StructureBlockInfo
+        79: astore        9
+        81: getstatic     #468                // Field com/simibubi/create/api/behaviour/movement/MovementBehaviour.REGISTRY:Lcom/simibubi/create/api/registry/SimpleRegistry;
+        84: aload         9
+        86: invokevirtual #471                // Method net/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplate$StructureBlockInfo.state:()Lnet/minecraft/world/level/block/state/BlockState;
+        89: invokeinterface #476,  2          // InterfaceMethod com/simibubi/create/api/registry/SimpleRegistry.get:(Lnet/minecraft/world/level/block/state/StateHolder;)Ljava/lang/Object;
+        94: checkcast     #464                // class com/simibubi/create/api/behaviour/movement/MovementBehaviour
+        97: astore        10
+        99: aload         10
+       101: ifnull        156
+       104: aload_2
+       105: aload         9
+       107: invokevirtual #479                // Method net/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplate$StructureBlockInfo.pos:()Lnet/minecraft/core/BlockPos;
+       110: invokevirtual #483                // Method com/simibubi/create/content/contraptions/Contraption.isHiddenInPortal:(Lnet/minecraft/core/BlockPos;)Z
+       113: ifeq          119
+       116: goto          17
+       119: aload         5
+       121: invokevirtual #232                // Method com/mojang/blaze3d/vertex/PoseStack.pushPose:()V
+       124: aload         5
+       126: invokestatic  #488                // InterfaceMethod dev/engine_room/flywheel/lib/transform/TransformStack.of:(Lcom/mojang/blaze3d/vertex/PoseStack;)Ldev/engine_room/flywheel/lib/transform/PoseTransformStack;
+       129: aload         9
+       131: invokevirtual #479                // Method net/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplate$StructureBlockInfo.pos:()Lnet/minecraft/core/BlockPos;
+       134: invokevirtual #493                // Method dev/engine_room/flywheel/lib/transform/PoseTransformStack.translate:(Lnet/minecraft/core/Vec3i;)Ldev/engine_room/flywheel/lib/transform/Translate;
+       137: pop
+       138: aload         10
+       140: aload         8
+       142: aload_1
+       143: aload_3
+       144: aload         4
+       146: invokeinterface #497,  5          // InterfaceMethod com/simibubi/create/api/behaviour/movement/MovementBehaviour.renderInContraption:(Lcom/simibubi/create/content/contraptions/behaviour/MovementContext;Lcom/simibubi/create/foundation/virtualWorld/VirtualRenderWorld;Lcom/simibubi/create/content/contraptions/render/ContraptionMatrices;Lnet/minecraft/client/renderer/MultiBufferSource;)V
+       151: aload         5
+       153: invokevirtual #259                // Method com/mojang/blaze3d/vertex/PoseStack.popPose:()V
+       156: goto          17
+       159: return
+
+  public net.minecraft.resources.ResourceLocation getTextureLocation(net.minecraft.world.entity.Entity);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: checkcast     #297                // class com/simibubi/create/content/contraptions/AbstractContraptionEntity
+         5: invokevirtual #511                // Method getTextureLocation:(Lcom/simibubi/create/content/contraptions/AbstractContraptionEntity;)Lnet/minecraft/resources/ResourceLocation;
+         8: areturn
+
+  public void render(net.minecraft.world.entity.Entity, float, float, com.mojang.blaze3d.vertex.PoseStack, net.minecraft.client.renderer.MultiBufferSource, int);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: checkcast     #297                // class com/simibubi/create/content/contraptions/AbstractContraptionEntity
+         5: fload_2
+         6: fload_3
+         7: aload         4
+         9: aload         5
+        11: iload         6
+        13: invokevirtual #513                // Method render:(Lcom/simibubi/create/content/contraptions/AbstractContraptionEntity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V
+        16: return
+
+  public boolean shouldRender(net.minecraft.world.entity.Entity, net.minecraft.client.renderer.culling.Frustum, double, double, double);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: checkcast     #297                // class com/simibubi/create/content/contraptions/AbstractContraptionEntity
+         5: aload_2
+         6: dload_3
+         7: dload         5
+         9: dload         7
+        11: invokevirtual #515                // Method shouldRender:(Lcom/simibubi/create/content/contraptions/AbstractContraptionEntity;Lnet/minecraft/client/renderer/culling/Frustum;DDD)Z
+        14: ireturn
+
+  private static net.createmod.catnip.render.SuperByteBuffer lambda$getBuffer$0(com.simibubi.create.content.contraptions.Contraption, com.simibubi.create.foundation.virtualWorld.VirtualRenderWorld, net.minecraft.client.renderer.RenderType) throws java.lang.Exception;
+    Code:
+         0: aload_0
+         1: aload_1
+         2: aload_2
+         3: invokestatic  #519                // Method buildStructureBuffer:(Lcom/simibubi/create/content/contraptions/Contraption;Lcom/simibubi/create/foundation/virtualWorld/VirtualRenderWorld;Lnet/minecraft/client/renderer/RenderType;)Lnet/createmod/catnip/render/SuperByteBuffer;
+         6: areturn
+
+  static {};
+    Code:
+         0: new           #15                 // class net/createmod/catnip/render/SuperByteBufferCache$Compartment
+         3: dup
+         4: invokespecial #522                // Method net/createmod/catnip/render/SuperByteBufferCache$Compartment."<init>":()V
+         7: putstatic     #57                 // Field CONTRAPTION:Lnet/createmod/catnip/render/SuperByteBufferCache$Compartment;
+        10: invokedynamic #529,  0            // InvokeDynamic #1:get:()Ljava/util/function/Supplier;
+        15: invokestatic  #533                // Method java/lang/ThreadLocal.withInitial:(Ljava/util/function/Supplier;)Ljava/lang/ThreadLocal;
+        18: putstatic     #110                // Field THREAD_LOCAL_OBJECTS:Ljava/lang/ThreadLocal;
+        21: return
+}

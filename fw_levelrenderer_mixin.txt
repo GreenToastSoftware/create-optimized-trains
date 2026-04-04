@@ -1,0 +1,45 @@
+﻿Compiled from "LevelRendererMixin.java"
+abstract class dev.engine_room.flywheel.impl.mixin.visualmanage.LevelRendererMixin {
+  private net.minecraft.client.multiplayer.ClientLevel level;
+
+  dev.engine_room.flywheel.impl.mixin.visualmanage.LevelRendererMixin();
+    Code:
+         0: aload_0
+         1: invokespecial #15                 // Method java/lang/Object."<init>":()V
+         4: return
+
+  private void flywheel$checkUpdate(net.minecraft.core.BlockPos, net.minecraft.world.level.block.state.BlockState, net.minecraft.world.level.block.state.BlockState, org.spongepowered.asm.mixin.injection.callback.CallbackInfo);
+    Code:
+         0: aload_0
+         1: getfield      #31                 // Field level:Lnet/minecraft/client/multiplayer/ClientLevel;
+         4: invokestatic  #37                 // InterfaceMethod dev/engine_room/flywheel/api/visualization/VisualizationManager.get:(Lnet/minecraft/world/level/LevelAccessor;)Ldev/engine_room/flywheel/api/visualization/VisualizationManager;
+         7: astore        5
+         9: aload         5
+        11: ifnonnull     15
+        14: return
+        15: aload_0
+        16: getfield      #31                 // Field level:Lnet/minecraft/client/multiplayer/ClientLevel;
+        19: aload_1
+        20: invokevirtual #43                 // Method net/minecraft/client/multiplayer/ClientLevel.getBlockEntity:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/entity/BlockEntity;
+        23: astore        6
+        25: aload         6
+        27: ifnonnull     31
+        30: return
+        31: aload         5
+        33: invokeinterface #49,  1           // InterfaceMethod dev/engine_room/flywheel/api/visualization/VisualizationManager.blockEntities:()Ldev/engine_room/flywheel/api/visualization/VisualManager;
+        38: astore        7
+        40: aload_2
+        41: aload_3
+        42: if_acmpeq     66
+        45: aload         7
+        47: aload         6
+        49: invokeinterface #55,  2           // InterfaceMethod dev/engine_room/flywheel/api/visualization/VisualManager.queueRemove:(Ljava/lang/Object;)V
+        54: aload         7
+        56: aload         6
+        58: invokeinterface #58,  2           // InterfaceMethod dev/engine_room/flywheel/api/visualization/VisualManager.queueAdd:(Ljava/lang/Object;)V
+        63: goto          75
+        66: aload         7
+        68: aload         6
+        70: invokeinterface #61,  2           // InterfaceMethod dev/engine_room/flywheel/api/visualization/VisualManager.queueUpdate:(Ljava/lang/Object;)V
+        75: return
+}

@@ -1,0 +1,732 @@
+﻿Compiled from "OitFramebuffer.java"
+public class dev.engine_room.flywheel.backend.engine.indirect.OitFramebuffer {
+  public static final float[] CLEAR_TO_ZERO;
+
+  public static final int[] DEPTH_RANGE_DRAW_BUFFERS;
+
+  public static final int[] RENDER_TRANSMITTANCE_DRAW_BUFFERS;
+
+  public static final int[] ACCUMULATE_DRAW_BUFFERS;
+
+  public static final int[] DEPTH_ONLY_DRAW_BUFFERS;
+
+  private final dev.engine_room.flywheel.backend.compile.OitPrograms programs;
+
+  private final int vao;
+
+  public int fbo;
+
+  public int depthBounds;
+
+  public int coefficients;
+
+  public int accumulate;
+
+  private int lastWidth;
+
+  private int lastHeight;
+
+  public dev.engine_room.flywheel.backend.engine.indirect.OitFramebuffer(dev.engine_room.flywheel.backend.compile.OitPrograms);
+    Code:
+         0: aload_0
+         1: invokespecial #35                 // Method java/lang/Object."<init>":()V
+         4: aload_0
+         5: iconst_m1
+         6: putfield      #37                 // Field fbo:I
+         9: aload_0
+        10: iconst_m1
+        11: putfield      #39                 // Field depthBounds:I
+        14: aload_0
+        15: iconst_m1
+        16: putfield      #41                 // Field coefficients:I
+        19: aload_0
+        20: iconst_m1
+        21: putfield      #43                 // Field accumulate:I
+        24: aload_0
+        25: iconst_m1
+        26: putfield      #45                 // Field lastWidth:I
+        29: aload_0
+        30: iconst_m1
+        31: putfield      #47                 // Field lastHeight:I
+        34: aload_0
+        35: aload_1
+        36: putfield      #49                 // Field programs:Ldev/engine_room/flywheel/backend/compile/OitPrograms;
+        39: getstatic     #55                 // Field dev/engine_room/flywheel/backend/gl/GlCompat.SUPPORTS_DSA:Z
+        42: ifeq          55
+        45: aload_0
+        46: invokestatic  #61                 // Method org/lwjgl/opengl/GL46.glCreateVertexArrays:()I
+        49: putfield      #63                 // Field vao:I
+        52: goto          62
+        55: aload_0
+        56: invokestatic  #70                 // Method org/lwjgl/opengl/GL32.glGenVertexArrays:()I
+        59: putfield      #63                 // Field vao:I
+        62: return
+
+  public void prepare();
+    Code:
+         0: invokestatic  #79                 // Method net/minecraft/client/Minecraft.useShaderTransparency:()Z
+         3: ifeq          29
+         6: invokestatic  #83                 // Method net/minecraft/client/Minecraft.getInstance:()Lnet/minecraft/client/Minecraft;
+         9: getfield      #87                 // Field net/minecraft/client/Minecraft.levelRenderer:Lnet/minecraft/client/renderer/LevelRenderer;
+        12: invokevirtual #93                 // Method net/minecraft/client/renderer/LevelRenderer.getItemEntityTarget:()Lcom/mojang/blaze3d/pipeline/RenderTarget;
+        15: astore_1
+        16: aload_1
+        17: invokestatic  #83                 // Method net/minecraft/client/Minecraft.getInstance:()Lnet/minecraft/client/Minecraft;
+        20: invokevirtual #96                 // Method net/minecraft/client/Minecraft.getMainRenderTarget:()Lcom/mojang/blaze3d/pipeline/RenderTarget;
+        23: invokevirtual #102                // Method com/mojang/blaze3d/pipeline/RenderTarget.copyDepthFrom:(Lcom/mojang/blaze3d/pipeline/RenderTarget;)V
+        26: goto          36
+        29: invokestatic  #83                 // Method net/minecraft/client/Minecraft.getInstance:()Lnet/minecraft/client/Minecraft;
+        32: invokevirtual #96                 // Method net/minecraft/client/Minecraft.getMainRenderTarget:()Lcom/mojang/blaze3d/pipeline/RenderTarget;
+        35: astore_1
+        36: aload_0
+        37: aload_1
+        38: getfield      #105                // Field com/mojang/blaze3d/pipeline/RenderTarget.width:I
+        41: aload_1
+        42: getfield      #108                // Field com/mojang/blaze3d/pipeline/RenderTarget.height:I
+        45: invokevirtual #112                // Method maybeResizeFBO:(II)V
+        48: getstatic     #118                // Field dev/engine_room/flywheel/backend/Samplers.COEFFICIENTS:Ldev/engine_room/flywheel/backend/gl/GlTextureUnit;
+        51: invokevirtual #123                // Method dev/engine_room/flywheel/backend/gl/GlTextureUnit.makeActive:()V
+        54: iconst_0
+        55: invokestatic  #129                // Method com/mojang/blaze3d/systems/RenderSystem.bindTexture:(I)V
+        58: ldc           #130                // int 35866
+        60: aload_0
+        61: getfield      #41                 // Field coefficients:I
+        64: invokestatic  #133                // Method org/lwjgl/opengl/GL32.glBindTexture:(II)V
+        67: getstatic     #136                // Field dev/engine_room/flywheel/backend/Samplers.DEPTH_RANGE:Ldev/engine_room/flywheel/backend/gl/GlTextureUnit;
+        70: invokevirtual #123                // Method dev/engine_room/flywheel/backend/gl/GlTextureUnit.makeActive:()V
+        73: aload_0
+        74: getfield      #39                 // Field depthBounds:I
+        77: invokestatic  #129                // Method com/mojang/blaze3d/systems/RenderSystem.bindTexture:(I)V
+        80: getstatic     #139                // Field dev/engine_room/flywheel/backend/Samplers.NOISE:Ldev/engine_room/flywheel/backend/gl/GlTextureUnit;
+        83: invokevirtual #123                // Method dev/engine_room/flywheel/backend/gl/GlTextureUnit.makeActive:()V
+        86: getstatic     #145                // Field dev/engine_room/flywheel/backend/NoiseTextures.BLUE_NOISE:Lnet/minecraft/client/renderer/texture/DynamicTexture;
+        89: invokevirtual #150                // Method net/minecraft/client/renderer/texture/DynamicTexture.bind:()V
+        92: ldc           #151                // int 36160
+        94: aload_0
+        95: getfield      #37                 // Field fbo:I
+        98: invokestatic  #154                // Method com/mojang/blaze3d/platform/GlStateManager._glBindFramebuffer:(II)V
+       101: ldc           #151                // int 36160
+       103: ldc           #155                // int 36096
+       105: aload_1
+       106: invokevirtual #158                // Method com/mojang/blaze3d/pipeline/RenderTarget.getDepthTextureId:()I
+       109: iconst_0
+       110: invokestatic  #162                // Method org/lwjgl/opengl/GL32.glFramebufferTexture:(IIII)V
+       113: return
+
+  public void depthRange();
+    Code:
+         0: iconst_0
+         1: invokestatic  #169                // Method com/mojang/blaze3d/systems/RenderSystem.depthMask:(Z)V
+         4: iconst_1
+         5: iconst_1
+         6: iconst_1
+         7: iconst_1
+         8: invokestatic  #173                // Method com/mojang/blaze3d/systems/RenderSystem.colorMask:(ZZZZ)V
+        11: invokestatic  #176                // Method com/mojang/blaze3d/systems/RenderSystem.enableBlend:()V
+        14: getstatic     #180                // Field com/mojang/blaze3d/platform/GlStateManager$SourceFactor.ONE:Lcom/mojang/blaze3d/platform/GlStateManager$SourceFactor;
+        17: getstatic     #183                // Field com/mojang/blaze3d/platform/GlStateManager$DestFactor.ONE:Lcom/mojang/blaze3d/platform/GlStateManager$DestFactor;
+        20: invokestatic  #187                // Method com/mojang/blaze3d/systems/RenderSystem.blendFunc:(Lcom/mojang/blaze3d/platform/GlStateManager$SourceFactor;Lcom/mojang/blaze3d/platform/GlStateManager$DestFactor;)V
+        23: ldc           #188                // int 32776
+        25: invokestatic  #191                // Method com/mojang/blaze3d/systems/RenderSystem.blendEquation:(I)V
+        28: invokestatic  #83                 // Method net/minecraft/client/Minecraft.getInstance:()Lnet/minecraft/client/Minecraft;
+        31: getfield      #195                // Field net/minecraft/client/Minecraft.gameRenderer:Lnet/minecraft/client/renderer/GameRenderer;
+        34: invokevirtual #201                // Method net/minecraft/client/renderer/GameRenderer.getDepthFar:()F
+        37: fstore_1
+        38: getstatic     #55                 // Field dev/engine_room/flywheel/backend/gl/GlCompat.SUPPORTS_DSA:Z
+        41: ifeq          89
+        44: aload_0
+        45: getfield      #37                 // Field fbo:I
+        48: getstatic     #203                // Field DEPTH_RANGE_DRAW_BUFFERS:[I
+        51: invokestatic  #207                // Method org/lwjgl/opengl/GL46.glNamedFramebufferDrawBuffers:(I[I)V
+        54: aload_0
+        55: getfield      #37                 // Field fbo:I
+        58: sipush        6144
+        61: iconst_0
+        62: iconst_4
+        63: newarray       float
+        65: dup
+        66: iconst_0
+        67: fload_1
+        68: fneg
+        69: fastore
+        70: dup
+        71: iconst_1
+        72: fload_1
+        73: fneg
+        74: fastore
+        75: dup
+        76: iconst_2
+        77: fconst_0
+        78: fastore
+        79: dup
+        80: iconst_3
+        81: fconst_0
+        82: fastore
+        83: invokestatic  #211                // Method org/lwjgl/opengl/GL46.glClearNamedFramebufferfv:(III[F)V
+        86: goto          111
+        89: getstatic     #203                // Field DEPTH_RANGE_DRAW_BUFFERS:[I
+        92: invokestatic  #215                // Method org/lwjgl/opengl/GL32.glDrawBuffers:([I)V
+        95: fload_1
+        96: fneg
+        97: fload_1
+        98: fneg
+        99: fconst_0
+       100: fconst_0
+       101: invokestatic  #219                // Method com/mojang/blaze3d/systems/RenderSystem.clearColor:(FFFF)V
+       104: sipush        16384
+       107: iconst_0
+       108: invokestatic  #223                // Method com/mojang/blaze3d/systems/RenderSystem.clear:(IZ)V
+       111: return
+
+  public void renderTransmittance();
+    Code:
+         0: iconst_0
+         1: invokestatic  #169                // Method com/mojang/blaze3d/systems/RenderSystem.depthMask:(Z)V
+         4: iconst_1
+         5: iconst_1
+         6: iconst_1
+         7: iconst_1
+         8: invokestatic  #173                // Method com/mojang/blaze3d/systems/RenderSystem.colorMask:(ZZZZ)V
+        11: invokestatic  #176                // Method com/mojang/blaze3d/systems/RenderSystem.enableBlend:()V
+        14: getstatic     #180                // Field com/mojang/blaze3d/platform/GlStateManager$SourceFactor.ONE:Lcom/mojang/blaze3d/platform/GlStateManager$SourceFactor;
+        17: getstatic     #183                // Field com/mojang/blaze3d/platform/GlStateManager$DestFactor.ONE:Lcom/mojang/blaze3d/platform/GlStateManager$DestFactor;
+        20: invokestatic  #187                // Method com/mojang/blaze3d/systems/RenderSystem.blendFunc:(Lcom/mojang/blaze3d/platform/GlStateManager$SourceFactor;Lcom/mojang/blaze3d/platform/GlStateManager$DestFactor;)V
+        23: ldc           #227                // int 32774
+        25: invokestatic  #191                // Method com/mojang/blaze3d/systems/RenderSystem.blendEquation:(I)V
+        28: getstatic     #55                 // Field dev/engine_room/flywheel/backend/gl/GlCompat.SUPPORTS_DSA:Z
+        31: ifeq          103
+        34: aload_0
+        35: getfield      #37                 // Field fbo:I
+        38: getstatic     #229                // Field RENDER_TRANSMITTANCE_DRAW_BUFFERS:[I
+        41: invokestatic  #207                // Method org/lwjgl/opengl/GL46.glNamedFramebufferDrawBuffers:(I[I)V
+        44: aload_0
+        45: getfield      #37                 // Field fbo:I
+        48: sipush        6144
+        51: iconst_0
+        52: getstatic     #231                // Field CLEAR_TO_ZERO:[F
+        55: invokestatic  #211                // Method org/lwjgl/opengl/GL46.glClearNamedFramebufferfv:(III[F)V
+        58: aload_0
+        59: getfield      #37                 // Field fbo:I
+        62: sipush        6144
+        65: iconst_1
+        66: getstatic     #231                // Field CLEAR_TO_ZERO:[F
+        69: invokestatic  #211                // Method org/lwjgl/opengl/GL46.glClearNamedFramebufferfv:(III[F)V
+        72: aload_0
+        73: getfield      #37                 // Field fbo:I
+        76: sipush        6144
+        79: iconst_2
+        80: getstatic     #231                // Field CLEAR_TO_ZERO:[F
+        83: invokestatic  #211                // Method org/lwjgl/opengl/GL46.glClearNamedFramebufferfv:(III[F)V
+        86: aload_0
+        87: getfield      #37                 // Field fbo:I
+        90: sipush        6144
+        93: iconst_3
+        94: getstatic     #231                // Field CLEAR_TO_ZERO:[F
+        97: invokestatic  #211                // Method org/lwjgl/opengl/GL46.glClearNamedFramebufferfv:(III[F)V
+       100: goto          123
+       103: getstatic     #229                // Field RENDER_TRANSMITTANCE_DRAW_BUFFERS:[I
+       106: invokestatic  #215                // Method org/lwjgl/opengl/GL32.glDrawBuffers:([I)V
+       109: fconst_0
+       110: fconst_0
+       111: fconst_0
+       112: fconst_0
+       113: invokestatic  #219                // Method com/mojang/blaze3d/systems/RenderSystem.clearColor:(FFFF)V
+       116: sipush        16384
+       119: iconst_0
+       120: invokestatic  #223                // Method com/mojang/blaze3d/systems/RenderSystem.clear:(IZ)V
+       123: return
+
+  public void renderDepthFromTransmittance();
+    Code:
+         0: iconst_1
+         1: invokestatic  #169                // Method com/mojang/blaze3d/systems/RenderSystem.depthMask:(Z)V
+         4: iconst_0
+         5: iconst_0
+         6: iconst_0
+         7: iconst_0
+         8: invokestatic  #173                // Method com/mojang/blaze3d/systems/RenderSystem.colorMask:(ZZZZ)V
+        11: invokestatic  #235                // Method com/mojang/blaze3d/systems/RenderSystem.disableBlend:()V
+        14: sipush        519
+        17: invokestatic  #238                // Method com/mojang/blaze3d/systems/RenderSystem.depthFunc:(I)V
+        20: getstatic     #55                 // Field dev/engine_room/flywheel/backend/gl/GlCompat.SUPPORTS_DSA:Z
+        23: ifeq          39
+        26: aload_0
+        27: getfield      #37                 // Field fbo:I
+        30: getstatic     #240                // Field DEPTH_ONLY_DRAW_BUFFERS:[I
+        33: invokestatic  #207                // Method org/lwjgl/opengl/GL46.glNamedFramebufferDrawBuffers:(I[I)V
+        36: goto          45
+        39: getstatic     #240                // Field DEPTH_ONLY_DRAW_BUFFERS:[I
+        42: invokestatic  #215                // Method org/lwjgl/opengl/GL32.glDrawBuffers:([I)V
+        45: aload_0
+        46: getfield      #49                 // Field programs:Ldev/engine_room/flywheel/backend/compile/OitPrograms;
+        49: invokevirtual #244                // Method dev/engine_room/flywheel/backend/compile/OitPrograms.getOitDepthProgram:()Ldev/engine_room/flywheel/backend/gl/shader/GlProgram;
+        52: invokevirtual #247                // Method dev/engine_room/flywheel/backend/gl/shader/GlProgram.bind:()V
+        55: aload_0
+        56: invokevirtual #250                // Method drawFullscreenQuad:()V
+        59: return
+
+  public void accumulate();
+    Code:
+         0: iconst_0
+         1: invokestatic  #169                // Method com/mojang/blaze3d/systems/RenderSystem.depthMask:(Z)V
+         4: iconst_1
+         5: iconst_1
+         6: iconst_1
+         7: iconst_1
+         8: invokestatic  #173                // Method com/mojang/blaze3d/systems/RenderSystem.colorMask:(ZZZZ)V
+        11: invokestatic  #176                // Method com/mojang/blaze3d/systems/RenderSystem.enableBlend:()V
+        14: getstatic     #180                // Field com/mojang/blaze3d/platform/GlStateManager$SourceFactor.ONE:Lcom/mojang/blaze3d/platform/GlStateManager$SourceFactor;
+        17: getstatic     #183                // Field com/mojang/blaze3d/platform/GlStateManager$DestFactor.ONE:Lcom/mojang/blaze3d/platform/GlStateManager$DestFactor;
+        20: invokestatic  #187                // Method com/mojang/blaze3d/systems/RenderSystem.blendFunc:(Lcom/mojang/blaze3d/platform/GlStateManager$SourceFactor;Lcom/mojang/blaze3d/platform/GlStateManager$DestFactor;)V
+        23: ldc           #227                // int 32774
+        25: invokestatic  #191                // Method com/mojang/blaze3d/systems/RenderSystem.blendEquation:(I)V
+        28: getstatic     #55                 // Field dev/engine_room/flywheel/backend/gl/GlCompat.SUPPORTS_DSA:Z
+        31: ifeq          61
+        34: aload_0
+        35: getfield      #37                 // Field fbo:I
+        38: getstatic     #252                // Field ACCUMULATE_DRAW_BUFFERS:[I
+        41: invokestatic  #207                // Method org/lwjgl/opengl/GL46.glNamedFramebufferDrawBuffers:(I[I)V
+        44: aload_0
+        45: getfield      #37                 // Field fbo:I
+        48: sipush        6144
+        51: iconst_0
+        52: getstatic     #231                // Field CLEAR_TO_ZERO:[F
+        55: invokestatic  #211                // Method org/lwjgl/opengl/GL46.glClearNamedFramebufferfv:(III[F)V
+        58: goto          81
+        61: getstatic     #252                // Field ACCUMULATE_DRAW_BUFFERS:[I
+        64: invokestatic  #215                // Method org/lwjgl/opengl/GL32.glDrawBuffers:([I)V
+        67: fconst_0
+        68: fconst_0
+        69: fconst_0
+        70: fconst_0
+        71: invokestatic  #219                // Method com/mojang/blaze3d/systems/RenderSystem.clearColor:(FFFF)V
+        74: sipush        16384
+        77: iconst_0
+        78: invokestatic  #223                // Method com/mojang/blaze3d/systems/RenderSystem.clear:(IZ)V
+        81: return
+
+  public void composite();
+    Code:
+         0: invokestatic  #79                 // Method net/minecraft/client/Minecraft.useShaderTransparency:()Z
+         3: ifeq          22
+         6: invokestatic  #83                 // Method net/minecraft/client/Minecraft.getInstance:()Lnet/minecraft/client/Minecraft;
+         9: getfield      #87                 // Field net/minecraft/client/Minecraft.levelRenderer:Lnet/minecraft/client/renderer/LevelRenderer;
+        12: invokevirtual #93                 // Method net/minecraft/client/renderer/LevelRenderer.getItemEntityTarget:()Lcom/mojang/blaze3d/pipeline/RenderTarget;
+        15: iconst_0
+        16: invokevirtual #256                // Method com/mojang/blaze3d/pipeline/RenderTarget.bindWrite:(Z)V
+        19: goto          32
+        22: invokestatic  #83                 // Method net/minecraft/client/Minecraft.getInstance:()Lnet/minecraft/client/Minecraft;
+        25: invokevirtual #96                 // Method net/minecraft/client/Minecraft.getMainRenderTarget:()Lcom/mojang/blaze3d/pipeline/RenderTarget;
+        28: iconst_0
+        29: invokevirtual #256                // Method com/mojang/blaze3d/pipeline/RenderTarget.bindWrite:(Z)V
+        32: iconst_1
+        33: invokestatic  #169                // Method com/mojang/blaze3d/systems/RenderSystem.depthMask:(Z)V
+        36: iconst_1
+        37: iconst_1
+        38: iconst_1
+        39: iconst_1
+        40: invokestatic  #173                // Method com/mojang/blaze3d/systems/RenderSystem.colorMask:(ZZZZ)V
+        43: invokestatic  #176                // Method com/mojang/blaze3d/systems/RenderSystem.enableBlend:()V
+        46: getstatic     #259                // Field com/mojang/blaze3d/platform/GlStateManager$SourceFactor.SRC_ALPHA:Lcom/mojang/blaze3d/platform/GlStateManager$SourceFactor;
+        49: getstatic     #262                // Field com/mojang/blaze3d/platform/GlStateManager$DestFactor.ONE_MINUS_SRC_ALPHA:Lcom/mojang/blaze3d/platform/GlStateManager$DestFactor;
+        52: getstatic     #180                // Field com/mojang/blaze3d/platform/GlStateManager$SourceFactor.ONE:Lcom/mojang/blaze3d/platform/GlStateManager$SourceFactor;
+        55: getstatic     #262                // Field com/mojang/blaze3d/platform/GlStateManager$DestFactor.ONE_MINUS_SRC_ALPHA:Lcom/mojang/blaze3d/platform/GlStateManager$DestFactor;
+        58: invokestatic  #266                // Method com/mojang/blaze3d/systems/RenderSystem.blendFuncSeparate:(Lcom/mojang/blaze3d/platform/GlStateManager$SourceFactor;Lcom/mojang/blaze3d/platform/GlStateManager$DestFactor;Lcom/mojang/blaze3d/platform/GlStateManager$SourceFactor;Lcom/mojang/blaze3d/platform/GlStateManager$DestFactor;)V
+        61: ldc           #227                // int 32774
+        63: invokestatic  #191                // Method com/mojang/blaze3d/systems/RenderSystem.blendEquation:(I)V
+        66: sipush        519
+        69: invokestatic  #238                // Method com/mojang/blaze3d/systems/RenderSystem.depthFunc:(I)V
+        72: getstatic     #269                // Field dev/engine_room/flywheel/backend/gl/GlTextureUnit.T0:Ldev/engine_room/flywheel/backend/gl/GlTextureUnit;
+        75: invokevirtual #123                // Method dev/engine_room/flywheel/backend/gl/GlTextureUnit.makeActive:()V
+        78: aload_0
+        79: getfield      #43                 // Field accumulate:I
+        82: invokestatic  #129                // Method com/mojang/blaze3d/systems/RenderSystem.bindTexture:(I)V
+        85: aload_0
+        86: getfield      #49                 // Field programs:Ldev/engine_room/flywheel/backend/compile/OitPrograms;
+        89: invokevirtual #272                // Method dev/engine_room/flywheel/backend/compile/OitPrograms.getOitCompositeProgram:()Ldev/engine_room/flywheel/backend/gl/shader/GlProgram;
+        92: invokevirtual #247                // Method dev/engine_room/flywheel/backend/gl/shader/GlProgram.bind:()V
+        95: aload_0
+        96: invokevirtual #250                // Method drawFullscreenQuad:()V
+        99: invokestatic  #83                 // Method net/minecraft/client/Minecraft.getInstance:()Lnet/minecraft/client/Minecraft;
+       102: invokevirtual #96                 // Method net/minecraft/client/Minecraft.getMainRenderTarget:()Lcom/mojang/blaze3d/pipeline/RenderTarget;
+       105: iconst_0
+       106: invokevirtual #256                // Method com/mojang/blaze3d/pipeline/RenderTarget.bindWrite:(Z)V
+       109: return
+
+  public void delete();
+    Code:
+         0: aload_0
+         1: invokevirtual #276                // Method deleteTextures:()V
+         4: aload_0
+         5: getfield      #63                 // Field vao:I
+         8: invokestatic  #279                // Method org/lwjgl/opengl/GL32.glDeleteVertexArrays:(I)V
+        11: return
+
+  private void drawFullscreenQuad();
+    Code:
+         0: aload_0
+         1: getfield      #63                 // Field vao:I
+         4: invokestatic  #282                // Method com/mojang/blaze3d/platform/GlStateManager._glBindVertexArray:(I)V
+         7: iconst_4
+         8: iconst_0
+         9: iconst_3
+        10: invokestatic  #286                // Method org/lwjgl/opengl/GL32.glDrawArrays:(III)V
+        13: return
+
+  private void deleteTextures();
+    Code:
+         0: aload_0
+         1: getfield      #39                 // Field depthBounds:I
+         4: iconst_m1
+         5: if_icmpeq     15
+         8: aload_0
+         9: getfield      #39                 // Field depthBounds:I
+        12: invokestatic  #289                // Method org/lwjgl/opengl/GL32.glDeleteTextures:(I)V
+        15: aload_0
+        16: getfield      #41                 // Field coefficients:I
+        19: iconst_m1
+        20: if_icmpeq     30
+        23: aload_0
+        24: getfield      #41                 // Field coefficients:I
+        27: invokestatic  #289                // Method org/lwjgl/opengl/GL32.glDeleteTextures:(I)V
+        30: aload_0
+        31: getfield      #43                 // Field accumulate:I
+        34: iconst_m1
+        35: if_icmpeq     45
+        38: aload_0
+        39: getfield      #43                 // Field accumulate:I
+        42: invokestatic  #289                // Method org/lwjgl/opengl/GL32.glDeleteTextures:(I)V
+        45: aload_0
+        46: getfield      #37                 // Field fbo:I
+        49: iconst_m1
+        50: if_icmpeq     60
+        53: aload_0
+        54: getfield      #37                 // Field fbo:I
+        57: invokestatic  #292                // Method org/lwjgl/opengl/GL32.glDeleteFramebuffers:(I)V
+        60: getstatic     #118                // Field dev/engine_room/flywheel/backend/Samplers.COEFFICIENTS:Ldev/engine_room/flywheel/backend/gl/GlTextureUnit;
+        63: invokevirtual #123                // Method dev/engine_room/flywheel/backend/gl/GlTextureUnit.makeActive:()V
+        66: iconst_0
+        67: invokestatic  #129                // Method com/mojang/blaze3d/systems/RenderSystem.bindTexture:(I)V
+        70: getstatic     #136                // Field dev/engine_room/flywheel/backend/Samplers.DEPTH_RANGE:Ldev/engine_room/flywheel/backend/gl/GlTextureUnit;
+        73: invokevirtual #123                // Method dev/engine_room/flywheel/backend/gl/GlTextureUnit.makeActive:()V
+        76: iconst_0
+        77: invokestatic  #129                // Method com/mojang/blaze3d/systems/RenderSystem.bindTexture:(I)V
+        80: return
+
+  private void maybeResizeFBO(int, int);
+    Code:
+         0: aload_0
+         1: getfield      #45                 // Field lastWidth:I
+         4: iload_1
+         5: if_icmpne     17
+         8: aload_0
+         9: getfield      #47                 // Field lastHeight:I
+        12: iload_2
+        13: if_icmpne     17
+        16: return
+        17: aload_0
+        18: iload_1
+        19: putfield      #45                 // Field lastWidth:I
+        22: aload_0
+        23: iload_2
+        24: putfield      #47                 // Field lastHeight:I
+        27: aload_0
+        28: invokevirtual #276                // Method deleteTextures:()V
+        31: getstatic     #55                 // Field dev/engine_room/flywheel/backend/gl/GlCompat.SUPPORTS_DSA:Z
+        34: ifeq          210
+        37: aload_0
+        38: invokestatic  #295                // Method org/lwjgl/opengl/GL46.glCreateFramebuffers:()I
+        41: putfield      #37                 // Field fbo:I
+        44: aload_0
+        45: sipush        3553
+        48: invokestatic  #299                // Method org/lwjgl/opengl/GL46.glCreateTextures:(I)I
+        51: putfield      #39                 // Field depthBounds:I
+        54: aload_0
+        55: ldc           #130                // int 35866
+        57: invokestatic  #299                // Method org/lwjgl/opengl/GL46.glCreateTextures:(I)I
+        60: putfield      #41                 // Field coefficients:I
+        63: aload_0
+        64: sipush        3553
+        67: invokestatic  #299                // Method org/lwjgl/opengl/GL46.glCreateTextures:(I)I
+        70: putfield      #43                 // Field accumulate:I
+        73: aload_0
+        74: getfield      #39                 // Field depthBounds:I
+        77: iconst_1
+        78: ldc_w         #300                // int 33328
+        81: iload_1
+        82: iload_2
+        83: invokestatic  #304                // Method org/lwjgl/opengl/GL46.glTextureStorage2D:(IIIII)V
+        86: aload_0
+        87: getfield      #41                 // Field coefficients:I
+        90: iconst_1
+        91: ldc_w         #305                // int 34842
+        94: iload_1
+        95: iload_2
+        96: iconst_4
+        97: invokestatic  #309                // Method org/lwjgl/opengl/GL46.glTextureStorage3D:(IIIIII)V
+       100: aload_0
+       101: getfield      #43                 // Field accumulate:I
+       104: iconst_1
+       105: ldc_w         #305                // int 34842
+       108: iload_1
+       109: iload_2
+       110: invokestatic  #304                // Method org/lwjgl/opengl/GL46.glTextureStorage2D:(IIIII)V
+       113: aload_0
+       114: getfield      #37                 // Field fbo:I
+       117: ldc_w         #310                // int 36064
+       120: aload_0
+       121: getfield      #39                 // Field depthBounds:I
+       124: iconst_0
+       125: invokestatic  #313                // Method org/lwjgl/opengl/GL46.glNamedFramebufferTexture:(IIII)V
+       128: aload_0
+       129: getfield      #37                 // Field fbo:I
+       132: ldc_w         #314                // int 36065
+       135: aload_0
+       136: getfield      #41                 // Field coefficients:I
+       139: iconst_0
+       140: iconst_0
+       141: invokestatic  #317                // Method org/lwjgl/opengl/GL46.glNamedFramebufferTextureLayer:(IIIII)V
+       144: aload_0
+       145: getfield      #37                 // Field fbo:I
+       148: ldc_w         #318                // int 36066
+       151: aload_0
+       152: getfield      #41                 // Field coefficients:I
+       155: iconst_0
+       156: iconst_1
+       157: invokestatic  #317                // Method org/lwjgl/opengl/GL46.glNamedFramebufferTextureLayer:(IIIII)V
+       160: aload_0
+       161: getfield      #37                 // Field fbo:I
+       164: ldc_w         #319                // int 36067
+       167: aload_0
+       168: getfield      #41                 // Field coefficients:I
+       171: iconst_0
+       172: iconst_2
+       173: invokestatic  #317                // Method org/lwjgl/opengl/GL46.glNamedFramebufferTextureLayer:(IIIII)V
+       176: aload_0
+       177: getfield      #37                 // Field fbo:I
+       180: ldc_w         #320                // int 36068
+       183: aload_0
+       184: getfield      #41                 // Field coefficients:I
+       187: iconst_0
+       188: iconst_3
+       189: invokestatic  #317                // Method org/lwjgl/opengl/GL46.glNamedFramebufferTextureLayer:(IIIII)V
+       192: aload_0
+       193: getfield      #37                 // Field fbo:I
+       196: ldc_w         #321                // int 36069
+       199: aload_0
+       200: getfield      #43                 // Field accumulate:I
+       203: iconst_0
+       204: invokestatic  #313                // Method org/lwjgl/opengl/GL46.glNamedFramebufferTexture:(IIII)V
+       207: goto          568
+       210: aload_0
+       211: invokestatic  #324                // Method org/lwjgl/opengl/GL46.glGenFramebuffers:()I
+       214: putfield      #37                 // Field fbo:I
+       217: aload_0
+       218: invokestatic  #327                // Method org/lwjgl/opengl/GL32.glGenTextures:()I
+       221: putfield      #39                 // Field depthBounds:I
+       224: aload_0
+       225: invokestatic  #327                // Method org/lwjgl/opengl/GL32.glGenTextures:()I
+       228: putfield      #41                 // Field coefficients:I
+       231: aload_0
+       232: invokestatic  #327                // Method org/lwjgl/opengl/GL32.glGenTextures:()I
+       235: putfield      #43                 // Field accumulate:I
+       238: getstatic     #269                // Field dev/engine_room/flywheel/backend/gl/GlTextureUnit.T0:Ldev/engine_room/flywheel/backend/gl/GlTextureUnit;
+       241: invokevirtual #123                // Method dev/engine_room/flywheel/backend/gl/GlTextureUnit.makeActive:()V
+       244: iconst_0
+       245: invokestatic  #129                // Method com/mojang/blaze3d/systems/RenderSystem.bindTexture:(I)V
+       248: sipush        3553
+       251: aload_0
+       252: getfield      #39                 // Field depthBounds:I
+       255: invokestatic  #133                // Method org/lwjgl/opengl/GL32.glBindTexture:(II)V
+       258: sipush        3553
+       261: iconst_0
+       262: ldc_w         #300                // int 33328
+       265: iload_1
+       266: iload_2
+       267: iconst_0
+       268: sipush        6408
+       271: sipush        5120
+       274: lconst_0
+       275: invokestatic  #331                // Method org/lwjgl/opengl/GL32.glTexImage2D:(IIIIIIIIJ)V
+       278: sipush        3553
+       281: sipush        10241
+       284: sipush        9728
+       287: invokestatic  #334                // Method org/lwjgl/opengl/GL32.glTexParameteri:(III)V
+       290: sipush        3553
+       293: sipush        10240
+       296: sipush        9728
+       299: invokestatic  #334                // Method org/lwjgl/opengl/GL32.glTexParameteri:(III)V
+       302: sipush        3553
+       305: sipush        10242
+       308: ldc_w         #335                // int 33071
+       311: invokestatic  #334                // Method org/lwjgl/opengl/GL32.glTexParameteri:(III)V
+       314: sipush        3553
+       317: sipush        10243
+       320: ldc_w         #335                // int 33071
+       323: invokestatic  #334                // Method org/lwjgl/opengl/GL32.glTexParameteri:(III)V
+       326: ldc           #130                // int 35866
+       328: aload_0
+       329: getfield      #41                 // Field coefficients:I
+       332: invokestatic  #133                // Method org/lwjgl/opengl/GL32.glBindTexture:(II)V
+       335: ldc           #130                // int 35866
+       337: iconst_0
+       338: ldc_w         #305                // int 34842
+       341: iload_1
+       342: iload_2
+       343: iconst_4
+       344: iconst_0
+       345: sipush        6408
+       348: sipush        5120
+       351: lconst_0
+       352: invokestatic  #339                // Method org/lwjgl/opengl/GL32.glTexImage3D:(IIIIIIIIIJ)V
+       355: ldc           #130                // int 35866
+       357: sipush        10241
+       360: sipush        9728
+       363: invokestatic  #334                // Method org/lwjgl/opengl/GL32.glTexParameteri:(III)V
+       366: ldc           #130                // int 35866
+       368: sipush        10240
+       371: sipush        9728
+       374: invokestatic  #334                // Method org/lwjgl/opengl/GL32.glTexParameteri:(III)V
+       377: ldc           #130                // int 35866
+       379: sipush        10242
+       382: ldc_w         #335                // int 33071
+       385: invokestatic  #334                // Method org/lwjgl/opengl/GL32.glTexParameteri:(III)V
+       388: ldc           #130                // int 35866
+       390: sipush        10243
+       393: ldc_w         #335                // int 33071
+       396: invokestatic  #334                // Method org/lwjgl/opengl/GL32.glTexParameteri:(III)V
+       399: sipush        3553
+       402: aload_0
+       403: getfield      #43                 // Field accumulate:I
+       406: invokestatic  #133                // Method org/lwjgl/opengl/GL32.glBindTexture:(II)V
+       409: sipush        3553
+       412: iconst_0
+       413: ldc_w         #305                // int 34842
+       416: iload_1
+       417: iload_2
+       418: iconst_0
+       419: sipush        6408
+       422: sipush        5120
+       425: lconst_0
+       426: invokestatic  #331                // Method org/lwjgl/opengl/GL32.glTexImage2D:(IIIIIIIIJ)V
+       429: sipush        3553
+       432: sipush        10241
+       435: sipush        9728
+       438: invokestatic  #334                // Method org/lwjgl/opengl/GL32.glTexParameteri:(III)V
+       441: sipush        3553
+       444: sipush        10240
+       447: sipush        9728
+       450: invokestatic  #334                // Method org/lwjgl/opengl/GL32.glTexParameteri:(III)V
+       453: sipush        3553
+       456: sipush        10242
+       459: ldc_w         #335                // int 33071
+       462: invokestatic  #334                // Method org/lwjgl/opengl/GL32.glTexParameteri:(III)V
+       465: sipush        3553
+       468: sipush        10243
+       471: ldc_w         #335                // int 33071
+       474: invokestatic  #334                // Method org/lwjgl/opengl/GL32.glTexParameteri:(III)V
+       477: ldc           #151                // int 36160
+       479: aload_0
+       480: getfield      #37                 // Field fbo:I
+       483: invokestatic  #154                // Method com/mojang/blaze3d/platform/GlStateManager._glBindFramebuffer:(II)V
+       486: ldc           #151                // int 36160
+       488: ldc_w         #310                // int 36064
+       491: aload_0
+       492: getfield      #39                 // Field depthBounds:I
+       495: iconst_0
+       496: invokestatic  #340                // Method org/lwjgl/opengl/GL46.glFramebufferTexture:(IIII)V
+       499: ldc           #151                // int 36160
+       501: ldc_w         #314                // int 36065
+       504: aload_0
+       505: getfield      #41                 // Field coefficients:I
+       508: iconst_0
+       509: iconst_0
+       510: invokestatic  #343                // Method org/lwjgl/opengl/GL46.glFramebufferTextureLayer:(IIIII)V
+       513: ldc           #151                // int 36160
+       515: ldc_w         #318                // int 36066
+       518: aload_0
+       519: getfield      #41                 // Field coefficients:I
+       522: iconst_0
+       523: iconst_1
+       524: invokestatic  #343                // Method org/lwjgl/opengl/GL46.glFramebufferTextureLayer:(IIIII)V
+       527: ldc           #151                // int 36160
+       529: ldc_w         #319                // int 36067
+       532: aload_0
+       533: getfield      #41                 // Field coefficients:I
+       536: iconst_0
+       537: iconst_2
+       538: invokestatic  #343                // Method org/lwjgl/opengl/GL46.glFramebufferTextureLayer:(IIIII)V
+       541: ldc           #151                // int 36160
+       543: ldc_w         #320                // int 36068
+       546: aload_0
+       547: getfield      #41                 // Field coefficients:I
+       550: iconst_0
+       551: iconst_3
+       552: invokestatic  #343                // Method org/lwjgl/opengl/GL46.glFramebufferTextureLayer:(IIIII)V
+       555: ldc           #151                // int 36160
+       557: ldc_w         #321                // int 36069
+       560: aload_0
+       561: getfield      #43                 // Field accumulate:I
+       564: iconst_0
+       565: invokestatic  #340                // Method org/lwjgl/opengl/GL46.glFramebufferTexture:(IIII)V
+       568: return
+
+  static {};
+    Code:
+         0: iconst_4
+         1: newarray       float
+         3: dup
+         4: iconst_0
+         5: fconst_0
+         6: fastore
+         7: dup
+         8: iconst_1
+         9: fconst_0
+        10: fastore
+        11: dup
+        12: iconst_2
+        13: fconst_0
+        14: fastore
+        15: dup
+        16: iconst_3
+        17: fconst_0
+        18: fastore
+        19: putstatic     #231                // Field CLEAR_TO_ZERO:[F
+        22: iconst_1
+        23: newarray       int
+        25: dup
+        26: iconst_0
+        27: ldc_w         #310                // int 36064
+        30: iastore
+        31: putstatic     #203                // Field DEPTH_RANGE_DRAW_BUFFERS:[I
+        34: iconst_4
+        35: newarray       int
+        37: dup
+        38: iconst_0
+        39: ldc_w         #314                // int 36065
+        42: iastore
+        43: dup
+        44: iconst_1
+        45: ldc_w         #318                // int 36066
+        48: iastore
+        49: dup
+        50: iconst_2
+        51: ldc_w         #319                // int 36067
+        54: iastore
+        55: dup
+        56: iconst_3
+        57: ldc_w         #320                // int 36068
+        60: iastore
+        61: putstatic     #229                // Field RENDER_TRANSMITTANCE_DRAW_BUFFERS:[I
+        64: iconst_1
+        65: newarray       int
+        67: dup
+        68: iconst_0
+        69: ldc_w         #321                // int 36069
+        72: iastore
+        73: putstatic     #252                // Field ACCUMULATE_DRAW_BUFFERS:[I
+        76: iconst_0
+        77: newarray       int
+        79: putstatic     #240                // Field DEPTH_ONLY_DRAW_BUFFERS:[I
+        82: return
+}

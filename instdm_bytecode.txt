@@ -1,0 +1,640 @@
+﻿Compiled from "InstancedDrawManager.java"
+public class dev.engine_room.flywheel.backend.engine.instancing.InstancedDrawManager extends dev.engine_room.flywheel.backend.engine.DrawManager<dev.engine_room.flywheel.backend.engine.instancing.InstancedInstancer<?>> {
+  private static final java.util.Comparator<dev.engine_room.flywheel.backend.engine.instancing.InstancedDraw> DRAW_COMPARATOR;
+
+  private final java.util.List<dev.engine_room.flywheel.backend.engine.instancing.InstancedDraw> allDraws;
+
+  private boolean needSort;
+
+  private final java.util.List<dev.engine_room.flywheel.backend.engine.instancing.InstancedDraw> draws;
+
+  private final java.util.List<dev.engine_room.flywheel.backend.engine.instancing.InstancedDraw> oitDraws;
+
+  private final dev.engine_room.flywheel.backend.compile.InstancingPrograms programs;
+
+  private final dev.engine_room.flywheel.backend.engine.MeshPool meshPool;
+
+  private final dev.engine_room.flywheel.backend.gl.array.GlVertexArray vao;
+
+  private final dev.engine_room.flywheel.backend.gl.TextureBuffer instanceTexture;
+
+  private final dev.engine_room.flywheel.backend.engine.instancing.InstancedLight light;
+
+  private final dev.engine_room.flywheel.backend.engine.indirect.OitFramebuffer oitFramebuffer;
+
+  public dev.engine_room.flywheel.backend.engine.instancing.InstancedDrawManager(dev.engine_room.flywheel.backend.compile.InstancingPrograms);
+    Code:
+         0: aload_0
+         1: invokespecial #85                 // Method dev/engine_room/flywheel/backend/engine/DrawManager."<init>":()V
+         4: aload_0
+         5: new           #87                 // class java/util/ArrayList
+         8: dup
+         9: invokespecial #88                 // Method java/util/ArrayList."<init>":()V
+        12: putfield      #90                 // Field allDraws:Ljava/util/List;
+        15: aload_0
+        16: iconst_0
+        17: putfield      #92                 // Field needSort:Z
+        20: aload_0
+        21: new           #87                 // class java/util/ArrayList
+        24: dup
+        25: invokespecial #88                 // Method java/util/ArrayList."<init>":()V
+        28: putfield      #94                 // Field draws:Ljava/util/List;
+        31: aload_0
+        32: new           #87                 // class java/util/ArrayList
+        35: dup
+        36: invokespecial #88                 // Method java/util/ArrayList."<init>":()V
+        39: putfield      #96                 // Field oitDraws:Ljava/util/List;
+        42: aload_1
+        43: invokevirtual #101                // Method dev/engine_room/flywheel/backend/compile/InstancingPrograms.acquire:()V
+        46: aload_0
+        47: aload_1
+        48: putfield      #103                // Field programs:Ldev/engine_room/flywheel/backend/compile/InstancingPrograms;
+        51: aload_0
+        52: new           #15                 // class dev/engine_room/flywheel/backend/engine/MeshPool
+        55: dup
+        56: invokespecial #104                // Method dev/engine_room/flywheel/backend/engine/MeshPool."<init>":()V
+        59: putfield      #106                // Field meshPool:Ldev/engine_room/flywheel/backend/engine/MeshPool;
+        62: aload_0
+        63: invokestatic  #112                // Method dev/engine_room/flywheel/backend/gl/array/GlVertexArray.create:()Ldev/engine_room/flywheel/backend/gl/array/GlVertexArray;
+        66: putfield      #114                // Field vao:Ldev/engine_room/flywheel/backend/gl/array/GlVertexArray;
+        69: aload_0
+        70: new           #116                // class dev/engine_room/flywheel/backend/gl/TextureBuffer
+        73: dup
+        74: invokespecial #117                // Method dev/engine_room/flywheel/backend/gl/TextureBuffer."<init>":()V
+        77: putfield      #119                // Field instanceTexture:Ldev/engine_room/flywheel/backend/gl/TextureBuffer;
+        80: aload_0
+        81: new           #121                // class dev/engine_room/flywheel/backend/engine/instancing/InstancedLight
+        84: dup
+        85: invokespecial #122                // Method dev/engine_room/flywheel/backend/engine/instancing/InstancedLight."<init>":()V
+        88: putfield      #124                // Field light:Ldev/engine_room/flywheel/backend/engine/instancing/InstancedLight;
+        91: aload_0
+        92: getfield      #106                // Field meshPool:Ldev/engine_room/flywheel/backend/engine/MeshPool;
+        95: aload_0
+        96: getfield      #114                // Field vao:Ldev/engine_room/flywheel/backend/gl/array/GlVertexArray;
+        99: invokevirtual #128                // Method dev/engine_room/flywheel/backend/engine/MeshPool.bind:(Ldev/engine_room/flywheel/backend/gl/array/GlVertexArray;)V
+       102: aload_0
+       103: new           #130                // class dev/engine_room/flywheel/backend/engine/indirect/OitFramebuffer
+       106: dup
+       107: aload_1
+       108: invokevirtual #134                // Method dev/engine_room/flywheel/backend/compile/InstancingPrograms.oitPrograms:()Ldev/engine_room/flywheel/backend/compile/OitPrograms;
+       111: invokespecial #137                // Method dev/engine_room/flywheel/backend/engine/indirect/OitFramebuffer."<init>":(Ldev/engine_room/flywheel/backend/compile/OitPrograms;)V
+       114: putfield      #139                // Field oitFramebuffer:Ldev/engine_room/flywheel/backend/engine/indirect/OitFramebuffer;
+       117: return
+
+  public void render(dev.engine_room.flywheel.backend.engine.LightStorage, dev.engine_room.flywheel.backend.engine.embed.EnvironmentStorage);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: aload_2
+         3: invokespecial #147                // Method dev/engine_room/flywheel/backend/engine/DrawManager.render:(Ldev/engine_room/flywheel/backend/engine/LightStorage;Ldev/engine_room/flywheel/backend/engine/embed/EnvironmentStorage;)V
+         6: aload_0
+         7: getfield      #151                // Field instancers:Ljava/util/Map;
+        10: invokeinterface #155,  1          // InterfaceMethod java/util/Map.values:()Ljava/util/Collection;
+        15: invokedynamic #174,  0            // InvokeDynamic #0:test:()Ljava/util/function/Predicate;
+        20: invokeinterface #180,  2          // InterfaceMethod java/util/Collection.removeIf:(Ljava/util/function/Predicate;)Z
+        25: pop
+        26: aload_0
+        27: dup
+        28: getfield      #92                 // Field needSort:Z
+        31: aload_0
+        32: getfield      #90                 // Field allDraws:Ljava/util/List;
+        35: invokedynamic #190,  0            // InvokeDynamic #1:test:()Ljava/util/function/Predicate;
+        40: invokeinterface #193,  2          // InterfaceMethod java/util/List.removeIf:(Ljava/util/function/Predicate;)Z
+        45: ior
+        46: putfield      #92                 // Field needSort:Z
+        49: aload_0
+        50: getfield      #92                 // Field needSort:Z
+        53: ifeq          167
+        56: aload_0
+        57: getfield      #90                 // Field allDraws:Ljava/util/List;
+        60: getstatic     #195                // Field DRAW_COMPARATOR:Ljava/util/Comparator;
+        63: invokeinterface #199,  2          // InterfaceMethod java/util/List.sort:(Ljava/util/Comparator;)V
+        68: aload_0
+        69: getfield      #94                 // Field draws:Ljava/util/List;
+        72: invokeinterface #202,  1          // InterfaceMethod java/util/List.clear:()V
+        77: aload_0
+        78: getfield      #96                 // Field oitDraws:Ljava/util/List;
+        81: invokeinterface #202,  1          // InterfaceMethod java/util/List.clear:()V
+        86: aload_0
+        87: getfield      #90                 // Field allDraws:Ljava/util/List;
+        90: invokeinterface #206,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+        95: astore_3
+        96: aload_3
+        97: invokeinterface #211,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+       102: ifeq          162
+       105: aload_3
+       106: invokeinterface #215,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+       111: checkcast     #182                // class dev/engine_room/flywheel/backend/engine/instancing/InstancedDraw
+       114: astore        4
+       116: aload         4
+       118: invokevirtual #219                // Method dev/engine_room/flywheel/backend/engine/instancing/InstancedDraw.material:()Ldev/engine_room/flywheel/api/material/Material;
+       121: invokeinterface #225,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.transparency:()Ldev/engine_room/flywheel/api/material/Transparency;
+       126: getstatic     #231                // Field dev/engine_room/flywheel/api/material/Transparency.ORDER_INDEPENDENT:Ldev/engine_room/flywheel/api/material/Transparency;
+       129: if_acmpne     147
+       132: aload_0
+       133: getfield      #96                 // Field oitDraws:Ljava/util/List;
+       136: aload         4
+       138: invokeinterface #234,  2          // InterfaceMethod java/util/List.add:(Ljava/lang/Object;)Z
+       143: pop
+       144: goto          159
+       147: aload_0
+       148: getfield      #94                 // Field draws:Ljava/util/List;
+       151: aload         4
+       153: invokeinterface #234,  2          // InterfaceMethod java/util/List.add:(Ljava/lang/Object;)Z
+       158: pop
+       159: goto          96
+       162: aload_0
+       163: iconst_0
+       164: putfield      #92                 // Field needSort:Z
+       167: aload_0
+       168: getfield      #106                // Field meshPool:Ldev/engine_room/flywheel/backend/engine/MeshPool;
+       171: invokevirtual #237                // Method dev/engine_room/flywheel/backend/engine/MeshPool.flush:()V
+       174: aload_0
+       175: getfield      #124                // Field light:Ldev/engine_room/flywheel/backend/engine/instancing/InstancedLight;
+       178: aload_1
+       179: invokevirtual #240                // Method dev/engine_room/flywheel/backend/engine/instancing/InstancedLight.flush:(Ldev/engine_room/flywheel/backend/engine/LightStorage;)V
+       182: aload_0
+       183: getfield      #90                 // Field allDraws:Ljava/util/List;
+       186: invokeinterface #243,  1          // InterfaceMethod java/util/List.isEmpty:()Z
+       191: ifeq          195
+       194: return
+       195: invokestatic  #248                // Method dev/engine_room/flywheel/backend/engine/uniform/Uniforms.bindAll:()V
+       198: aload_0
+       199: getfield      #114                // Field vao:Ldev/engine_room/flywheel/backend/gl/array/GlVertexArray;
+       202: invokevirtual #251                // Method dev/engine_room/flywheel/backend/gl/array/GlVertexArray.bindForDraw:()V
+       205: invokestatic  #256                // Method dev/engine_room/flywheel/backend/engine/TextureBinder.bindLightAndOverlay:()V
+       208: aload_0
+       209: getfield      #124                // Field light:Ldev/engine_room/flywheel/backend/engine/instancing/InstancedLight;
+       212: invokevirtual #258                // Method dev/engine_room/flywheel/backend/engine/instancing/InstancedLight.bind:()V
+       215: aload_0
+       216: invokevirtual #261                // Method submitDraws:()V
+       219: aload_0
+       220: getfield      #96                 // Field oitDraws:Ljava/util/List;
+       223: invokeinterface #243,  1          // InterfaceMethod java/util/List.isEmpty:()Z
+       228: ifne          301
+       231: aload_0
+       232: getfield      #139                // Field oitFramebuffer:Ldev/engine_room/flywheel/backend/engine/indirect/OitFramebuffer;
+       235: invokevirtual #264                // Method dev/engine_room/flywheel/backend/engine/indirect/OitFramebuffer.prepare:()V
+       238: aload_0
+       239: getfield      #139                // Field oitFramebuffer:Ldev/engine_room/flywheel/backend/engine/indirect/OitFramebuffer;
+       242: invokevirtual #267                // Method dev/engine_room/flywheel/backend/engine/indirect/OitFramebuffer.depthRange:()V
+       245: aload_0
+       246: getstatic     #271                // Field dev/engine_room/flywheel/backend/compile/PipelineCompiler$OitMode.DEPTH_RANGE:Ldev/engine_room/flywheel/backend/compile/PipelineCompiler$OitMode;
+       249: invokevirtual #275                // Method submitOitDraws:(Ldev/engine_room/flywheel/backend/compile/PipelineCompiler$OitMode;)V
+       252: aload_0
+       253: getfield      #139                // Field oitFramebuffer:Ldev/engine_room/flywheel/backend/engine/indirect/OitFramebuffer;
+       256: invokevirtual #278                // Method dev/engine_room/flywheel/backend/engine/indirect/OitFramebuffer.renderTransmittance:()V
+       259: aload_0
+       260: getstatic     #281                // Field dev/engine_room/flywheel/backend/compile/PipelineCompiler$OitMode.GENERATE_COEFFICIENTS:Ldev/engine_room/flywheel/backend/compile/PipelineCompiler$OitMode;
+       263: invokevirtual #275                // Method submitOitDraws:(Ldev/engine_room/flywheel/backend/compile/PipelineCompiler$OitMode;)V
+       266: aload_0
+       267: getfield      #139                // Field oitFramebuffer:Ldev/engine_room/flywheel/backend/engine/indirect/OitFramebuffer;
+       270: invokevirtual #284                // Method dev/engine_room/flywheel/backend/engine/indirect/OitFramebuffer.renderDepthFromTransmittance:()V
+       273: aload_0
+       274: getfield      #114                // Field vao:Ldev/engine_room/flywheel/backend/gl/array/GlVertexArray;
+       277: invokevirtual #251                // Method dev/engine_room/flywheel/backend/gl/array/GlVertexArray.bindForDraw:()V
+       280: aload_0
+       281: getfield      #139                // Field oitFramebuffer:Ldev/engine_room/flywheel/backend/engine/indirect/OitFramebuffer;
+       284: invokevirtual #287                // Method dev/engine_room/flywheel/backend/engine/indirect/OitFramebuffer.accumulate:()V
+       287: aload_0
+       288: getstatic     #290                // Field dev/engine_room/flywheel/backend/compile/PipelineCompiler$OitMode.EVALUATE:Ldev/engine_room/flywheel/backend/compile/PipelineCompiler$OitMode;
+       291: invokevirtual #275                // Method submitOitDraws:(Ldev/engine_room/flywheel/backend/compile/PipelineCompiler$OitMode;)V
+       294: aload_0
+       295: getfield      #139                // Field oitFramebuffer:Ldev/engine_room/flywheel/backend/engine/indirect/OitFramebuffer;
+       298: invokevirtual #293                // Method dev/engine_room/flywheel/backend/engine/indirect/OitFramebuffer.composite:()V
+       301: invokestatic  #298                // Method dev/engine_room/flywheel/backend/engine/MaterialRenderState.reset:()V
+       304: invokestatic  #301                // Method dev/engine_room/flywheel/backend/engine/TextureBinder.resetLightAndOverlay:()V
+       307: return
+
+  private void submitDraws();
+    Code:
+         0: aload_0
+         1: getfield      #94                 // Field draws:Ljava/util/List;
+         4: invokeinterface #206,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+         9: astore_1
+        10: aload_1
+        11: invokeinterface #211,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+        16: ifeq          128
+        19: aload_1
+        20: invokeinterface #215,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+        25: checkcast     #182                // class dev/engine_room/flywheel/backend/engine/instancing/InstancedDraw
+        28: astore_2
+        29: aload_2
+        30: invokevirtual #219                // Method dev/engine_room/flywheel/backend/engine/instancing/InstancedDraw.material:()Ldev/engine_room/flywheel/api/material/Material;
+        33: astore_3
+        34: aload_2
+        35: getfield      #309                // Field dev/engine_room/flywheel/backend/engine/instancing/InstancedDraw.groupKey:Ldev/engine_room/flywheel/backend/engine/GroupKey;
+        38: astore        4
+        40: aload         4
+        42: invokevirtual #315                // Method dev/engine_room/flywheel/backend/engine/GroupKey.environment:()Ldev/engine_room/flywheel/backend/engine/embed/Environment;
+        45: astore        5
+        47: aload_0
+        48: getfield      #103                // Field programs:Ldev/engine_room/flywheel/backend/compile/InstancingPrograms;
+        51: aload         4
+        53: invokevirtual #319                // Method dev/engine_room/flywheel/backend/engine/GroupKey.instanceType:()Ldev/engine_room/flywheel/api/instance/InstanceType;
+        56: aload         5
+        58: invokeinterface #325,  1          // InterfaceMethod dev/engine_room/flywheel/backend/engine/embed/Environment.contextShader:()Ldev/engine_room/flywheel/backend/compile/ContextShader;
+        63: aload_3
+        64: getstatic     #328                // Field dev/engine_room/flywheel/backend/compile/PipelineCompiler$OitMode.OFF:Ldev/engine_room/flywheel/backend/compile/PipelineCompiler$OitMode;
+        67: invokevirtual #332                // Method dev/engine_room/flywheel/backend/compile/InstancingPrograms.get:(Ldev/engine_room/flywheel/api/instance/InstanceType;Ldev/engine_room/flywheel/backend/compile/ContextShader;Ldev/engine_room/flywheel/api/material/Material;Ldev/engine_room/flywheel/backend/compile/PipelineCompiler$OitMode;)Ldev/engine_room/flywheel/backend/gl/shader/GlProgram;
+        70: astore        6
+        72: aload         6
+        74: invokevirtual #335                // Method dev/engine_room/flywheel/backend/gl/shader/GlProgram.bind:()V
+        77: aload         5
+        79: aload         6
+        81: invokeinterface #339,  2          // InterfaceMethod dev/engine_room/flywheel/backend/engine/embed/Environment.setupDraw:(Ldev/engine_room/flywheel/backend/gl/shader/GlProgram;)V
+        86: aload         6
+        88: aload_3
+        89: invokestatic  #343                // Method uploadMaterialUniform:(Ldev/engine_room/flywheel/backend/gl/shader/GlProgram;Ldev/engine_room/flywheel/api/material/Material;)V
+        92: aload         6
+        94: ldc_w         #345                // String _flw_vertexOffset
+        97: aload_2
+        98: invokevirtual #349                // Method dev/engine_room/flywheel/backend/engine/instancing/InstancedDraw.mesh:()Ldev/engine_room/flywheel/backend/engine/MeshPool$PooledMesh;
+       101: invokevirtual #353                // Method dev/engine_room/flywheel/backend/engine/MeshPool$PooledMesh.baseVertex:()I
+       104: invokevirtual #357                // Method dev/engine_room/flywheel/backend/gl/shader/GlProgram.setUInt:(Ljava/lang/String;I)V
+       107: aload_3
+       108: invokestatic  #361                // Method dev/engine_room/flywheel/backend/engine/MaterialRenderState.setup:(Ldev/engine_room/flywheel/api/material/Material;)V
+       111: getstatic     #367                // Field dev/engine_room/flywheel/backend/Samplers.INSTANCE_BUFFER:Ldev/engine_room/flywheel/backend/gl/GlTextureUnit;
+       114: invokevirtual #372                // Method dev/engine_room/flywheel/backend/gl/GlTextureUnit.makeActive:()V
+       117: aload_2
+       118: aload_0
+       119: getfield      #119                // Field instanceTexture:Ldev/engine_room/flywheel/backend/gl/TextureBuffer;
+       122: invokevirtual #375                // Method dev/engine_room/flywheel/backend/engine/instancing/InstancedDraw.render:(Ldev/engine_room/flywheel/backend/gl/TextureBuffer;)V
+       125: goto          10
+       128: return
+
+  private void submitOitDraws(dev.engine_room.flywheel.backend.compile.PipelineCompiler$OitMode);
+    Code:
+         0: aload_0
+         1: getfield      #96                 // Field oitDraws:Ljava/util/List;
+         4: invokeinterface #206,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+         9: astore_2
+        10: aload_2
+        11: invokeinterface #211,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+        16: ifeq          130
+        19: aload_2
+        20: invokeinterface #215,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+        25: checkcast     #182                // class dev/engine_room/flywheel/backend/engine/instancing/InstancedDraw
+        28: astore_3
+        29: aload_3
+        30: invokevirtual #219                // Method dev/engine_room/flywheel/backend/engine/instancing/InstancedDraw.material:()Ldev/engine_room/flywheel/api/material/Material;
+        33: astore        4
+        35: aload_3
+        36: getfield      #309                // Field dev/engine_room/flywheel/backend/engine/instancing/InstancedDraw.groupKey:Ldev/engine_room/flywheel/backend/engine/GroupKey;
+        39: astore        5
+        41: aload         5
+        43: invokevirtual #315                // Method dev/engine_room/flywheel/backend/engine/GroupKey.environment:()Ldev/engine_room/flywheel/backend/engine/embed/Environment;
+        46: astore        6
+        48: aload_0
+        49: getfield      #103                // Field programs:Ldev/engine_room/flywheel/backend/compile/InstancingPrograms;
+        52: aload         5
+        54: invokevirtual #319                // Method dev/engine_room/flywheel/backend/engine/GroupKey.instanceType:()Ldev/engine_room/flywheel/api/instance/InstanceType;
+        57: aload         6
+        59: invokeinterface #325,  1          // InterfaceMethod dev/engine_room/flywheel/backend/engine/embed/Environment.contextShader:()Ldev/engine_room/flywheel/backend/compile/ContextShader;
+        64: aload         4
+        66: aload_1
+        67: invokevirtual #332                // Method dev/engine_room/flywheel/backend/compile/InstancingPrograms.get:(Ldev/engine_room/flywheel/api/instance/InstanceType;Ldev/engine_room/flywheel/backend/compile/ContextShader;Ldev/engine_room/flywheel/api/material/Material;Ldev/engine_room/flywheel/backend/compile/PipelineCompiler$OitMode;)Ldev/engine_room/flywheel/backend/gl/shader/GlProgram;
+        70: astore        7
+        72: aload         7
+        74: invokevirtual #335                // Method dev/engine_room/flywheel/backend/gl/shader/GlProgram.bind:()V
+        77: aload         6
+        79: aload         7
+        81: invokeinterface #339,  2          // InterfaceMethod dev/engine_room/flywheel/backend/engine/embed/Environment.setupDraw:(Ldev/engine_room/flywheel/backend/gl/shader/GlProgram;)V
+        86: aload         7
+        88: aload         4
+        90: invokestatic  #343                // Method uploadMaterialUniform:(Ldev/engine_room/flywheel/backend/gl/shader/GlProgram;Ldev/engine_room/flywheel/api/material/Material;)V
+        93: aload         7
+        95: ldc_w         #345                // String _flw_vertexOffset
+        98: aload_3
+        99: invokevirtual #349                // Method dev/engine_room/flywheel/backend/engine/instancing/InstancedDraw.mesh:()Ldev/engine_room/flywheel/backend/engine/MeshPool$PooledMesh;
+       102: invokevirtual #353                // Method dev/engine_room/flywheel/backend/engine/MeshPool$PooledMesh.baseVertex:()I
+       105: invokevirtual #357                // Method dev/engine_room/flywheel/backend/gl/shader/GlProgram.setUInt:(Ljava/lang/String;I)V
+       108: aload         4
+       110: invokestatic  #385                // Method dev/engine_room/flywheel/backend/engine/MaterialRenderState.setupOit:(Ldev/engine_room/flywheel/api/material/Material;)V
+       113: getstatic     #367                // Field dev/engine_room/flywheel/backend/Samplers.INSTANCE_BUFFER:Ldev/engine_room/flywheel/backend/gl/GlTextureUnit;
+       116: invokevirtual #372                // Method dev/engine_room/flywheel/backend/gl/GlTextureUnit.makeActive:()V
+       119: aload_3
+       120: aload_0
+       121: getfield      #119                // Field instanceTexture:Ldev/engine_room/flywheel/backend/gl/TextureBuffer;
+       124: invokevirtual #375                // Method dev/engine_room/flywheel/backend/engine/instancing/InstancedDraw.render:(Ldev/engine_room/flywheel/backend/gl/TextureBuffer;)V
+       127: goto          10
+       130: return
+
+  public void delete();
+    Code:
+         0: aload_0
+         1: getfield      #151                // Field instancers:Ljava/util/Map;
+         4: invokeinterface #155,  1          // InterfaceMethod java/util/Map.values:()Ljava/util/Collection;
+         9: invokedynamic #399,  0            // InvokeDynamic #2:accept:()Ljava/util/function/Consumer;
+        14: invokeinterface #403,  2          // InterfaceMethod java/util/Collection.forEach:(Ljava/util/function/Consumer;)V
+        19: aload_0
+        20: getfield      #90                 // Field allDraws:Ljava/util/List;
+        23: invokedynamic #408,  0            // InvokeDynamic #3:accept:()Ljava/util/function/Consumer;
+        28: invokeinterface #409,  2          // InterfaceMethod java/util/List.forEach:(Ljava/util/function/Consumer;)V
+        33: aload_0
+        34: getfield      #90                 // Field allDraws:Ljava/util/List;
+        37: invokeinterface #202,  1          // InterfaceMethod java/util/List.clear:()V
+        42: aload_0
+        43: getfield      #94                 // Field draws:Ljava/util/List;
+        46: invokeinterface #202,  1          // InterfaceMethod java/util/List.clear:()V
+        51: aload_0
+        52: getfield      #96                 // Field oitDraws:Ljava/util/List;
+        55: invokeinterface #202,  1          // InterfaceMethod java/util/List.clear:()V
+        60: aload_0
+        61: getfield      #106                // Field meshPool:Ldev/engine_room/flywheel/backend/engine/MeshPool;
+        64: invokevirtual #410                // Method dev/engine_room/flywheel/backend/engine/MeshPool.delete:()V
+        67: aload_0
+        68: getfield      #119                // Field instanceTexture:Ldev/engine_room/flywheel/backend/gl/TextureBuffer;
+        71: invokevirtual #411                // Method dev/engine_room/flywheel/backend/gl/TextureBuffer.delete:()V
+        74: aload_0
+        75: getfield      #103                // Field programs:Ldev/engine_room/flywheel/backend/compile/InstancingPrograms;
+        78: invokevirtual #414                // Method dev/engine_room/flywheel/backend/compile/InstancingPrograms.release:()V
+        81: aload_0
+        82: getfield      #114                // Field vao:Ldev/engine_room/flywheel/backend/gl/array/GlVertexArray;
+        85: invokevirtual #415                // Method dev/engine_room/flywheel/backend/gl/array/GlVertexArray.delete:()V
+        88: aload_0
+        89: getfield      #124                // Field light:Ldev/engine_room/flywheel/backend/engine/instancing/InstancedLight;
+        92: invokevirtual #416                // Method dev/engine_room/flywheel/backend/engine/instancing/InstancedLight.delete:()V
+        95: aload_0
+        96: getfield      #139                // Field oitFramebuffer:Ldev/engine_room/flywheel/backend/engine/indirect/OitFramebuffer;
+        99: invokevirtual #417                // Method dev/engine_room/flywheel/backend/engine/indirect/OitFramebuffer.delete:()V
+       102: aload_0
+       103: invokespecial #418                // Method dev/engine_room/flywheel/backend/engine/DrawManager.delete:()V
+       106: return
+
+  protected <I extends dev.engine_room.flywheel.api.instance.Instance> dev.engine_room.flywheel.backend.engine.instancing.InstancedInstancer<I> create(dev.engine_room.flywheel.backend.engine.InstancerKey<I>);
+    Code:
+         0: new           #390                // class dev/engine_room/flywheel/backend/engine/instancing/InstancedInstancer
+         3: dup
+         4: aload_1
+         5: new           #18                 // class dev/engine_room/flywheel/backend/engine/AbstractInstancer$Recreate
+         8: dup
+         9: aload_1
+        10: aload_0
+        11: invokespecial #424                // Method dev/engine_room/flywheel/backend/engine/AbstractInstancer$Recreate."<init>":(Ldev/engine_room/flywheel/backend/engine/InstancerKey;Ldev/engine_room/flywheel/backend/engine/DrawManager;)V
+        14: invokespecial #427                // Method dev/engine_room/flywheel/backend/engine/instancing/InstancedInstancer."<init>":(Ldev/engine_room/flywheel/backend/engine/InstancerKey;Ldev/engine_room/flywheel/backend/engine/AbstractInstancer$Recreate;)V
+        17: areturn
+
+  protected <I extends dev.engine_room.flywheel.api.instance.Instance> void initialize(dev.engine_room.flywheel.backend.engine.InstancerKey<I>, dev.engine_room.flywheel.backend.engine.instancing.InstancedInstancer<?>);
+    Code:
+         0: aload_2
+         1: invokevirtual #436                // Method dev/engine_room/flywheel/backend/engine/instancing/InstancedInstancer.init:()V
+         4: aload_1
+         5: invokevirtual #442                // Method dev/engine_room/flywheel/backend/engine/InstancerKey.model:()Ldev/engine_room/flywheel/api/model/Model;
+         8: invokeinterface #446,  1          // InterfaceMethod dev/engine_room/flywheel/api/model/Model.meshes:()Ljava/util/List;
+        13: astore_3
+        14: iconst_0
+        15: istore        4
+        17: iload         4
+        19: aload_3
+        20: invokeinterface #449,  1          // InterfaceMethod java/util/List.size:()I
+        25: if_icmpge     126
+        28: aload_3
+        29: iload         4
+        31: invokeinterface #452,  2          // InterfaceMethod java/util/List.get:(I)Ljava/lang/Object;
+        36: checkcast     #23                 // class dev/engine_room/flywheel/api/model/Model$ConfiguredMesh
+        39: astore        5
+        41: aload_0
+        42: getfield      #106                // Field meshPool:Ldev/engine_room/flywheel/backend/engine/MeshPool;
+        45: aload         5
+        47: invokevirtual #455                // Method dev/engine_room/flywheel/api/model/Model$ConfiguredMesh.mesh:()Ldev/engine_room/flywheel/api/model/Mesh;
+        50: invokevirtual #459                // Method dev/engine_room/flywheel/backend/engine/MeshPool.alloc:(Ldev/engine_room/flywheel/api/model/Mesh;)Ldev/engine_room/flywheel/backend/engine/MeshPool$PooledMesh;
+        53: astore        6
+        55: new           #311                // class dev/engine_room/flywheel/backend/engine/GroupKey
+        58: dup
+        59: aload_1
+        60: invokevirtual #462                // Method dev/engine_room/flywheel/backend/engine/InstancerKey.type:()Ldev/engine_room/flywheel/api/instance/InstanceType;
+        63: aload_1
+        64: invokevirtual #463                // Method dev/engine_room/flywheel/backend/engine/InstancerKey.environment:()Ldev/engine_room/flywheel/backend/engine/embed/Environment;
+        67: invokespecial #466                // Method dev/engine_room/flywheel/backend/engine/GroupKey."<init>":(Ldev/engine_room/flywheel/api/instance/InstanceType;Ldev/engine_room/flywheel/backend/engine/embed/Environment;)V
+        70: astore        7
+        72: new           #182                // class dev/engine_room/flywheel/backend/engine/instancing/InstancedDraw
+        75: dup
+        76: aload_2
+        77: aload         6
+        79: aload         7
+        81: aload         5
+        83: invokevirtual #467                // Method dev/engine_room/flywheel/api/model/Model$ConfiguredMesh.material:()Ldev/engine_room/flywheel/api/material/Material;
+        86: aload_1
+        87: invokevirtual #470                // Method dev/engine_room/flywheel/backend/engine/InstancerKey.bias:()I
+        90: iload         4
+        92: invokespecial #473                // Method dev/engine_room/flywheel/backend/engine/instancing/InstancedDraw."<init>":(Ldev/engine_room/flywheel/backend/engine/instancing/InstancedInstancer;Ldev/engine_room/flywheel/backend/engine/MeshPool$PooledMesh;Ldev/engine_room/flywheel/backend/engine/GroupKey;Ldev/engine_room/flywheel/api/material/Material;II)V
+        95: astore        8
+        97: aload_0
+        98: getfield      #90                 // Field allDraws:Ljava/util/List;
+       101: aload         8
+       103: invokeinterface #234,  2          // InterfaceMethod java/util/List.add:(Ljava/lang/Object;)Z
+       108: pop
+       109: aload_0
+       110: iconst_1
+       111: putfield      #92                 // Field needSort:Z
+       114: aload_2
+       115: aload         8
+       117: invokevirtual #476                // Method dev/engine_room/flywheel/backend/engine/instancing/InstancedInstancer.addDrawCall:(Ldev/engine_room/flywheel/backend/engine/instancing/InstancedDraw;)V
+       120: iinc          4, 1
+       123: goto          17
+       126: return
+
+  public void renderCrumbling(java.util.List<dev.engine_room.flywheel.api.backend.Engine$CrumblingBlock>);
+    Code:
+         0: aload_1
+         1: invokedynamic #501,  0            // InvokeDynamic #4:apply:()Ldev/engine_room/flywheel/backend/engine/DrawManager$State2Instancer;
+         6: invokestatic  #505                // Method doCrumblingSort:(Ljava/util/List;Ldev/engine_room/flywheel/backend/engine/DrawManager$State2Instancer;)Ljava/util/Map;
+         9: astore_2
+        10: aload_2
+        11: invokeinterface #506,  1          // InterfaceMethod java/util/Map.isEmpty:()Z
+        16: ifeq          20
+        19: return
+        20: invokestatic  #510                // Method dev/engine_room/flywheel/lib/material/SimpleMaterial.builder:()Ldev/engine_room/flywheel/lib/material/SimpleMaterial$Builder;
+        23: astore_3
+        24: invokestatic  #248                // Method dev/engine_room/flywheel/backend/engine/uniform/Uniforms.bindAll:()V
+        27: aload_0
+        28: getfield      #114                // Field vao:Ldev/engine_room/flywheel/backend/gl/array/GlVertexArray;
+        31: invokevirtual #251                // Method dev/engine_room/flywheel/backend/gl/array/GlVertexArray.bindForDraw:()V
+        34: invokestatic  #256                // Method dev/engine_room/flywheel/backend/engine/TextureBinder.bindLightAndOverlay:()V
+        37: aload_2
+        38: invokeinterface #514,  1          // InterfaceMethod java/util/Map.entrySet:()Ljava/util/Set;
+        43: invokeinterface #517,  1          // InterfaceMethod java/util/Set.iterator:()Ljava/util/Iterator;
+        48: astore        4
+        50: aload         4
+        52: invokeinterface #211,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+        57: ifeq          337
+        60: aload         4
+        62: invokeinterface #215,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+        67: checkcast     #36                 // class java/util/Map$Entry
+        70: astore        5
+        72: aload         5
+        74: invokeinterface #520,  1          // InterfaceMethod java/util/Map$Entry.getValue:()Ljava/lang/Object;
+        79: checkcast     #43                 // class it/unimi/dsi/fastutil/ints/Int2ObjectMap
+        82: astore        6
+        84: aload         5
+        86: invokeinterface #523,  1          // InterfaceMethod java/util/Map$Entry.getKey:()Ljava/lang/Object;
+        91: checkcast     #311                // class dev/engine_room/flywheel/backend/engine/GroupKey
+        94: astore        7
+        96: aload         6
+        98: invokeinterface #527,  1          // InterfaceMethod it/unimi/dsi/fastutil/ints/Int2ObjectMap.int2ObjectEntrySet:()Lit/unimi/dsi/fastutil/objects/ObjectSet;
+       103: invokeinterface #532,  1          // InterfaceMethod it/unimi/dsi/fastutil/objects/ObjectSet.iterator:()Lit/unimi/dsi/fastutil/objects/ObjectIterator;
+       108: astore        8
+       110: aload         8
+       112: invokeinterface #211,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+       117: ifeq          334
+       120: aload         8
+       122: invokeinterface #215,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+       127: checkcast     #41                 // class it/unimi/dsi/fastutil/ints/Int2ObjectMap$Entry
+       130: astore        9
+       132: getstatic     #535                // Field dev/engine_room/flywheel/backend/Samplers.CRUMBLING:Ldev/engine_room/flywheel/backend/gl/GlTextureUnit;
+       135: invokevirtual #372                // Method dev/engine_room/flywheel/backend/gl/GlTextureUnit.makeActive:()V
+       138: getstatic     #540                // Field net/minecraft/client/resources/model/ModelBakery.BREAKING_LOCATIONS:Ljava/util/List;
+       141: aload         9
+       143: invokeinterface #543,  1          // InterfaceMethod it/unimi/dsi/fastutil/ints/Int2ObjectMap$Entry.getIntKey:()I
+       148: invokeinterface #452,  2          // InterfaceMethod java/util/List.get:(I)Ljava/lang/Object;
+       153: checkcast     #545                // class net/minecraft/resources/ResourceLocation
+       156: invokestatic  #548                // Method dev/engine_room/flywheel/backend/engine/TextureBinder.bind:(Lnet/minecraft/resources/ResourceLocation;)V
+       159: aload         9
+       161: invokeinterface #549,  1          // InterfaceMethod it/unimi/dsi/fastutil/ints/Int2ObjectMap$Entry.getValue:()Ljava/lang/Object;
+       166: checkcast     #192                // class java/util/List
+       169: invokeinterface #206,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+       174: astore        10
+       176: aload         10
+       178: invokeinterface #211,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+       183: ifeq          331
+       186: aload         10
+       188: invokeinterface #215,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+       193: checkcast     #551                // class com/mojang/datafixers/util/Pair
+       196: astore        11
+       198: aload         11
+       200: invokevirtual #554                // Method com/mojang/datafixers/util/Pair.getFirst:()Ljava/lang/Object;
+       203: checkcast     #390                // class dev/engine_room/flywheel/backend/engine/instancing/InstancedInstancer
+       206: astore        12
+       208: aload         11
+       210: invokevirtual #557                // Method com/mojang/datafixers/util/Pair.getSecond:()Ljava/lang/Object;
+       213: checkcast     #52                 // class dev/engine_room/flywheel/backend/engine/InstanceHandleImpl
+       216: getfield      #560                // Field dev/engine_room/flywheel/backend/engine/InstanceHandleImpl.index:I
+       219: istore        13
+       221: aload         12
+       223: invokevirtual #562                // Method dev/engine_room/flywheel/backend/engine/instancing/InstancedInstancer.draws:()Ljava/util/List;
+       226: invokeinterface #206,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+       231: astore        14
+       233: aload         14
+       235: invokeinterface #211,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+       240: ifeq          328
+       243: aload         14
+       245: invokeinterface #215,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+       250: checkcast     #182                // class dev/engine_room/flywheel/backend/engine/instancing/InstancedDraw
+       253: astore        15
+       255: aload_3
+       256: aload         15
+       258: invokevirtual #219                // Method dev/engine_room/flywheel/backend/engine/instancing/InstancedDraw.material:()Ldev/engine_room/flywheel/api/material/Material;
+       261: invokestatic  #568                // Method dev/engine_room/flywheel/backend/engine/CommonCrumbling.applyCrumblingProperties:(Ldev/engine_room/flywheel/lib/material/SimpleMaterial$Builder;Ldev/engine_room/flywheel/api/material/Material;)V
+       264: aload_0
+       265: getfield      #103                // Field programs:Ldev/engine_room/flywheel/backend/compile/InstancingPrograms;
+       268: aload         7
+       270: invokevirtual #319                // Method dev/engine_room/flywheel/backend/engine/GroupKey.instanceType:()Ldev/engine_room/flywheel/api/instance/InstanceType;
+       273: getstatic     #573                // Field dev/engine_room/flywheel/backend/compile/ContextShader.CRUMBLING:Ldev/engine_room/flywheel/backend/compile/ContextShader;
+       276: aload_3
+       277: getstatic     #328                // Field dev/engine_room/flywheel/backend/compile/PipelineCompiler$OitMode.OFF:Ldev/engine_room/flywheel/backend/compile/PipelineCompiler$OitMode;
+       280: invokevirtual #332                // Method dev/engine_room/flywheel/backend/compile/InstancingPrograms.get:(Ldev/engine_room/flywheel/api/instance/InstanceType;Ldev/engine_room/flywheel/backend/compile/ContextShader;Ldev/engine_room/flywheel/api/material/Material;Ldev/engine_room/flywheel/backend/compile/PipelineCompiler$OitMode;)Ldev/engine_room/flywheel/backend/gl/shader/GlProgram;
+       283: astore        16
+       285: aload         16
+       287: invokevirtual #335                // Method dev/engine_room/flywheel/backend/gl/shader/GlProgram.bind:()V
+       290: aload         16
+       292: ldc_w         #575                // String _flw_baseInstance
+       295: iload         13
+       297: invokevirtual #578                // Method dev/engine_room/flywheel/backend/gl/shader/GlProgram.setInt:(Ljava/lang/String;I)V
+       300: aload         16
+       302: aload_3
+       303: invokestatic  #343                // Method uploadMaterialUniform:(Ldev/engine_room/flywheel/backend/gl/shader/GlProgram;Ldev/engine_room/flywheel/api/material/Material;)V
+       306: aload_3
+       307: invokestatic  #361                // Method dev/engine_room/flywheel/backend/engine/MaterialRenderState.setup:(Ldev/engine_room/flywheel/api/material/Material;)V
+       310: getstatic     #367                // Field dev/engine_room/flywheel/backend/Samplers.INSTANCE_BUFFER:Ldev/engine_room/flywheel/backend/gl/GlTextureUnit;
+       313: invokevirtual #372                // Method dev/engine_room/flywheel/backend/gl/GlTextureUnit.makeActive:()V
+       316: aload         15
+       318: aload_0
+       319: getfield      #119                // Field instanceTexture:Ldev/engine_room/flywheel/backend/gl/TextureBuffer;
+       322: invokevirtual #581                // Method dev/engine_room/flywheel/backend/engine/instancing/InstancedDraw.renderOne:(Ldev/engine_room/flywheel/backend/gl/TextureBuffer;)V
+       325: goto          233
+       328: goto          176
+       331: goto          110
+       334: goto          50
+       337: invokestatic  #298                // Method dev/engine_room/flywheel/backend/engine/MaterialRenderState.reset:()V
+       340: invokestatic  #301                // Method dev/engine_room/flywheel/backend/engine/TextureBinder.resetLightAndOverlay:()V
+       343: return
+
+  public void triggerFallback();
+    Code:
+         0: invokestatic  #603                // Method dev/engine_room/flywheel/backend/compile/InstancingPrograms.kill:()V
+         3: invokestatic  #609                // Method net/minecraft/client/Minecraft.getInstance:()Lnet/minecraft/client/Minecraft;
+         6: getfield      #613                // Field net/minecraft/client/Minecraft.levelRenderer:Lnet/minecraft/client/renderer/LevelRenderer;
+         9: invokevirtual #618                // Method net/minecraft/client/renderer/LevelRenderer.allChanged:()V
+        12: return
+
+  public static void uploadMaterialUniform(dev.engine_room.flywheel.backend.gl.shader.GlProgram, dev.engine_room.flywheel.api.material.Material);
+    Code:
+         0: aload_1
+         1: invokestatic  #624                // Method dev/engine_room/flywheel/backend/engine/MaterialEncoder.packUberShader:(Ldev/engine_room/flywheel/api/material/Material;)I
+         4: istore_2
+         5: aload_1
+         6: invokestatic  #627                // Method dev/engine_room/flywheel/backend/engine/MaterialEncoder.packProperties:(Ldev/engine_room/flywheel/api/material/Material;)I
+         9: istore_3
+        10: aload_0
+        11: ldc_w         #629                // String _flw_packedMaterial
+        14: iload_2
+        15: iload_3
+        16: invokevirtual #633                // Method dev/engine_room/flywheel/backend/gl/shader/GlProgram.setUVec2:(Ljava/lang/String;II)V
+        19: return
+
+  protected void initialize(dev.engine_room.flywheel.backend.engine.InstancerKey, dev.engine_room.flywheel.backend.engine.AbstractInstancer);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: aload_2
+         3: checkcast     #390                // class dev/engine_room/flywheel/backend/engine/instancing/InstancedInstancer
+         6: invokevirtual #638                // Method initialize:(Ldev/engine_room/flywheel/backend/engine/InstancerKey;Ldev/engine_room/flywheel/backend/engine/instancing/InstancedInstancer;)V
+         9: return
+
+  protected dev.engine_room.flywheel.backend.engine.AbstractInstancer create(dev.engine_room.flywheel.backend.engine.InstancerKey);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: invokevirtual #641                // Method create:(Ldev/engine_room/flywheel/backend/engine/InstancerKey;)Ldev/engine_room/flywheel/backend/engine/instancing/InstancedInstancer;
+         5: areturn
+
+  private static dev.engine_room.flywheel.backend.engine.instancing.InstancedInstancer lambda$renderCrumbling$1(dev.engine_room.flywheel.backend.engine.InstanceHandleImpl$State);
+    Code:
+         0: aload_0
+         1: instanceof    #390                // class dev/engine_room/flywheel/backend/engine/instancing/InstancedInstancer
+         4: ifeq          14
+         7: aload_0
+         8: checkcast     #390                // class dev/engine_room/flywheel/backend/engine/instancing/InstancedInstancer
+        11: astore_1
+        12: aload_1
+        13: areturn
+        14: aconst_null
+        15: areturn
+
+  private static boolean lambda$render$0(dev.engine_room.flywheel.backend.engine.instancing.InstancedInstancer);
+    Code:
+         0: aload_0
+         1: invokevirtual #646                // Method dev/engine_room/flywheel/backend/engine/instancing/InstancedInstancer.instanceCount:()I
+         4: ifne          13
+         7: aload_0
+         8: invokevirtual #392                // Method dev/engine_room/flywheel/backend/engine/instancing/InstancedInstancer.delete:()V
+        11: iconst_1
+        12: ireturn
+        13: aload_0
+        14: invokevirtual #649                // Method dev/engine_room/flywheel/backend/engine/instancing/InstancedInstancer.updateBuffer:()V
+        17: iconst_0
+        18: ireturn
+
+  static {};
+    Code:
+         0: invokedynamic #660,  0            // InvokeDynamic #5:applyAsInt:()Ljava/util/function/ToIntFunction;
+         5: invokestatic  #666                // InterfaceMethod java/util/Comparator.comparingInt:(Ljava/util/function/ToIntFunction;)Ljava/util/Comparator;
+         8: invokedynamic #671,  0            // InvokeDynamic #6:applyAsInt:()Ljava/util/function/ToIntFunction;
+        13: invokeinterface #674,  2          // InterfaceMethod java/util/Comparator.thenComparingInt:(Ljava/util/function/ToIntFunction;)Ljava/util/Comparator;
+        18: invokedynamic #682,  0            // InvokeDynamic #7:apply:()Ljava/util/function/Function;
+        23: getstatic     #685                // Field dev/engine_room/flywheel/backend/engine/MaterialRenderState.COMPARATOR:Ljava/util/Comparator;
+        26: invokeinterface #689,  3          // InterfaceMethod java/util/Comparator.thenComparing:(Ljava/util/function/Function;Ljava/util/Comparator;)Ljava/util/Comparator;
+        31: putstatic     #195                // Field DRAW_COMPARATOR:Ljava/util/Comparator;
+        34: return
+}

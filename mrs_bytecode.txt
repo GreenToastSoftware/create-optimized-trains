@@ -1,0 +1,580 @@
+﻿Compiled from "MaterialRenderState.java"
+public final class dev.engine_room.flywheel.backend.engine.MaterialRenderState {
+  public static final java.util.Comparator<dev.engine_room.flywheel.api.material.Material> COMPARATOR;
+
+  private dev.engine_room.flywheel.backend.engine.MaterialRenderState();
+    Code:
+         0: aload_0
+         1: invokespecial #27                 // Method java/lang/Object."<init>":()V
+         4: return
+
+  public static void setup(dev.engine_room.flywheel.api.material.Material);
+    Code:
+         0: aload_0
+         1: invokestatic  #35                 // Method setupTexture:(Ldev/engine_room/flywheel/api/material/Material;)V
+         4: aload_0
+         5: invokeinterface #41,  1           // InterfaceMethod dev/engine_room/flywheel/api/material/Material.backfaceCulling:()Z
+        10: invokestatic  #45                 // Method setupBackfaceCulling:(Z)V
+        13: aload_0
+        14: invokeinterface #48,  1           // InterfaceMethod dev/engine_room/flywheel/api/material/Material.polygonOffset:()Z
+        19: invokestatic  #51                 // Method setupPolygonOffset:(Z)V
+        22: aload_0
+        23: invokeinterface #55,  1           // InterfaceMethod dev/engine_room/flywheel/api/material/Material.depthTest:()Ldev/engine_room/flywheel/api/material/DepthTest;
+        28: invokestatic  #59                 // Method setupDepthTest:(Ldev/engine_room/flywheel/api/material/DepthTest;)V
+        31: aload_0
+        32: invokeinterface #63,  1           // InterfaceMethod dev/engine_room/flywheel/api/material/Material.transparency:()Ldev/engine_room/flywheel/api/material/Transparency;
+        37: invokestatic  #67                 // Method setupTransparency:(Ldev/engine_room/flywheel/api/material/Transparency;)V
+        40: aload_0
+        41: invokeinterface #71,  1           // InterfaceMethod dev/engine_room/flywheel/api/material/Material.writeMask:()Ldev/engine_room/flywheel/api/material/WriteMask;
+        46: invokestatic  #75                 // Method setupWriteMask:(Ldev/engine_room/flywheel/api/material/WriteMask;)V
+        49: return
+
+  public static void setupOit(dev.engine_room.flywheel.api.material.Material);
+    Code:
+         0: aload_0
+         1: invokestatic  #35                 // Method setupTexture:(Ldev/engine_room/flywheel/api/material/Material;)V
+         4: aload_0
+         5: invokeinterface #41,  1           // InterfaceMethod dev/engine_room/flywheel/api/material/Material.backfaceCulling:()Z
+        10: invokestatic  #45                 // Method setupBackfaceCulling:(Z)V
+        13: aload_0
+        14: invokeinterface #48,  1           // InterfaceMethod dev/engine_room/flywheel/api/material/Material.polygonOffset:()Z
+        19: invokestatic  #51                 // Method setupPolygonOffset:(Z)V
+        22: aload_0
+        23: invokeinterface #55,  1           // InterfaceMethod dev/engine_room/flywheel/api/material/Material.depthTest:()Ldev/engine_room/flywheel/api/material/DepthTest;
+        28: invokestatic  #59                 // Method setupDepthTest:(Ldev/engine_room/flywheel/api/material/DepthTest;)V
+        31: aload_0
+        32: invokeinterface #71,  1           // InterfaceMethod dev/engine_room/flywheel/api/material/Material.writeMask:()Ldev/engine_room/flywheel/api/material/WriteMask;
+        37: astore_1
+        38: aload_1
+        39: invokevirtual #82                 // Method dev/engine_room/flywheel/api/material/WriteMask.color:()Z
+        42: istore_2
+        43: iload_2
+        44: iload_2
+        45: iload_2
+        46: iload_2
+        47: invokestatic  #88                 // Method com/mojang/blaze3d/systems/RenderSystem.colorMask:(ZZZZ)V
+        50: return
+
+  private static void setupTexture(dev.engine_room.flywheel.api.material.Material);
+    Code:
+         0: getstatic     #98                 // Field dev/engine_room/flywheel/backend/Samplers.DIFFUSE:Ldev/engine_room/flywheel/backend/gl/GlTextureUnit;
+         3: invokevirtual #103                // Method dev/engine_room/flywheel/backend/gl/GlTextureUnit.makeActive:()V
+         6: invokestatic  #109                // Method net/minecraft/client/Minecraft.getInstance:()Lnet/minecraft/client/Minecraft;
+         9: invokevirtual #113                // Method net/minecraft/client/Minecraft.getTextureManager:()Lnet/minecraft/client/renderer/texture/TextureManager;
+        12: aload_0
+        13: invokeinterface #117,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.texture:()Lnet/minecraft/resources/ResourceLocation;
+        18: invokevirtual #123                // Method net/minecraft/client/renderer/texture/TextureManager.getTexture:(Lnet/minecraft/resources/ResourceLocation;)Lnet/minecraft/client/renderer/texture/AbstractTexture;
+        21: astore_1
+        22: aload_1
+        23: aload_0
+        24: invokeinterface #126,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.blur:()Z
+        29: aload_0
+        30: invokeinterface #129,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.mipmap:()Z
+        35: invokevirtual #135                // Method net/minecraft/client/renderer/texture/AbstractTexture.setFilter:(ZZ)V
+        38: aload_1
+        39: invokevirtual #139                // Method net/minecraft/client/renderer/texture/AbstractTexture.getId:()I
+        42: istore_2
+        43: iconst_0
+        44: iload_2
+        45: invokestatic  #143                // Method com/mojang/blaze3d/systems/RenderSystem.setShaderTexture:(II)V
+        48: iload_2
+        49: invokestatic  #147                // Method com/mojang/blaze3d/systems/RenderSystem.bindTexture:(I)V
+        52: return
+
+  private static void setupBackfaceCulling(boolean);
+    Code:
+         0: iload_0
+         1: ifeq          10
+         4: invokestatic  #153                // Method com/mojang/blaze3d/systems/RenderSystem.enableCull:()V
+         7: goto          13
+        10: invokestatic  #156                // Method com/mojang/blaze3d/systems/RenderSystem.disableCull:()V
+        13: return
+
+  private static void setupPolygonOffset(boolean);
+    Code:
+         0: iload_0
+         1: ifeq          17
+         4: ldc           #157                // float -1.0f
+         6: ldc           #158                // float -10.0f
+         8: invokestatic  #161                // Method com/mojang/blaze3d/systems/RenderSystem.polygonOffset:(FF)V
+        11: invokestatic  #164                // Method com/mojang/blaze3d/systems/RenderSystem.enablePolygonOffset:()V
+        14: goto          25
+        17: fconst_0
+        18: fconst_0
+        19: invokestatic  #161                // Method com/mojang/blaze3d/systems/RenderSystem.polygonOffset:(FF)V
+        22: invokestatic  #167                // Method com/mojang/blaze3d/systems/RenderSystem.disablePolygonOffset:()V
+        25: return
+
+  private static void setupDepthTest(dev.engine_room.flywheel.api.material.DepthTest);
+    Code:
+         0: getstatic     #171                // Field dev/engine_room/flywheel/backend/engine/MaterialRenderState$1.$SwitchMap$dev$engine_room$flywheel$api$material$DepthTest:[I
+         3: aload_0
+         4: invokevirtual #176                // Method dev/engine_room/flywheel/api/material/DepthTest.ordinal:()I
+         7: iaload
+         8: tableswitch   { // 1 to 9
+
+                       1: 60
+
+                       2: 66
+
+                       3: 78
+
+                       4: 90
+
+                       5: 102
+
+                       6: 114
+
+                       7: 126
+
+                       8: 138
+
+                       9: 150
+                 default: 159
+            }
+        60: invokestatic  #179                // Method com/mojang/blaze3d/systems/RenderSystem.disableDepthTest:()V
+        63: goto          159
+        66: invokestatic  #182                // Method com/mojang/blaze3d/systems/RenderSystem.enableDepthTest:()V
+        69: sipush        512
+        72: invokestatic  #185                // Method com/mojang/blaze3d/systems/RenderSystem.depthFunc:(I)V
+        75: goto          159
+        78: invokestatic  #182                // Method com/mojang/blaze3d/systems/RenderSystem.enableDepthTest:()V
+        81: sipush        513
+        84: invokestatic  #185                // Method com/mojang/blaze3d/systems/RenderSystem.depthFunc:(I)V
+        87: goto          159
+        90: invokestatic  #182                // Method com/mojang/blaze3d/systems/RenderSystem.enableDepthTest:()V
+        93: sipush        514
+        96: invokestatic  #185                // Method com/mojang/blaze3d/systems/RenderSystem.depthFunc:(I)V
+        99: goto          159
+       102: invokestatic  #182                // Method com/mojang/blaze3d/systems/RenderSystem.enableDepthTest:()V
+       105: sipush        515
+       108: invokestatic  #185                // Method com/mojang/blaze3d/systems/RenderSystem.depthFunc:(I)V
+       111: goto          159
+       114: invokestatic  #182                // Method com/mojang/blaze3d/systems/RenderSystem.enableDepthTest:()V
+       117: sipush        516
+       120: invokestatic  #185                // Method com/mojang/blaze3d/systems/RenderSystem.depthFunc:(I)V
+       123: goto          159
+       126: invokestatic  #182                // Method com/mojang/blaze3d/systems/RenderSystem.enableDepthTest:()V
+       129: sipush        517
+       132: invokestatic  #185                // Method com/mojang/blaze3d/systems/RenderSystem.depthFunc:(I)V
+       135: goto          159
+       138: invokestatic  #182                // Method com/mojang/blaze3d/systems/RenderSystem.enableDepthTest:()V
+       141: sipush        518
+       144: invokestatic  #185                // Method com/mojang/blaze3d/systems/RenderSystem.depthFunc:(I)V
+       147: goto          159
+       150: invokestatic  #182                // Method com/mojang/blaze3d/systems/RenderSystem.enableDepthTest:()V
+       153: sipush        519
+       156: invokestatic  #185                // Method com/mojang/blaze3d/systems/RenderSystem.depthFunc:(I)V
+       159: return
+
+  private static void setupTransparency(dev.engine_room.flywheel.api.material.Transparency);
+    Code:
+         0: getstatic     #189                // Field dev/engine_room/flywheel/backend/engine/MaterialRenderState$1.$SwitchMap$dev$engine_room$flywheel$api$material$Transparency:[I
+         3: aload_0
+         4: invokevirtual #192                // Method dev/engine_room/flywheel/api/material/Transparency.ordinal:()I
+         7: iaload
+         8: tableswitch   { // 1 to 6
+
+                       1: 48
+
+                       2: 54
+
+                       3: 69
+
+                       4: 84
+
+                       5: 105
+
+                       6: 126
+                 default: 144
+            }
+        48: invokestatic  #195                // Method com/mojang/blaze3d/systems/RenderSystem.disableBlend:()V
+        51: goto          144
+        54: invokestatic  #198                // Method com/mojang/blaze3d/systems/RenderSystem.enableBlend:()V
+        57: getstatic     #202                // Field com/mojang/blaze3d/platform/GlStateManager$SourceFactor.ONE:Lcom/mojang/blaze3d/platform/GlStateManager$SourceFactor;
+        60: getstatic     #205                // Field com/mojang/blaze3d/platform/GlStateManager$DestFactor.ONE:Lcom/mojang/blaze3d/platform/GlStateManager$DestFactor;
+        63: invokestatic  #209                // Method com/mojang/blaze3d/systems/RenderSystem.blendFunc:(Lcom/mojang/blaze3d/platform/GlStateManager$SourceFactor;Lcom/mojang/blaze3d/platform/GlStateManager$DestFactor;)V
+        66: goto          144
+        69: invokestatic  #198                // Method com/mojang/blaze3d/systems/RenderSystem.enableBlend:()V
+        72: getstatic     #212                // Field com/mojang/blaze3d/platform/GlStateManager$SourceFactor.SRC_ALPHA:Lcom/mojang/blaze3d/platform/GlStateManager$SourceFactor;
+        75: getstatic     #205                // Field com/mojang/blaze3d/platform/GlStateManager$DestFactor.ONE:Lcom/mojang/blaze3d/platform/GlStateManager$DestFactor;
+        78: invokestatic  #209                // Method com/mojang/blaze3d/systems/RenderSystem.blendFunc:(Lcom/mojang/blaze3d/platform/GlStateManager$SourceFactor;Lcom/mojang/blaze3d/platform/GlStateManager$DestFactor;)V
+        81: goto          144
+        84: invokestatic  #198                // Method com/mojang/blaze3d/systems/RenderSystem.enableBlend:()V
+        87: getstatic     #215                // Field com/mojang/blaze3d/platform/GlStateManager$SourceFactor.SRC_COLOR:Lcom/mojang/blaze3d/platform/GlStateManager$SourceFactor;
+        90: getstatic     #205                // Field com/mojang/blaze3d/platform/GlStateManager$DestFactor.ONE:Lcom/mojang/blaze3d/platform/GlStateManager$DestFactor;
+        93: getstatic     #218                // Field com/mojang/blaze3d/platform/GlStateManager$SourceFactor.ZERO:Lcom/mojang/blaze3d/platform/GlStateManager$SourceFactor;
+        96: getstatic     #205                // Field com/mojang/blaze3d/platform/GlStateManager$DestFactor.ONE:Lcom/mojang/blaze3d/platform/GlStateManager$DestFactor;
+        99: invokestatic  #222                // Method com/mojang/blaze3d/systems/RenderSystem.blendFuncSeparate:(Lcom/mojang/blaze3d/platform/GlStateManager$SourceFactor;Lcom/mojang/blaze3d/platform/GlStateManager$DestFactor;Lcom/mojang/blaze3d/platform/GlStateManager$SourceFactor;Lcom/mojang/blaze3d/platform/GlStateManager$DestFactor;)V
+       102: goto          144
+       105: invokestatic  #198                // Method com/mojang/blaze3d/systems/RenderSystem.enableBlend:()V
+       108: getstatic     #225                // Field com/mojang/blaze3d/platform/GlStateManager$SourceFactor.DST_COLOR:Lcom/mojang/blaze3d/platform/GlStateManager$SourceFactor;
+       111: getstatic     #227                // Field com/mojang/blaze3d/platform/GlStateManager$DestFactor.SRC_COLOR:Lcom/mojang/blaze3d/platform/GlStateManager$DestFactor;
+       114: getstatic     #202                // Field com/mojang/blaze3d/platform/GlStateManager$SourceFactor.ONE:Lcom/mojang/blaze3d/platform/GlStateManager$SourceFactor;
+       117: getstatic     #229                // Field com/mojang/blaze3d/platform/GlStateManager$DestFactor.ZERO:Lcom/mojang/blaze3d/platform/GlStateManager$DestFactor;
+       120: invokestatic  #222                // Method com/mojang/blaze3d/systems/RenderSystem.blendFuncSeparate:(Lcom/mojang/blaze3d/platform/GlStateManager$SourceFactor;Lcom/mojang/blaze3d/platform/GlStateManager$DestFactor;Lcom/mojang/blaze3d/platform/GlStateManager$SourceFactor;Lcom/mojang/blaze3d/platform/GlStateManager$DestFactor;)V
+       123: goto          144
+       126: invokestatic  #198                // Method com/mojang/blaze3d/systems/RenderSystem.enableBlend:()V
+       129: getstatic     #212                // Field com/mojang/blaze3d/platform/GlStateManager$SourceFactor.SRC_ALPHA:Lcom/mojang/blaze3d/platform/GlStateManager$SourceFactor;
+       132: getstatic     #232                // Field com/mojang/blaze3d/platform/GlStateManager$DestFactor.ONE_MINUS_SRC_ALPHA:Lcom/mojang/blaze3d/platform/GlStateManager$DestFactor;
+       135: getstatic     #202                // Field com/mojang/blaze3d/platform/GlStateManager$SourceFactor.ONE:Lcom/mojang/blaze3d/platform/GlStateManager$SourceFactor;
+       138: getstatic     #232                // Field com/mojang/blaze3d/platform/GlStateManager$DestFactor.ONE_MINUS_SRC_ALPHA:Lcom/mojang/blaze3d/platform/GlStateManager$DestFactor;
+       141: invokestatic  #222                // Method com/mojang/blaze3d/systems/RenderSystem.blendFuncSeparate:(Lcom/mojang/blaze3d/platform/GlStateManager$SourceFactor;Lcom/mojang/blaze3d/platform/GlStateManager$DestFactor;Lcom/mojang/blaze3d/platform/GlStateManager$SourceFactor;Lcom/mojang/blaze3d/platform/GlStateManager$DestFactor;)V
+       144: return
+
+  private static void setupWriteMask(dev.engine_room.flywheel.api.material.WriteMask);
+    Code:
+         0: aload_0
+         1: invokevirtual #236                // Method dev/engine_room/flywheel/api/material/WriteMask.depth:()Z
+         4: invokestatic  #239                // Method com/mojang/blaze3d/systems/RenderSystem.depthMask:(Z)V
+         7: aload_0
+         8: invokevirtual #82                 // Method dev/engine_room/flywheel/api/material/WriteMask.color:()Z
+        11: istore_1
+        12: iload_1
+        13: iload_1
+        14: iload_1
+        15: iload_1
+        16: invokestatic  #88                 // Method com/mojang/blaze3d/systems/RenderSystem.colorMask:(ZZZZ)V
+        19: return
+
+  public static void reset();
+    Code:
+         0: invokestatic  #243                // Method resetTexture:()V
+         3: invokestatic  #246                // Method resetBackfaceCulling:()V
+         6: invokestatic  #249                // Method resetPolygonOffset:()V
+         9: invokestatic  #252                // Method resetDepthTest:()V
+        12: invokestatic  #255                // Method resetTransparency:()V
+        15: invokestatic  #258                // Method resetWriteMask:()V
+        18: return
+
+  private static void resetTexture();
+    Code:
+         0: getstatic     #98                 // Field dev/engine_room/flywheel/backend/Samplers.DIFFUSE:Ldev/engine_room/flywheel/backend/gl/GlTextureUnit;
+         3: invokevirtual #103                // Method dev/engine_room/flywheel/backend/gl/GlTextureUnit.makeActive:()V
+         6: iconst_0
+         7: iconst_0
+         8: invokestatic  #143                // Method com/mojang/blaze3d/systems/RenderSystem.setShaderTexture:(II)V
+        11: return
+
+  private static void resetBackfaceCulling();
+    Code:
+         0: invokestatic  #153                // Method com/mojang/blaze3d/systems/RenderSystem.enableCull:()V
+         3: return
+
+  private static void resetPolygonOffset();
+    Code:
+         0: fconst_0
+         1: fconst_0
+         2: invokestatic  #161                // Method com/mojang/blaze3d/systems/RenderSystem.polygonOffset:(FF)V
+         5: invokestatic  #167                // Method com/mojang/blaze3d/systems/RenderSystem.disablePolygonOffset:()V
+         8: return
+
+  private static void resetDepthTest();
+    Code:
+         0: invokestatic  #179                // Method com/mojang/blaze3d/systems/RenderSystem.disableDepthTest:()V
+         3: sipush        515
+         6: invokestatic  #185                // Method com/mojang/blaze3d/systems/RenderSystem.depthFunc:(I)V
+         9: return
+
+  private static void resetTransparency();
+    Code:
+         0: invokestatic  #195                // Method com/mojang/blaze3d/systems/RenderSystem.disableBlend:()V
+         3: invokestatic  #261                // Method com/mojang/blaze3d/systems/RenderSystem.defaultBlendFunc:()V
+         6: return
+
+  private static void resetWriteMask();
+    Code:
+         0: iconst_1
+         1: invokestatic  #239                // Method com/mojang/blaze3d/systems/RenderSystem.depthMask:(Z)V
+         4: iconst_1
+         5: iconst_1
+         6: iconst_1
+         7: iconst_1
+         8: invokestatic  #88                 // Method com/mojang/blaze3d/systems/RenderSystem.colorMask:(ZZZZ)V
+        11: return
+
+  public static boolean materialEquals(dev.engine_room.flywheel.api.material.Material, dev.engine_room.flywheel.api.material.Material);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: if_acmpne     7
+         5: iconst_1
+         6: ireturn
+         7: aload_0
+         8: invokeinterface #126,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.blur:()Z
+        13: aload_1
+        14: invokeinterface #126,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.blur:()Z
+        19: if_icmpne     246
+        22: aload_0
+        23: invokeinterface #129,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.mipmap:()Z
+        28: aload_1
+        29: invokeinterface #129,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.mipmap:()Z
+        34: if_icmpne     246
+        37: aload_0
+        38: invokeinterface #41,  1           // InterfaceMethod dev/engine_room/flywheel/api/material/Material.backfaceCulling:()Z
+        43: aload_1
+        44: invokeinterface #41,  1           // InterfaceMethod dev/engine_room/flywheel/api/material/Material.backfaceCulling:()Z
+        49: if_icmpne     246
+        52: aload_0
+        53: invokeinterface #48,  1           // InterfaceMethod dev/engine_room/flywheel/api/material/Material.polygonOffset:()Z
+        58: aload_1
+        59: invokeinterface #48,  1           // InterfaceMethod dev/engine_room/flywheel/api/material/Material.polygonOffset:()Z
+        64: if_icmpne     246
+        67: aload_0
+        68: invokeinterface #55,  1           // InterfaceMethod dev/engine_room/flywheel/api/material/Material.depthTest:()Ldev/engine_room/flywheel/api/material/DepthTest;
+        73: aload_1
+        74: invokeinterface #55,  1           // InterfaceMethod dev/engine_room/flywheel/api/material/Material.depthTest:()Ldev/engine_room/flywheel/api/material/DepthTest;
+        79: if_acmpne     246
+        82: aload_0
+        83: invokeinterface #63,  1           // InterfaceMethod dev/engine_room/flywheel/api/material/Material.transparency:()Ldev/engine_room/flywheel/api/material/Transparency;
+        88: aload_1
+        89: invokeinterface #63,  1           // InterfaceMethod dev/engine_room/flywheel/api/material/Material.transparency:()Ldev/engine_room/flywheel/api/material/Transparency;
+        94: if_acmpne     246
+        97: aload_0
+        98: invokeinterface #71,  1           // InterfaceMethod dev/engine_room/flywheel/api/material/Material.writeMask:()Ldev/engine_room/flywheel/api/material/WriteMask;
+       103: aload_1
+       104: invokeinterface #71,  1           // InterfaceMethod dev/engine_room/flywheel/api/material/Material.writeMask:()Ldev/engine_room/flywheel/api/material/WriteMask;
+       109: if_acmpne     246
+       112: aload_0
+       113: invokeinterface #269,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.light:()Ldev/engine_room/flywheel/api/material/LightShader;
+       118: invokeinterface #274,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/LightShader.source:()Lnet/minecraft/resources/ResourceLocation;
+       123: aload_1
+       124: invokeinterface #269,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.light:()Ldev/engine_room/flywheel/api/material/LightShader;
+       129: invokeinterface #274,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/LightShader.source:()Lnet/minecraft/resources/ResourceLocation;
+       134: invokevirtual #280                // Method net/minecraft/resources/ResourceLocation.equals:(Ljava/lang/Object;)Z
+       137: ifeq          246
+       140: aload_0
+       141: invokeinterface #117,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.texture:()Lnet/minecraft/resources/ResourceLocation;
+       146: aload_1
+       147: invokeinterface #117,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.texture:()Lnet/minecraft/resources/ResourceLocation;
+       152: invokevirtual #280                // Method net/minecraft/resources/ResourceLocation.equals:(Ljava/lang/Object;)Z
+       155: ifeq          246
+       158: aload_0
+       159: invokeinterface #284,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.cutout:()Ldev/engine_room/flywheel/api/material/CutoutShader;
+       164: invokeinterface #287,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/CutoutShader.source:()Lnet/minecraft/resources/ResourceLocation;
+       169: aload_1
+       170: invokeinterface #284,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.cutout:()Ldev/engine_room/flywheel/api/material/CutoutShader;
+       175: invokeinterface #287,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/CutoutShader.source:()Lnet/minecraft/resources/ResourceLocation;
+       180: invokevirtual #280                // Method net/minecraft/resources/ResourceLocation.equals:(Ljava/lang/Object;)Z
+       183: ifeq          246
+       186: aload_0
+       187: invokeinterface #291,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.shaders:()Ldev/engine_room/flywheel/api/material/MaterialShaders;
+       192: invokeinterface #296,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/MaterialShaders.fragmentSource:()Lnet/minecraft/resources/ResourceLocation;
+       197: aload_1
+       198: invokeinterface #291,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.shaders:()Ldev/engine_room/flywheel/api/material/MaterialShaders;
+       203: invokeinterface #296,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/MaterialShaders.fragmentSource:()Lnet/minecraft/resources/ResourceLocation;
+       208: invokevirtual #280                // Method net/minecraft/resources/ResourceLocation.equals:(Ljava/lang/Object;)Z
+       211: ifeq          246
+       214: aload_0
+       215: invokeinterface #291,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.shaders:()Ldev/engine_room/flywheel/api/material/MaterialShaders;
+       220: invokeinterface #299,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/MaterialShaders.vertexSource:()Lnet/minecraft/resources/ResourceLocation;
+       225: aload_1
+       226: invokeinterface #291,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.shaders:()Ldev/engine_room/flywheel/api/material/MaterialShaders;
+       231: invokeinterface #299,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/MaterialShaders.vertexSource:()Lnet/minecraft/resources/ResourceLocation;
+       236: invokevirtual #280                // Method net/minecraft/resources/ResourceLocation.equals:(Ljava/lang/Object;)Z
+       239: ifeq          246
+       242: iconst_1
+       243: goto          247
+       246: iconst_0
+       247: ireturn
+
+  public static boolean materialIsAllNonNull(dev.engine_room.flywheel.api.material.Material);
+    Code:
+         0: aload_0
+         1: ifnull        159
+         4: aload_0
+         5: invokeinterface #291,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.shaders:()Ldev/engine_room/flywheel/api/material/MaterialShaders;
+        10: ifnull        159
+        13: aload_0
+        14: invokeinterface #291,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.shaders:()Ldev/engine_room/flywheel/api/material/MaterialShaders;
+        19: invokeinterface #296,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/MaterialShaders.fragmentSource:()Lnet/minecraft/resources/ResourceLocation;
+        24: ifnull        159
+        27: aload_0
+        28: invokeinterface #291,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.shaders:()Ldev/engine_room/flywheel/api/material/MaterialShaders;
+        33: invokeinterface #299,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/MaterialShaders.vertexSource:()Lnet/minecraft/resources/ResourceLocation;
+        38: ifnull        159
+        41: aload_0
+        42: invokeinterface #306,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.fog:()Ldev/engine_room/flywheel/api/material/FogShader;
+        47: ifnull        159
+        50: aload_0
+        51: invokeinterface #306,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.fog:()Ldev/engine_room/flywheel/api/material/FogShader;
+        56: invokeinterface #309,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/FogShader.source:()Lnet/minecraft/resources/ResourceLocation;
+        61: ifnull        159
+        64: aload_0
+        65: invokeinterface #284,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.cutout:()Ldev/engine_room/flywheel/api/material/CutoutShader;
+        70: ifnull        159
+        73: aload_0
+        74: invokeinterface #284,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.cutout:()Ldev/engine_room/flywheel/api/material/CutoutShader;
+        79: invokeinterface #287,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/CutoutShader.source:()Lnet/minecraft/resources/ResourceLocation;
+        84: ifnull        159
+        87: aload_0
+        88: invokeinterface #269,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.light:()Ldev/engine_room/flywheel/api/material/LightShader;
+        93: ifnull        159
+        96: aload_0
+        97: invokeinterface #269,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.light:()Ldev/engine_room/flywheel/api/material/LightShader;
+       102: invokeinterface #274,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/LightShader.source:()Lnet/minecraft/resources/ResourceLocation;
+       107: ifnull        159
+       110: aload_0
+       111: invokeinterface #117,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.texture:()Lnet/minecraft/resources/ResourceLocation;
+       116: ifnull        159
+       119: aload_0
+       120: invokeinterface #55,  1           // InterfaceMethod dev/engine_room/flywheel/api/material/Material.depthTest:()Ldev/engine_room/flywheel/api/material/DepthTest;
+       125: ifnull        159
+       128: aload_0
+       129: invokeinterface #63,  1           // InterfaceMethod dev/engine_room/flywheel/api/material/Material.transparency:()Ldev/engine_room/flywheel/api/material/Transparency;
+       134: ifnull        159
+       137: aload_0
+       138: invokeinterface #71,  1           // InterfaceMethod dev/engine_room/flywheel/api/material/Material.writeMask:()Ldev/engine_room/flywheel/api/material/WriteMask;
+       143: ifnull        159
+       146: aload_0
+       147: invokeinterface #313,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.cardinalLightingMode:()Ldev/engine_room/flywheel/api/material/CardinalLightingMode;
+       152: ifnull        159
+       155: iconst_1
+       156: goto          160
+       159: iconst_0
+       160: ireturn
+
+  public static int compare(dev.engine_room.flywheel.api.material.Material, dev.engine_room.flywheel.api.material.Material);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: if_acmpne     7
+         5: iconst_0
+         6: ireturn
+         7: aload_0
+         8: invokeinterface #63,  1           // InterfaceMethod dev/engine_room/flywheel/api/material/Material.transparency:()Ldev/engine_room/flywheel/api/material/Transparency;
+        13: aload_1
+        14: invokeinterface #63,  1           // InterfaceMethod dev/engine_room/flywheel/api/material/Material.transparency:()Ldev/engine_room/flywheel/api/material/Transparency;
+        19: invokevirtual #319                // Method dev/engine_room/flywheel/api/material/Transparency.compareTo:(Ljava/lang/Enum;)I
+        22: istore_2
+        23: iload_2
+        24: ifeq          29
+        27: iload_2
+        28: ireturn
+        29: aload_0
+        30: invokeinterface #269,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.light:()Ldev/engine_room/flywheel/api/material/LightShader;
+        35: invokeinterface #274,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/LightShader.source:()Lnet/minecraft/resources/ResourceLocation;
+        40: aload_1
+        41: invokeinterface #269,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.light:()Ldev/engine_room/flywheel/api/material/LightShader;
+        46: invokeinterface #274,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/LightShader.source:()Lnet/minecraft/resources/ResourceLocation;
+        51: invokevirtual #322                // Method net/minecraft/resources/ResourceLocation.compareTo:(Lnet/minecraft/resources/ResourceLocation;)I
+        54: istore_2
+        55: iload_2
+        56: ifeq          61
+        59: iload_2
+        60: ireturn
+        61: aload_0
+        62: invokeinterface #284,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.cutout:()Ldev/engine_room/flywheel/api/material/CutoutShader;
+        67: invokeinterface #287,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/CutoutShader.source:()Lnet/minecraft/resources/ResourceLocation;
+        72: aload_1
+        73: invokeinterface #284,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.cutout:()Ldev/engine_room/flywheel/api/material/CutoutShader;
+        78: invokeinterface #287,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/CutoutShader.source:()Lnet/minecraft/resources/ResourceLocation;
+        83: invokevirtual #322                // Method net/minecraft/resources/ResourceLocation.compareTo:(Lnet/minecraft/resources/ResourceLocation;)I
+        86: istore_2
+        87: iload_2
+        88: ifeq          93
+        91: iload_2
+        92: ireturn
+        93: aload_0
+        94: invokeinterface #291,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.shaders:()Ldev/engine_room/flywheel/api/material/MaterialShaders;
+        99: invokeinterface #296,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/MaterialShaders.fragmentSource:()Lnet/minecraft/resources/ResourceLocation;
+       104: aload_1
+       105: invokeinterface #291,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.shaders:()Ldev/engine_room/flywheel/api/material/MaterialShaders;
+       110: invokeinterface #296,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/MaterialShaders.fragmentSource:()Lnet/minecraft/resources/ResourceLocation;
+       115: invokevirtual #322                // Method net/minecraft/resources/ResourceLocation.compareTo:(Lnet/minecraft/resources/ResourceLocation;)I
+       118: istore_2
+       119: iload_2
+       120: ifeq          125
+       123: iload_2
+       124: ireturn
+       125: aload_0
+       126: invokeinterface #291,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.shaders:()Ldev/engine_room/flywheel/api/material/MaterialShaders;
+       131: invokeinterface #299,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/MaterialShaders.vertexSource:()Lnet/minecraft/resources/ResourceLocation;
+       136: aload_1
+       137: invokeinterface #291,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.shaders:()Ldev/engine_room/flywheel/api/material/MaterialShaders;
+       142: invokeinterface #299,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/MaterialShaders.vertexSource:()Lnet/minecraft/resources/ResourceLocation;
+       147: invokevirtual #322                // Method net/minecraft/resources/ResourceLocation.compareTo:(Lnet/minecraft/resources/ResourceLocation;)I
+       150: istore_2
+       151: iload_2
+       152: ifeq          157
+       155: iload_2
+       156: ireturn
+       157: aload_0
+       158: invokeinterface #117,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.texture:()Lnet/minecraft/resources/ResourceLocation;
+       163: aload_1
+       164: invokeinterface #117,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.texture:()Lnet/minecraft/resources/ResourceLocation;
+       169: invokevirtual #322                // Method net/minecraft/resources/ResourceLocation.compareTo:(Lnet/minecraft/resources/ResourceLocation;)I
+       172: istore_2
+       173: iload_2
+       174: ifeq          179
+       177: iload_2
+       178: ireturn
+       179: aload_0
+       180: invokeinterface #126,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.blur:()Z
+       185: aload_1
+       186: invokeinterface #126,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.blur:()Z
+       191: invokestatic  #327                // Method java/lang/Boolean.compare:(ZZ)I
+       194: istore_2
+       195: iload_2
+       196: ifeq          201
+       199: iload_2
+       200: ireturn
+       201: aload_0
+       202: invokeinterface #129,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.mipmap:()Z
+       207: aload_1
+       208: invokeinterface #129,  1          // InterfaceMethod dev/engine_room/flywheel/api/material/Material.mipmap:()Z
+       213: invokestatic  #327                // Method java/lang/Boolean.compare:(ZZ)I
+       216: istore_2
+       217: iload_2
+       218: ifeq          223
+       221: iload_2
+       222: ireturn
+       223: aload_0
+       224: invokeinterface #41,  1           // InterfaceMethod dev/engine_room/flywheel/api/material/Material.backfaceCulling:()Z
+       229: aload_1
+       230: invokeinterface #41,  1           // InterfaceMethod dev/engine_room/flywheel/api/material/Material.backfaceCulling:()Z
+       235: invokestatic  #327                // Method java/lang/Boolean.compare:(ZZ)I
+       238: istore_2
+       239: iload_2
+       240: ifeq          245
+       243: iload_2
+       244: ireturn
+       245: aload_0
+       246: invokeinterface #48,  1           // InterfaceMethod dev/engine_room/flywheel/api/material/Material.polygonOffset:()Z
+       251: aload_1
+       252: invokeinterface #48,  1           // InterfaceMethod dev/engine_room/flywheel/api/material/Material.polygonOffset:()Z
+       257: invokestatic  #327                // Method java/lang/Boolean.compare:(ZZ)I
+       260: istore_2
+       261: iload_2
+       262: ifeq          267
+       265: iload_2
+       266: ireturn
+       267: aload_0
+       268: invokeinterface #55,  1           // InterfaceMethod dev/engine_room/flywheel/api/material/Material.depthTest:()Ldev/engine_room/flywheel/api/material/DepthTest;
+       273: aload_1
+       274: invokeinterface #55,  1           // InterfaceMethod dev/engine_room/flywheel/api/material/Material.depthTest:()Ldev/engine_room/flywheel/api/material/DepthTest;
+       279: invokevirtual #328                // Method dev/engine_room/flywheel/api/material/DepthTest.compareTo:(Ljava/lang/Enum;)I
+       282: istore_2
+       283: iload_2
+       284: ifeq          289
+       287: iload_2
+       288: ireturn
+       289: aload_0
+       290: invokeinterface #71,  1           // InterfaceMethod dev/engine_room/flywheel/api/material/Material.writeMask:()Ldev/engine_room/flywheel/api/material/WriteMask;
+       295: aload_1
+       296: invokeinterface #71,  1           // InterfaceMethod dev/engine_room/flywheel/api/material/Material.writeMask:()Ldev/engine_room/flywheel/api/material/WriteMask;
+       301: invokevirtual #329                // Method dev/engine_room/flywheel/api/material/WriteMask.compareTo:(Ljava/lang/Enum;)I
+       304: istore_2
+       305: iload_2
+       306: ifeq          311
+       309: iload_2
+       310: ireturn
+       311: iconst_0
+       312: ireturn
+
+  static {};
+    Code:
+         0: invokedynamic #347,  0            // InvokeDynamic #0:compare:()Ljava/util/Comparator;
+         5: putstatic     #349                // Field COMPARATOR:Ljava/util/Comparator;
+         8: return
+}

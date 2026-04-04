@@ -1,0 +1,98 @@
+plugins {
+    id 'eclipse'
+    id 'idea'
+    id 'maven-publish'
+    id 'net.minecraftforge.gradle' version '[6.0.16,6.2)'
+    id 'org.spongepowered.mixin' version '0.7-SNAPSHOT'
+}
+
+version = '1.0.0'
+group = 'com.createoptimizedtrains'
+archivesBaseName = 'create-optimized-trains'
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+
+minecraft {
+    mappings channel: 'official', version: '1.20.1'
+
+    copyIdeResources = true
+
+    runs {
+        configureEach {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+
+            mods {
+                create_optimized_trains {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        client {
+            property 'forge.enabledGameTestNamespaces', 'create_optimized_trains'
+        }
+
+        server {
+            property 'forge.enabledGameTestNamespaces', 'create_optimized_trains'
+            args '--nogui'
+        }
+    }
+}
+
+mixin {
+    add sourceSets.main, "createoptimizedtrains.refmap.json"
+    config "createoptimizedtrains.mixins.json"
+}
+
+repositories {
+    maven {
+        name = "Modrinth Maven"
+        url = "https://api.modrinth.com/maven"
+    }
+}
+
+dependencies {
+    minecraft 'net.minecraftforge:forge:1.20.1-47.1.33'
+
+    // Create Mod 6.0.8 para mc1.20.1 (via Modrinth Maven)
+    compileOnly fg.deobf("maven.modrinth:create:mc1.20.1-6.0.8")
+
+    // Flywheel 1.0.5 (JiJ'd dentro do Create) — necessário para compilar mixins do ContraptionVisual
+    compileOnly files('temp_flywheel/META-INF/jarjar/flywheel-forge-1.20.1-1.0.5.jar')
+
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+}
+
+jar {
+    manifest {
+        attributes([
+            "Specification-Title"     : "Create Optimized Trains",
+            "Specification-Vendor"    : "GreenToastSoftware Games",
+            "Specification-Version"   : "1",
+            "Implementation-Title"    : project.name,
+            "Implementation-Version"  : project.jar.archiveVersion,
+            "Implementation-Vendor"   : "GreenToastSoftware Games",
+            "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+            "MixinConfigs"            : "createoptimizedtrains.mixins.json"
+        ])
+    }
+}
+
+jar.finalizedBy('reobfJar')
+
+publishing {
+    publications {
+        register('mavenJava', MavenPublication) {
+            artifact jar
+        }
+    }
+    repositories {
+        maven {
+            url "file://${project.projectDir}/mcmodsrepo"
+        }
+    }
+}

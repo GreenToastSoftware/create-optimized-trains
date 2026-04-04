@@ -1,0 +1,41 @@
+modLoader = "javafml"
+loaderVersion = "[47,)"
+license = "MIT"
+issueTrackerURL = "https://github.com/GreenToastSoftware/create-optimized-trains/issues"
+
+[[mods]]
+modId = "create_optimized_trains"
+version = "1.0.0"
+displayName = "Create Optimized Trains"
+logoFile = "Create_Optimized_Trains_logo.png"
+credits = "GreenToastSoftware Games"
+authors = "GreenToastSoftware Games"
+displayURL = "https://modrinth.com/mod/create-optimized-trains"
+description = '''
+Performance optimization addon for Create Mod trains.
+Includes LOD rendering, carriage grouping, safe multi-threading,
+tick throttling, render optimization, proxy entities,
+smart chunk management, physics & networking optimization,
+priority system and dynamic performance monitor.
+'''
+
+[[dependencies.create_optimized_trains]]
+modId = "forge"
+mandatory = true
+versionRange = "[47,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.create_optimized_trains]]
+modId = "minecraft"
+mandatory = true
+versionRange = "[1.20.1,1.21)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.create_optimized_trains]]
+modId = "create"
+mandatory = true
+versionRange = "[6.0,)"
+ordering = "AFTER"
+side = "BOTH"

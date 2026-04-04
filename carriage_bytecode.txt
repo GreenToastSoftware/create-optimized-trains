@@ -1,0 +1,1780 @@
+Compiled from "Carriage.java"
+public class com.simibubi.create.content.trains.entity.Carriage {
+  public static final java.util.concurrent.atomic.AtomicInteger netIdGenerator;
+
+  public com.simibubi.create.content.trains.entity.Train train;
+
+  public int id;
+
+  public boolean blocked;
+
+  public boolean stalled;
+
+  public net.createmod.catnip.data.Couple<java.lang.Boolean> presentConductors;
+
+  public int bogeySpacing;
+
+  public net.createmod.catnip.data.Couple<com.simibubi.create.content.trains.entity.CarriageBogey> bogeys;
+
+  public com.simibubi.create.content.contraptions.minecart.TrainCargoManager storage;
+
+  net.minecraft.nbt.CompoundTag serialisedEntity;
+
+  java.util.Map<java.lang.Integer, net.minecraft.nbt.CompoundTag> serialisedPassengers;
+
+  private java.util.Map<net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level>, com.simibubi.create.content.trains.entity.Carriage$DimensionalCarriageEntity> entities;
+
+  static final int FIRST;
+
+  static final int MIDDLE;
+
+  static final int LAST;
+
+  static final int BOTH;
+
+  private java.util.Set<net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level>> currentlyTraversedDimensions;
+
+  private com.simibubi.create.content.trains.entity.TravellingPoint portalScout;
+
+  public com.simibubi.create.content.trains.entity.Carriage(com.simibubi.create.content.trains.entity.CarriageBogey, com.simibubi.create.content.trains.entity.CarriageBogey, int);
+    Code:
+         0: aload_0
+         1: invokespecial #75                 // Method java/lang/Object."<init>":()V
+         4: aload_0
+         5: new           #77                 // class java/util/HashSet
+         8: dup
+         9: invokespecial #78                 // Method java/util/HashSet."<init>":()V
+        12: putfield      #80                 // Field currentlyTraversedDimensions:Ljava/util/Set;
+        15: aload_0
+        16: new           #12                 // class com/simibubi/create/content/trains/entity/TravellingPoint
+        19: dup
+        20: invokespecial #81                 // Method com/simibubi/create/content/trains/entity/TravellingPoint."<init>":()V
+        23: putfield      #83                 // Field portalScout:Lcom/simibubi/create/content/trains/entity/TravellingPoint;
+        26: aload_0
+        27: iload_3
+        28: putfield      #85                 // Field bogeySpacing:I
+        31: aload_0
+        32: aload_1
+        33: aload_2
+        34: invokestatic  #91                 // Method net/createmod/catnip/data/Couple.create:(Ljava/lang/Object;Ljava/lang/Object;)Lnet/createmod/catnip/data/Couple;
+        37: putfield      #93                 // Field bogeys:Lnet/createmod/catnip/data/Couple;
+        40: aload_0
+        41: getstatic     #95                 // Field netIdGenerator:Ljava/util/concurrent/atomic/AtomicInteger;
+        44: invokevirtual #101                // Method java/util/concurrent/atomic/AtomicInteger.incrementAndGet:()I
+        47: putfield      #103                // Field id:I
+        50: aload_0
+        51: new           #105                // class net/minecraft/nbt/CompoundTag
+        54: dup
+        55: invokespecial #106                // Method net/minecraft/nbt/CompoundTag."<init>":()V
+        58: putfield      #108                // Field serialisedEntity:Lnet/minecraft/nbt/CompoundTag;
+        61: aload_0
+        62: iconst_0
+        63: invokestatic  #114                // Method java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+        66: iconst_0
+        67: invokestatic  #114                // Method java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+        70: invokestatic  #91                 // Method net/createmod/catnip/data/Couple.create:(Ljava/lang/Object;Ljava/lang/Object;)Lnet/createmod/catnip/data/Couple;
+        73: putfield      #116                // Field presentConductors:Lnet/createmod/catnip/data/Couple;
+        76: aload_0
+        77: new           #118                // class java/util/HashMap
+        80: dup
+        81: invokespecial #119                // Method java/util/HashMap."<init>":()V
+        84: putfield      #121                // Field serialisedPassengers:Ljava/util/Map;
+        87: aload_0
+        88: new           #118                // class java/util/HashMap
+        91: dup
+        92: invokespecial #119                // Method java/util/HashMap."<init>":()V
+        95: putfield      #123                // Field entities:Ljava/util/Map;
+        98: aload_0
+        99: new           #125                // class com/simibubi/create/content/contraptions/minecart/TrainCargoManager
+       102: dup
+       103: invokespecial #126                // Method com/simibubi/create/content/contraptions/minecart/TrainCargoManager."<init>":()V
+       106: putfield      #128                // Field storage:Lcom/simibubi/create/content/contraptions/minecart/TrainCargoManager;
+       109: aload_1
+       110: invokevirtual #133                // Method com/simibubi/create/content/trains/entity/CarriageBogey.setLeading:()V
+       113: aload_1
+       114: aload_0
+       115: putfield      #137                // Field com/simibubi/create/content/trains/entity/CarriageBogey.carriage:Lcom/simibubi/create/content/trains/entity/Carriage;
+       118: aload_2
+       119: ifnull        127
+       122: aload_2
+       123: aload_0
+       124: putfield      #137                // Field com/simibubi/create/content/trains/entity/CarriageBogey.carriage:Lcom/simibubi/create/content/trains/entity/Carriage;
+       127: return
+
+  public boolean isOnIncompatibleTrack();
+    Code:
+         0: aload_0
+         1: invokevirtual #147                // Method leadingBogey:()Lcom/simibubi/create/content/trains/entity/CarriageBogey;
+         4: getfield      #151                // Field com/simibubi/create/content/trains/entity/CarriageBogey.type:Lcom/simibubi/create/content/trains/bogey/AbstractBogeyBlock;
+         7: aload_0
+         8: iconst_1
+         9: invokevirtual #156                // Method com/simibubi/create/content/trains/bogey/AbstractBogeyBlock.isOnIncompatibleTrack:(Lcom/simibubi/create/content/trains/entity/Carriage;Z)Z
+        12: ifne          30
+        15: aload_0
+        16: invokevirtual #159                // Method trailingBogey:()Lcom/simibubi/create/content/trains/entity/CarriageBogey;
+        19: getfield      #151                // Field com/simibubi/create/content/trains/entity/CarriageBogey.type:Lcom/simibubi/create/content/trains/bogey/AbstractBogeyBlock;
+        22: aload_0
+        23: iconst_0
+        24: invokevirtual #156                // Method com/simibubi/create/content/trains/bogey/AbstractBogeyBlock.isOnIncompatibleTrack:(Lcom/simibubi/create/content/trains/entity/Carriage;Z)Z
+        27: ifeq          34
+        30: iconst_1
+        31: goto          35
+        34: iconst_0
+        35: ireturn
+
+  public void setTrain(com.simibubi.create.content.trains.entity.Train);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: putfield      #163                // Field train:Lcom/simibubi/create/content/trains/entity/Train;
+         5: return
+
+  public boolean presentInMultipleDimensions();
+    Code:
+         0: aload_0
+         1: getfield      #123                // Field entities:Ljava/util/Map;
+         4: invokeinterface #167,  1          // InterfaceMethod java/util/Map.size:()I
+         9: iconst_1
+        10: if_icmple     17
+        13: iconst_1
+        14: goto          18
+        17: iconst_0
+        18: ireturn
+
+  public java.util.List<net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level>> getPresentDimensions();
+    Code:
+         0: aload_0
+         1: getfield      #123                // Field entities:Ljava/util/Map;
+         4: invokeinterface #174,  1          // InterfaceMethod java/util/Map.keySet:()Ljava/util/Set;
+         9: invokeinterface #180,  1          // InterfaceMethod java/util/Set.stream:()Ljava/util/stream/Stream;
+        14: invokeinterface #185,  1          // InterfaceMethod java/util/stream/Stream.distinct:()Ljava/util/stream/Stream;
+        19: invokeinterface #188,  1          // InterfaceMethod java/util/stream/Stream.toList:()Ljava/util/List;
+        24: areturn
+
+  public java.util.Optional<net.minecraft.core.BlockPos> getPositionInDimension(net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level>);
+    Code:
+         0: aload_0
+         1: getfield      #123                // Field entities:Ljava/util/Map;
+         4: aload_1
+         5: invokeinterface #195,  2          // InterfaceMethod java/util/Map.get:(Ljava/lang/Object;)Ljava/lang/Object;
+        10: checkcast     #7                  // class com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity
+        13: invokestatic  #201                // Method java/util/Optional.ofNullable:(Ljava/lang/Object;)Ljava/util/Optional;
+        16: invokedynamic #219,  0            // InvokeDynamic #0:apply:()Ljava/util/function/Function;
+        21: invokevirtual #223                // Method java/util/Optional.map:(Ljava/util/function/Function;)Ljava/util/Optional;
+        24: areturn
+
+  public void setContraption(net.minecraft.world.level.Level, com.simibubi.create.content.trains.entity.CarriageContraption);
+    Code:
+         0: aload_0
+         1: aconst_null
+         2: putfield      #128                // Field storage:Lcom/simibubi/create/content/contraptions/minecart/TrainCargoManager;
+         5: aload_1
+         6: aload_2
+         7: invokestatic  #233                // Method com/simibubi/create/content/trains/entity/CarriageContraptionEntity.create:(Lnet/minecraft/world/level/Level;Lcom/simibubi/create/content/trains/entity/CarriageContraption;)Lcom/simibubi/create/content/trains/entity/CarriageContraptionEntity;
+        10: astore_3
+        11: aload_3
+        12: aload_0
+        13: invokevirtual #237                // Method com/simibubi/create/content/trains/entity/CarriageContraptionEntity.setCarriage:(Lcom/simibubi/create/content/trains/entity/Carriage;)V
+        16: aload_2
+        17: aload_1
+        18: invokevirtual #243                // Method com/simibubi/create/content/trains/entity/CarriageContraption.startMoving:(Lnet/minecraft/world/level/Level;)V
+        21: aload_2
+        22: aload_1
+        23: aload_3
+        24: invokevirtual #247                // Method com/simibubi/create/content/trains/entity/CarriageContraption.onEntityInitialize:(Lnet/minecraft/world/level/Level;Lcom/simibubi/create/content/contraptions/AbstractContraptionEntity;)V
+        27: aload_0
+        28: invokevirtual #250                // Method updateContraptionAnchors:()V
+        31: aload_0
+        32: aload_1
+        33: invokevirtual #254                // Method getDimensional:(Lnet/minecraft/world/level/Level;)Lcom/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity;
+        36: astore        4
+        38: aload         4
+        40: aload_3
+        41: invokevirtual #258                // Method com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.alignEntity:(Lcom/simibubi/create/content/trains/entity/CarriageContraptionEntity;)V
+        44: aload         4
+        46: aload_3
+        47: iconst_1
+        48: invokevirtual #262                // Method com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.removeAndSaveEntity:(Lcom/simibubi/create/content/trains/entity/CarriageContraptionEntity;Z)V
+        51: return
+
+  public com.simibubi.create.content.trains.entity.Carriage$DimensionalCarriageEntity getDimensional(net.minecraft.world.level.Level);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: invokevirtual #275                // Method net/minecraft/world/level/Level.dimension:()Lnet/minecraft/resources/ResourceKey;
+         5: invokevirtual #278                // Method getDimensional:(Lnet/minecraft/resources/ResourceKey;)Lcom/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity;
+         8: areturn
+
+  public com.simibubi.create.content.trains.entity.Carriage$DimensionalCarriageEntity getDimensional(net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level>);
+    Code:
+         0: aload_0
+         1: getfield      #123                // Field entities:Ljava/util/Map;
+         4: aload_1
+         5: aload_0
+         6: invokedynamic #287,  0            // InvokeDynamic #1:apply:(Lcom/simibubi/create/content/trains/entity/Carriage;)Ljava/util/function/Function;
+        11: invokeinterface #291,  3          // InterfaceMethod java/util/Map.computeIfAbsent:(Ljava/lang/Object;Ljava/util/function/Function;)Ljava/lang/Object;
+        16: checkcast     #7                  // class com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity
+        19: areturn
+
+  public com.simibubi.create.content.trains.entity.Carriage$DimensionalCarriageEntity getDimensionalIfPresent(net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level>);
+    Code:
+         0: aload_0
+         1: getfield      #123                // Field entities:Ljava/util/Map;
+         4: aload_1
+         5: invokeinterface #195,  2          // InterfaceMethod java/util/Map.get:(Ljava/lang/Object;)Ljava/lang/Object;
+        10: checkcast     #7                  // class com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity
+        13: areturn
+
+  public double travel(net.minecraft.world.level.Level, com.simibubi.create.content.trains.graph.TrackGraph, double, com.simibubi.create.content.trains.entity.TravellingPoint, com.simibubi.create.content.trains.entity.TravellingPoint, int);
+    Code:
+         0: aload         5
+         2: ifnonnull     25
+         5: aload_0
+         6: getfield      #163                // Field train:Lcom/simibubi/create/content/trains/entity/Train;
+         9: getfield      #300                // Field com/simibubi/create/content/trains/entity/Train.navigation:Lcom/simibubi/create/content/trains/entity/Navigation;
+        12: dup
+        13: invokestatic  #305                // Method java/util/Objects.requireNonNull:(Ljava/lang/Object;)Ljava/lang/Object;
+        16: pop
+        17: invokedynamic #316,  0            // InvokeDynamic #2:apply:(Lcom/simibubi/create/content/trains/entity/Navigation;)Ljava/util/function/Function;
+        22: goto          32
+        25: aload         5
+        27: invokedynamic #324,  0            // InvokeDynamic #3:apply:(Lcom/simibubi/create/content/trains/entity/TravellingPoint;)Ljava/util/function/Function;
+        32: astore        8
+        34: aload         6
+        36: ifnonnull     59
+        39: aload_0
+        40: getfield      #163                // Field train:Lcom/simibubi/create/content/trains/entity/Train;
+        43: getfield      #300                // Field com/simibubi/create/content/trains/entity/Train.navigation:Lcom/simibubi/create/content/trains/entity/Navigation;
+        46: dup
+        47: invokestatic  #305                // Method java/util/Objects.requireNonNull:(Ljava/lang/Object;)Ljava/lang/Object;
+        50: pop
+        51: invokedynamic #316,  0            // InvokeDynamic #2:apply:(Lcom/simibubi/create/content/trains/entity/Navigation;)Ljava/util/function/Function;
+        56: goto          66
+        59: aload         6
+        61: invokedynamic #331,  0            // InvokeDynamic #4:apply:(Lcom/simibubi/create/content/trains/entity/TravellingPoint;)Ljava/util/function/Function;
+        66: astore        9
+        68: aload_0
+        69: invokevirtual #334                // Method isOnTwoBogeys:()Z
+        72: istore        10
+        74: aload_0
+        75: getfield      #163                // Field train:Lcom/simibubi/create/content/trains/entity/Train;
+        78: getfield      #337                // Field com/simibubi/create/content/trains/entity/Train.derailed:Z
+        81: ifeq          88
+        84: dconst_0
+        85: goto          107
+        88: iload         10
+        90: ifeq          106
+        93: aload_0
+        94: getfield      #85                 // Field bogeySpacing:I
+        97: i2d
+        98: aload_0
+        99: invokevirtual #341                // Method getAnchorDiff:()D
+       102: dsub
+       103: goto          107
+       106: dconst_0
+       107: dstore        11
+       109: aload_0
+       110: iconst_0
+       111: putfield      #343                // Field blocked:Z
+       114: new           #345                // class org/apache/commons/lang3/mutable/MutableDouble
+       117: dup
+       118: dload_3
+       119: invokespecial #348                // Method org/apache/commons/lang3/mutable/MutableDouble."<init>":(D)V
+       122: astore        13
+       124: dload_3
+       125: dconst_0
+       126: dcmpg
+       127: ifge          134
+       130: iconst_1
+       131: goto          135
+       134: iconst_0
+       135: istore        14
+       137: getstatic     #354                // Field net/createmod/catnip/data/Iterate.trueAndFalse:[Z
+       140: astore        15
+       142: aload         15
+       144: arraylength
+       145: istore        16
+       147: iconst_0
+       148: istore        17
+       150: iload         17
+       152: iload         16
+       154: if_icmpge     708
+       157: aload         15
+       159: iload         17
+       161: baload
+       162: istore        18
+       164: iload         18
+       166: ifne          177
+       169: iload         10
+       171: ifne          177
+       174: goto          702
+       177: iload         10
+       179: ifeq          190
+       182: iload         18
+       184: iload         14
+       186: ixor
+       187: ifeq          194
+       190: iconst_1
+       191: goto          195
+       194: iconst_0
+       195: istore        19
+       197: aload_0
+       198: getfield      #93                 // Field bogeys:Lnet/createmod/catnip/data/Couple;
+       201: iload         19
+       203: invokevirtual #360                // Method net/createmod/catnip/data/Couple.get:(Z)Ljava/lang/Object;
+       206: checkcast     #130                // class com/simibubi/create/content/trains/entity/CarriageBogey
+       209: astore        20
+       211: dload         11
+       213: iload         19
+       215: ifeq          224
+       218: ldc2_w        #361                // double 0.5d
+       221: goto          227
+       224: ldc2_w        #363                // double -0.5d
+       227: dmul
+       228: dstore        21
+       230: aload         20
+       232: invokevirtual #367                // Method com/simibubi/create/content/trains/entity/CarriageBogey.getStress:()D
+       235: dstore        23
+       237: getstatic     #354                // Field net/createmod/catnip/data/Iterate.trueAndFalse:[Z
+       240: astore        25
+       242: aload         25
+       244: arraylength
+       245: istore        26
+       247: iconst_0
+       248: istore        27
+       250: iload         27
+       252: iload         26
+       254: if_icmpge     702
+       257: aload         25
+       259: iload         27
+       261: baload
+       262: istore        28
+       264: iload         28
+       266: iload         14
+       268: ixor
+       269: istore        29
+       271: aload         20
+       273: getfield      #370                // Field com/simibubi/create/content/trains/entity/CarriageBogey.points:Lnet/createmod/catnip/data/Couple;
+       276: iload         29
+       278: invokevirtual #360                // Method net/createmod/catnip/data/Couple.get:(Z)Ljava/lang/Object;
+       281: checkcast     #12                 // class com/simibubi/create/content/trains/entity/TravellingPoint
+       284: astore        30
+       286: iload         29
+       288: ifne          305
+       291: aload         20
+       293: getfield      #370                // Field com/simibubi/create/content/trains/entity/CarriageBogey.points:Lnet/createmod/catnip/data/Couple;
+       296: invokevirtual #374                // Method net/createmod/catnip/data/Couple.getFirst:()Ljava/lang/Object;
+       299: checkcast     #12                 // class com/simibubi/create/content/trains/entity/TravellingPoint
+       302: goto          338
+       305: iload         19
+       307: ifne          337
+       310: iload         10
+       312: ifeq          337
+       315: aload_0
+       316: getfield      #93                 // Field bogeys:Lnet/createmod/catnip/data/Couple;
+       319: invokevirtual #374                // Method net/createmod/catnip/data/Couple.getFirst:()Ljava/lang/Object;
+       322: checkcast     #130                // class com/simibubi/create/content/trains/entity/CarriageBogey
+       325: getfield      #370                // Field com/simibubi/create/content/trains/entity/CarriageBogey.points:Lnet/createmod/catnip/data/Couple;
+       328: invokevirtual #377                // Method net/createmod/catnip/data/Couple.getSecond:()Ljava/lang/Object;
+       331: checkcast     #12                 // class com/simibubi/create/content/trains/entity/TravellingPoint
+       334: goto          338
+       337: aconst_null
+       338: astore        31
+       340: iload         29
+       342: ifeq          359
+       345: aload         20
+       347: getfield      #370                // Field com/simibubi/create/content/trains/entity/CarriageBogey.points:Lnet/createmod/catnip/data/Couple;
+       350: invokevirtual #377                // Method net/createmod/catnip/data/Couple.getSecond:()Ljava/lang/Object;
+       353: checkcast     #12                 // class com/simibubi/create/content/trains/entity/TravellingPoint
+       356: goto          392
+       359: iload         19
+       361: ifeq          391
+       364: iload         10
+       366: ifeq          391
+       369: aload_0
+       370: getfield      #93                 // Field bogeys:Lnet/createmod/catnip/data/Couple;
+       373: invokevirtual #377                // Method net/createmod/catnip/data/Couple.getSecond:()Ljava/lang/Object;
+       376: checkcast     #130                // class com/simibubi/create/content/trains/entity/CarriageBogey
+       379: getfield      #370                // Field com/simibubi/create/content/trains/entity/CarriageBogey.points:Lnet/createmod/catnip/data/Couple;
+       382: invokevirtual #374                // Method net/createmod/catnip/data/Couple.getFirst:()Ljava/lang/Object;
+       385: checkcast     #12                 // class com/simibubi/create/content/trains/entity/TravellingPoint
+       388: goto          392
+       391: aconst_null
+       392: astore        32
+       394: dload         23
+       396: iload         29
+       398: ifeq          407
+       401: ldc2_w        #361                // double 0.5d
+       404: goto          410
+       407: ldc2_w        #363                // double -0.5d
+       410: dmul
+       411: dstore        33
+       413: aload         13
+       415: invokevirtual #381                // Method org/apache/commons/lang3/mutable/MutableDouble.getValue:()Ljava/lang/Double;
+       418: invokevirtual #386                // Method java/lang/Double.doubleValue:()D
+       421: dstore        35
+       423: aload         31
+       425: ifnonnull     443
+       428: aload         8
+       430: aload         30
+       432: invokeinterface #388,  2          // InterfaceMethod java/util/function/Function.apply:(Ljava/lang/Object;)Ljava/lang/Object;
+       437: checkcast     #10                 // class com/simibubi/create/content/trains/entity/TravellingPoint$ITrackSelector
+       440: goto          450
+       443: aload         30
+       445: aload         31
+       447: invokevirtual #391                // Method com/simibubi/create/content/trains/entity/TravellingPoint.follow:(Lcom/simibubi/create/content/trains/entity/TravellingPoint;)Lcom/simibubi/create/content/trains/entity/TravellingPoint$ITrackSelector;
+       450: astore        37
+       452: aload         32
+       454: ifnonnull     472
+       457: aload         9
+       459: aload         30
+       461: invokeinterface #388,  2          // InterfaceMethod java/util/function/Function.apply:(Ljava/lang/Object;)Ljava/lang/Object;
+       466: checkcast     #10                 // class com/simibubi/create/content/trains/entity/TravellingPoint$ITrackSelector
+       469: goto          479
+       472: aload         30
+       474: aload         32
+       476: invokevirtual #391                // Method com/simibubi/create/content/trains/entity/TravellingPoint.follow:(Lcom/simibubi/create/content/trains/entity/TravellingPoint;)Lcom/simibubi/create/content/trains/entity/TravellingPoint$ITrackSelector;
+       479: astore        38
+       481: iload         7
+       483: ifeq          492
+       486: iload         7
+       488: iconst_3
+       489: if_icmpne     506
+       492: iload         29
+       494: ifeq          506
+       497: iload         19
+       499: ifeq          506
+       502: iconst_1
+       503: goto          507
+       506: iconst_0
+       507: istore        39
+       509: iload         7
+       511: iconst_2
+       512: if_icmpeq     521
+       515: iload         7
+       517: iconst_3
+       518: if_icmpne     540
+       521: iload         29
+       523: ifne          540
+       526: iload         19
+       528: ifeq          536
+       531: iload         10
+       533: ifne          540
+       536: iconst_1
+       537: goto          541
+       540: iconst_0
+       541: istore        40
+       543: aload_0
+       544: getfield      #163                // Field train:Lcom/simibubi/create/content/trains/entity/Train;
+       547: invokevirtual #395                // Method com/simibubi/create/content/trains/entity/Train.frontSignalListener:()Lcom/simibubi/create/content/trains/entity/TravellingPoint$IEdgePointListener;
+       550: astore        41
+       552: aload_0
+       553: getfield      #163                // Field train:Lcom/simibubi/create/content/trains/entity/Train;
+       556: invokevirtual #398                // Method com/simibubi/create/content/trains/entity/Train.backSignalListener:()Lcom/simibubi/create/content/trains/entity/TravellingPoint$IEdgePointListener;
+       559: astore        42
+       561: aload         30
+       563: invokevirtual #401                // Method com/simibubi/create/content/trains/entity/TravellingPoint.ignoreEdgePoints:()Lcom/simibubi/create/content/trains/entity/TravellingPoint$IEdgePointListener;
+       566: astore        43
+       568: dload         35
+       570: dload         33
+       572: dload         21
+       574: dadd
+       575: dadd
+       576: dstore        35
+       578: dload         35
+       580: dconst_0
+       581: dcmpl
+       582: ifle          590
+       585: aload         37
+       587: goto          592
+       590: aload         38
+       592: astore        44
+       594: dload         35
+       596: dconst_0
+       597: dcmpl
+       598: ifle          626
+       601: iload         39
+       603: ifeq          611
+       606: aload         41
+       608: goto          648
+       611: iload         40
+       613: ifeq          621
+       616: aload         42
+       618: goto          648
+       621: aload         43
+       623: goto          648
+       626: iload         39
+       628: ifeq          636
+       631: aload         42
+       633: goto          648
+       636: iload         40
+       638: ifeq          646
+       641: aload         41
+       643: goto          648
+       646: aload         43
+       648: astore        45
+       650: aload         30
+       652: aload_2
+       653: dload         35
+       655: aload         44
+       657: aload         45
+       659: aload         30
+       661: invokevirtual #405                // Method com/simibubi/create/content/trains/entity/TravellingPoint.ignoreTurns:()Lcom/simibubi/create/content/trains/entity/TravellingPoint$ITurnListener;
+       664: aload_0
+       665: invokedynamic #417,  0            // InvokeDynamic #5:test:(Lcom/simibubi/create/content/trains/entity/Carriage;)Lcom/simibubi/create/content/trains/entity/TravellingPoint$IPortalListener;
+       670: invokevirtual #420                // Method com/simibubi/create/content/trains/entity/TravellingPoint.travel:(Lcom/simibubi/create/content/trains/graph/TrackGraph;DLcom/simibubi/create/content/trains/entity/TravellingPoint$ITrackSelector;Lcom/simibubi/create/content/trains/entity/TravellingPoint$IEdgePointListener;Lcom/simibubi/create/content/trains/entity/TravellingPoint$ITurnListener;Lcom/simibubi/create/content/trains/entity/TravellingPoint$IPortalListener;)D
+       673: dstore        46
+       675: aload_0
+       676: dup
+       677: getfield      #343                // Field blocked:Z
+       680: aload         30
+       682: getfield      #421                // Field com/simibubi/create/content/trains/entity/TravellingPoint.blocked:Z
+       685: ior
+       686: putfield      #343                // Field blocked:Z
+       689: aload         13
+       691: dload         46
+       693: invokevirtual #424                // Method org/apache/commons/lang3/mutable/MutableDouble.setValue:(D)V
+       696: iinc          27, 1
+       699: goto          250
+       702: iinc          17, 1
+       705: goto          150
+       708: aload_0
+       709: invokevirtual #250                // Method updateContraptionAnchors:()V
+       712: aload_0
+       713: aload_1
+       714: invokevirtual #427                // Method manageEntities:(Lnet/minecraft/world/level/Level;)V
+       717: aload         13
+       719: invokevirtual #381                // Method org/apache/commons/lang3/mutable/MutableDouble.getValue:()Ljava/lang/Double;
+       722: invokevirtual #386                // Method java/lang/Double.doubleValue:()D
+       725: dreturn
+
+  public double getAnchorDiff();
+    Code:
+         0: dconst_0
+         1: dstore_1
+         2: iconst_0
+         3: istore_3
+         4: aload_0
+         5: invokevirtual #470                // Method getLeadingPoint:()Lcom/simibubi/create/content/trains/entity/TravellingPoint;
+         8: astore        4
+        10: aload_0
+        11: invokevirtual #473                // Method getTrailingPoint:()Lcom/simibubi/create/content/trains/entity/TravellingPoint;
+        14: astore        5
+        16: aload         4
+        18: getfield      #477                // Field com/simibubi/create/content/trains/entity/TravellingPoint.node1:Lcom/simibubi/create/content/trains/graph/TrackNode;
+        21: ifnull        66
+        24: aload         5
+        26: getfield      #477                // Field com/simibubi/create/content/trains/entity/TravellingPoint.node1:Lcom/simibubi/create/content/trains/graph/TrackNode;
+        29: ifnull        66
+        32: aload         4
+        34: getfield      #477                // Field com/simibubi/create/content/trains/entity/TravellingPoint.node1:Lcom/simibubi/create/content/trains/graph/TrackNode;
+        37: invokevirtual #483                // Method com/simibubi/create/content/trains/graph/TrackNode.getLocation:()Lcom/simibubi/create/content/trains/graph/TrackNodeLocation;
+        40: getfield      #487                // Field com/simibubi/create/content/trains/graph/TrackNodeLocation.dimension:Lnet/minecraft/resources/ResourceKey;
+        43: aload         5
+        45: getfield      #477                // Field com/simibubi/create/content/trains/entity/TravellingPoint.node1:Lcom/simibubi/create/content/trains/graph/TrackNode;
+        48: invokevirtual #483                // Method com/simibubi/create/content/trains/graph/TrackNode.getLocation:()Lcom/simibubi/create/content/trains/graph/TrackNodeLocation;
+        51: getfield      #487                // Field com/simibubi/create/content/trains/graph/TrackNodeLocation.dimension:Lnet/minecraft/resources/ResourceKey;
+        54: invokevirtual #492                // Method net/minecraft/resources/ResourceKey.equals:(Ljava/lang/Object;)Z
+        57: ifne          66
+        60: aload_0
+        61: getfield      #85                 // Field bogeySpacing:I
+        64: i2d
+        65: dreturn
+        66: aload_0
+        67: getfield      #123                // Field entities:Ljava/util/Map;
+        70: invokeinterface #496,  1          // InterfaceMethod java/util/Map.values:()Ljava/util/Collection;
+        75: invokeinterface #502,  1          // InterfaceMethod java/util/Collection.iterator:()Ljava/util/Iterator;
+        80: astore        6
+        82: aload         6
+        84: invokeinterface #507,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+        89: ifeq          142
+        92: aload         6
+        94: invokeinterface #510,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+        99: checkcast     #7                  // class com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity
+       102: astore        7
+       104: aload         7
+       106: invokevirtual #514                // Method com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.leadingAnchor:()Lnet/minecraft/world/phys/Vec3;
+       109: ifnull        139
+       112: aload         7
+       114: invokevirtual #517                // Method com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.trailingAnchor:()Lnet/minecraft/world/phys/Vec3;
+       117: ifnull        139
+       120: iinc          3, 1
+       123: dload_1
+       124: aload         7
+       126: invokevirtual #514                // Method com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.leadingAnchor:()Lnet/minecraft/world/phys/Vec3;
+       129: aload         7
+       131: invokevirtual #517                // Method com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.trailingAnchor:()Lnet/minecraft/world/phys/Vec3;
+       134: invokevirtual #523                // Method net/minecraft/world/phys/Vec3.distanceTo:(Lnet/minecraft/world/phys/Vec3;)D
+       137: dadd
+       138: dstore_1
+       139: goto          82
+       142: iload_3
+       143: ifne          152
+       146: aload_0
+       147: getfield      #85                 // Field bogeySpacing:I
+       150: i2d
+       151: dreturn
+       152: dload_1
+       153: iload_3
+       154: i2d
+       155: ddiv
+       156: dreturn
+
+  public void updateConductors();
+    Code:
+         0: aload_0
+         1: invokevirtual #533                // Method anyAvailableEntity:()Lcom/simibubi/create/content/trains/entity/CarriageContraptionEntity;
+         4: ifnull        32
+         7: aload_0
+         8: getfield      #123                // Field entities:Ljava/util/Map;
+        11: invokeinterface #167,  1          // InterfaceMethod java/util/Map.size:()I
+        16: iconst_1
+        17: if_icmpgt     32
+        20: aload_0
+        21: getfield      #121                // Field serialisedPassengers:Ljava/util/Map;
+        24: invokeinterface #167,  1          // InterfaceMethod java/util/Map.size:()I
+        29: ifle          33
+        32: return
+        33: aload_0
+        34: getfield      #116                // Field presentConductors:Lnet/createmod/catnip/data/Couple;
+        37: invokedynamic #540,  0            // InvokeDynamic #6:apply:()Ljava/util/function/Function;
+        42: invokevirtual #544                // Method net/createmod/catnip/data/Couple.replace:(Ljava/util/function/Function;)V
+        45: aload_0
+        46: getfield      #123                // Field entities:Ljava/util/Map;
+        49: invokeinterface #496,  1          // InterfaceMethod java/util/Map.values:()Ljava/util/Collection;
+        54: invokeinterface #502,  1          // InterfaceMethod java/util/Collection.iterator:()Ljava/util/Iterator;
+        59: astore_1
+        60: aload_1
+        61: invokeinterface #507,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+        66: ifeq          120
+        69: aload_1
+        70: invokeinterface #510,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+        75: checkcast     #7                  // class com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity
+        78: astore_2
+        79: aload_2
+        80: getfield      #547                // Field com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.entity:Ljava/lang/ref/WeakReference;
+        83: invokevirtual #551                // Method java/lang/ref/WeakReference.get:()Ljava/lang/Object;
+        86: checkcast     #230                // class com/simibubi/create/content/trains/entity/CarriageContraptionEntity
+        89: astore_3
+        90: aload_3
+        91: ifnull        117
+        94: aload_3
+        95: invokevirtual #554                // Method com/simibubi/create/content/trains/entity/CarriageContraptionEntity.isAlive:()Z
+        98: ifeq          117
+       101: aload_0
+       102: getfield      #116                // Field presentConductors:Lnet/createmod/catnip/data/Couple;
+       105: invokedynamic #565,  0            // InvokeDynamic #7:apply:()Ljava/util/function/BiFunction;
+       110: aload_3
+       111: invokevirtual #569                // Method com/simibubi/create/content/trains/entity/CarriageContraptionEntity.checkConductors:()Lnet/createmod/catnip/data/Couple;
+       114: invokevirtual #573                // Method net/createmod/catnip/data/Couple.replaceWithParams:(Ljava/util/function/BiFunction;Lnet/createmod/catnip/data/Couple;)V
+       117: goto          60
+       120: return
+
+  public void manageEntities(net.minecraft.world.level.Level);
+    Code:
+         0: aload_0
+         1: getfield      #80                 // Field currentlyTraversedDimensions:Ljava/util/Set;
+         4: invokeinterface #577,  1          // InterfaceMethod java/util/Set.clear:()V
+         9: aload_0
+        10: getfield      #93                 // Field bogeys:Lnet/createmod/catnip/data/Couple;
+        13: aload_0
+        14: invokedynamic #589,  0            // InvokeDynamic #8:accept:(Lcom/simibubi/create/content/trains/entity/Carriage;)Ljava/util/function/Consumer;
+        19: invokevirtual #593                // Method net/createmod/catnip/data/Couple.forEach:(Ljava/util/function/Consumer;)V
+        22: aload_0
+        23: getfield      #123                // Field entities:Ljava/util/Map;
+        26: invokeinterface #596,  1          // InterfaceMethod java/util/Map.entrySet:()Ljava/util/Set;
+        31: invokeinterface #597,  1          // InterfaceMethod java/util/Set.iterator:()Ljava/util/Iterator;
+        36: astore_2
+        37: aload_2
+        38: invokeinterface #507,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+        43: ifeq          351
+        46: aload_2
+        47: invokeinterface #510,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+        52: checkcast     #24                 // class java/util/Map$Entry
+        55: astore_3
+        56: aload_0
+        57: getfield      #80                 // Field currentlyTraversedDimensions:Ljava/util/Set;
+        60: invokeinterface #600,  1          // InterfaceMethod java/util/Set.isEmpty:()Z
+        65: ifne          90
+        68: aload_0
+        69: getfield      #80                 // Field currentlyTraversedDimensions:Ljava/util/Set;
+        72: aload_3
+        73: invokeinterface #603,  1          // InterfaceMethod java/util/Map$Entry.getKey:()Ljava/lang/Object;
+        78: invokeinterface #606,  2          // InterfaceMethod java/util/Set.contains:(Ljava/lang/Object;)Z
+        83: ifne          90
+        86: iconst_1
+        87: goto          91
+        90: iconst_0
+        91: istore        4
+        93: aload_1
+        94: invokevirtual #610                // Method net/minecraft/world/level/Level.getServer:()Lnet/minecraft/server/MinecraftServer;
+        97: astore        5
+        99: aload         5
+       101: ifnonnull     107
+       104: goto          37
+       107: aload         5
+       109: aload_3
+       110: invokeinterface #603,  1          // InterfaceMethod java/util/Map$Entry.getKey:()Ljava/lang/Object;
+       115: checkcast     #489                // class net/minecraft/resources/ResourceKey
+       118: invokevirtual #616                // Method net/minecraft/server/MinecraftServer.getLevel:(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/server/level/ServerLevel;
+       121: astore        6
+       123: aload         6
+       125: ifnonnull     131
+       128: goto          37
+       131: aload_3
+       132: invokeinterface #620,  1          // InterfaceMethod java/util/Map$Entry.getValue:()Ljava/lang/Object;
+       137: checkcast     #7                  // class com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity
+       140: astore        7
+       142: aload         7
+       144: getfield      #547                // Field com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.entity:Ljava/lang/ref/WeakReference;
+       147: invokevirtual #551                // Method java/lang/ref/WeakReference.get:()Ljava/lang/Object;
+       150: checkcast     #230                // class com/simibubi/create/content/trains/entity/CarriageContraptionEntity
+       153: astore        8
+       155: aload         8
+       157: ifnonnull     220
+       160: iload         4
+       162: ifeq          174
+       165: aload_2
+       166: invokeinterface #623,  1          // InterfaceMethod java/util/Iterator.remove:()V
+       171: goto          310
+       174: aload         7
+       176: getfield      #627                // Field com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.positionAnchor:Lnet/minecraft/world/phys/Vec3;
+       179: ifnull        310
+       182: aload         6
+       184: aload         7
+       186: getfield      #627                // Field com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.positionAnchor:Lnet/minecraft/world/phys/Vec3;
+       189: invokestatic  #633                // Method net/minecraft/core/BlockPos.containing:(Lnet/minecraft/core/Position;)Lnet/minecraft/core/BlockPos;
+       192: invokestatic  #639                // Method com/simibubi/create/content/trains/entity/CarriageEntityHandler.isActiveChunk:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)Z
+       195: ifeq          310
+       198: aload         7
+       200: aload         6
+       202: aload_0
+       203: invokevirtual #533                // Method anyAvailableEntity:()Lcom/simibubi/create/content/trains/entity/CarriageContraptionEntity;
+       206: ifnonnull     213
+       209: iconst_1
+       210: goto          214
+       213: iconst_0
+       214: invokevirtual #643                // Method com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.createEntity:(Lnet/minecraft/world/level/Level;Z)V
+       217: goto          310
+       220: iload         4
+       222: ifeq          255
+       225: aload         7
+       227: getfield      #646                // Field com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.discardTicks:I
+       230: iconst_3
+       231: if_icmple     238
+       234: iconst_1
+       235: goto          239
+       238: iconst_0
+       239: istore        4
+       241: aload         7
+       243: dup
+       244: getfield      #646                // Field com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.discardTicks:I
+       247: iconst_1
+       248: iadd
+       249: putfield      #646                // Field com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.discardTicks:I
+       252: goto          261
+       255: aload         7
+       257: iconst_0
+       258: putfield      #646                // Field com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.discardTicks:I
+       261: aload         8
+       263: invokestatic  #649                // Method com/simibubi/create/content/trains/entity/CarriageEntityHandler.validateCarriageEntity:(Lcom/simibubi/create/content/trains/entity/CarriageContraptionEntity;)V
+       266: aload         8
+       268: invokevirtual #554                // Method com/simibubi/create/content/trains/entity/CarriageContraptionEntity.isAlive:()Z
+       271: ifeq          287
+       274: aload         8
+       276: getfield      #652                // Field com/simibubi/create/content/trains/entity/CarriageContraptionEntity.leftTickingChunks:Z
+       279: ifne          287
+       282: iload         4
+       284: ifeq          310
+       287: aload         7
+       289: aload         8
+       291: iload         4
+       293: invokevirtual #262                // Method com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.removeAndSaveEntity:(Lcom/simibubi/create/content/trains/entity/CarriageContraptionEntity;Z)V
+       296: iload         4
+       298: ifeq          37
+       301: aload_2
+       302: invokeinterface #623,  1          // InterfaceMethod java/util/Iterator.remove:()V
+       307: goto          37
+       310: aload         7
+       312: getfield      #547                // Field com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.entity:Ljava/lang/ref/WeakReference;
+       315: invokevirtual #551                // Method java/lang/ref/WeakReference.get:()Ljava/lang/Object;
+       318: checkcast     #230                // class com/simibubi/create/content/trains/entity/CarriageContraptionEntity
+       321: astore        8
+       323: aload         8
+       325: ifnull        348
+       328: aload         7
+       330: getfield      #627                // Field com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.positionAnchor:Lnet/minecraft/world/phys/Vec3;
+       333: ifnull        348
+       336: aload         7
+       338: aload         8
+       340: invokevirtual #258                // Method com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.alignEntity:(Lcom/simibubi/create/content/trains/entity/CarriageContraptionEntity;)V
+       343: aload         8
+       345: invokevirtual #655                // Method com/simibubi/create/content/trains/entity/CarriageContraptionEntity.syncCarriage:()V
+       348: goto          37
+       351: return
+
+  public void updateContraptionAnchors();
+    Code:
+         0: aload_0
+         1: invokevirtual #147                // Method leadingBogey:()Lcom/simibubi/create/content/trains/entity/CarriageBogey;
+         4: astore_1
+         5: aload_1
+         6: getfield      #370                // Field com/simibubi/create/content/trains/entity/CarriageBogey.points:Lnet/createmod/catnip/data/Couple;
+         9: invokedynamic #674,  0            // InvokeDynamic #9:test:()Ljava/util/function/Predicate;
+        14: invokevirtual #678                // Method net/createmod/catnip/data/Couple.either:(Ljava/util/function/Predicate;)Z
+        17: ifeq          21
+        20: return
+        21: aload_0
+        22: invokevirtual #159                // Method trailingBogey:()Lcom/simibubi/create/content/trains/entity/CarriageBogey;
+        25: astore_2
+        26: aload_2
+        27: getfield      #370                // Field com/simibubi/create/content/trains/entity/CarriageBogey.points:Lnet/createmod/catnip/data/Couple;
+        30: invokedynamic #683,  0            // InvokeDynamic #10:test:()Ljava/util/function/Predicate;
+        35: invokevirtual #678                // Method net/createmod/catnip/data/Couple.either:(Ljava/util/function/Predicate;)Z
+        38: ifeq          42
+        41: return
+        42: aload_1
+        43: invokevirtual #686                // Method com/simibubi/create/content/trains/entity/CarriageBogey.getDimension:()Lnet/minecraft/resources/ResourceKey;
+        46: astore_3
+        47: aload_2
+        48: invokevirtual #686                // Method com/simibubi/create/content/trains/entity/CarriageBogey.getDimension:()Lnet/minecraft/resources/ResourceKey;
+        51: astore        4
+        53: aload_1
+        54: getfield      #151                // Field com/simibubi/create/content/trains/entity/CarriageBogey.type:Lcom/simibubi/create/content/trains/bogey/AbstractBogeyBlock;
+        57: invokevirtual #689                // Method com/simibubi/create/content/trains/bogey/AbstractBogeyBlock.getWheelPointSpacing:()D
+        60: dstore        5
+        62: aload_2
+        63: getfield      #151                // Field com/simibubi/create/content/trains/entity/CarriageBogey.type:Lcom/simibubi/create/content/trains/bogey/AbstractBogeyBlock;
+        66: invokevirtual #689                // Method com/simibubi/create/content/trains/bogey/AbstractBogeyBlock.getWheelPointSpacing:()D
+        69: dstore        7
+        71: aload_1
+        72: invokevirtual #692                // Method com/simibubi/create/content/trains/entity/CarriageBogey.isUpsideDown:()Z
+        75: istore        9
+        77: aload_2
+        78: invokevirtual #692                // Method com/simibubi/create/content/trains/entity/CarriageBogey.isUpsideDown:()Z
+        81: istore        10
+        83: getstatic     #354                // Field net/createmod/catnip/data/Iterate.trueAndFalse:[Z
+        86: astore        11
+        88: aload         11
+        90: arraylength
+        91: istore        12
+        93: iconst_0
+        94: istore        13
+        96: iload         13
+        98: iload         12
+       100: if_icmpge     610
+       103: aload         11
+       105: iload         13
+       107: baload
+       108: istore        14
+       110: iload         14
+       112: ifeq          122
+       115: aload_0
+       116: invokevirtual #470                // Method getLeadingPoint:()Lcom/simibubi/create/content/trains/entity/TravellingPoint;
+       119: goto          126
+       122: aload_0
+       123: invokevirtual #473                // Method getTrailingPoint:()Lcom/simibubi/create/content/trains/entity/TravellingPoint;
+       126: astore        15
+       128: iload         14
+       130: ifne          140
+       133: aload_0
+       134: invokevirtual #470                // Method getLeadingPoint:()Lcom/simibubi/create/content/trains/entity/TravellingPoint;
+       137: goto          144
+       140: aload_0
+       141: invokevirtual #473                // Method getTrailingPoint:()Lcom/simibubi/create/content/trains/entity/TravellingPoint;
+       144: astore        16
+       146: aload         15
+       148: getfield      #477                // Field com/simibubi/create/content/trains/entity/TravellingPoint.node1:Lcom/simibubi/create/content/trains/graph/TrackNode;
+       151: invokevirtual #483                // Method com/simibubi/create/content/trains/graph/TrackNode.getLocation:()Lcom/simibubi/create/content/trains/graph/TrackNodeLocation;
+       154: getfield      #487                // Field com/simibubi/create/content/trains/graph/TrackNodeLocation.dimension:Lnet/minecraft/resources/ResourceKey;
+       157: astore        17
+       159: aload         16
+       161: getfield      #477                // Field com/simibubi/create/content/trains/entity/TravellingPoint.node1:Lcom/simibubi/create/content/trains/graph/TrackNode;
+       164: invokevirtual #483                // Method com/simibubi/create/content/trains/graph/TrackNode.getLocation:()Lcom/simibubi/create/content/trains/graph/TrackNodeLocation;
+       167: getfield      #487                // Field com/simibubi/create/content/trains/graph/TrackNodeLocation.dimension:Lnet/minecraft/resources/ResourceKey;
+       170: astore        18
+       172: aload         17
+       174: aload         18
+       176: invokevirtual #492                // Method net/minecraft/resources/ResourceKey.equals:(Ljava/lang/Object;)Z
+       179: ifeq          199
+       182: iload         14
+       184: ifeq          199
+       187: aload_0
+       188: aload         17
+       190: invokevirtual #278                // Method getDimensional:(Lnet/minecraft/resources/ResourceKey;)Lcom/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity;
+       193: invokevirtual #695                // Method com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.discardPivot:()V
+       196: goto          604
+       199: aload_0
+       200: aload         17
+       202: invokevirtual #278                // Method getDimensional:(Lnet/minecraft/resources/ResourceKey;)Lcom/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity;
+       205: astore        19
+       207: aload         19
+       209: aload         17
+       211: aload_3
+       212: invokevirtual #492                // Method net/minecraft/resources/ResourceKey.equals:(Ljava/lang/Object;)Z
+       215: ifeq          225
+       218: aload_1
+       219: invokevirtual #698                // Method com/simibubi/create/content/trains/entity/CarriageBogey.getAnchorPosition:()Lnet/minecraft/world/phys/Vec3;
+       222: goto          265
+       225: aload_0
+       226: aload         19
+       228: aload         17
+       230: aload         15
+       232: iload         14
+       234: ifeq          246
+       237: dload         5
+       239: ldc2_w        #699                // double 2.0d
+       242: ddiv
+       243: goto          258
+       246: aload_0
+       247: getfield      #85                 // Field bogeySpacing:I
+       250: i2d
+       251: dload         7
+       253: ldc2_w        #699                // double 2.0d
+       256: ddiv
+       257: dadd
+       258: iload         9
+       260: iload         10
+       262: invokevirtual #704                // Method pivoted:(Lcom/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity;Lnet/minecraft/resources/ResourceKey;Lcom/simibubi/create/content/trains/entity/TravellingPoint;DZZ)Lnet/minecraft/world/phys/Vec3;
+       265: putfield      #627                // Field com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.positionAnchor:Lnet/minecraft/world/phys/Vec3;
+       268: aload_2
+       269: invokevirtual #692                // Method com/simibubi/create/content/trains/entity/CarriageBogey.isUpsideDown:()Z
+       272: aload_1
+       273: invokevirtual #692                // Method com/simibubi/create/content/trains/entity/CarriageBogey.isUpsideDown:()Z
+       276: ixor
+       277: istore        20
+       279: aload_0
+       280: invokevirtual #334                // Method isOnTwoBogeys:()Z
+       283: ifeq          420
+       286: aload         19
+       288: getfield      #707                // Field com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.rotationAnchors:Lnet/createmod/catnip/data/Couple;
+       291: aload         17
+       293: aload_3
+       294: invokevirtual #492                // Method net/minecraft/resources/ResourceKey.equals:(Ljava/lang/Object;)Z
+       297: ifeq          307
+       300: aload_1
+       301: invokevirtual #698                // Method com/simibubi/create/content/trains/entity/CarriageBogey.getAnchorPosition:()Lnet/minecraft/world/phys/Vec3;
+       304: goto          347
+       307: aload_0
+       308: aload         19
+       310: aload         17
+       312: aload         15
+       314: iload         14
+       316: ifeq          328
+       319: dload         5
+       321: ldc2_w        #699                // double 2.0d
+       324: ddiv
+       325: goto          340
+       328: aload_0
+       329: getfield      #85                 // Field bogeySpacing:I
+       332: i2d
+       333: dload         7
+       335: ldc2_w        #699                // double 2.0d
+       338: ddiv
+       339: dadd
+       340: iload         9
+       342: iload         10
+       344: invokevirtual #704                // Method pivoted:(Lcom/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity;Lnet/minecraft/resources/ResourceKey;Lcom/simibubi/create/content/trains/entity/TravellingPoint;DZZ)Lnet/minecraft/world/phys/Vec3;
+       347: invokevirtual #710                // Method net/createmod/catnip/data/Couple.setFirst:(Ljava/lang/Object;)V
+       350: aload         19
+       352: getfield      #707                // Field com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.rotationAnchors:Lnet/createmod/catnip/data/Couple;
+       355: aload         17
+       357: aload         4
+       359: invokevirtual #492                // Method net/minecraft/resources/ResourceKey.equals:(Ljava/lang/Object;)Z
+       362: ifeq          374
+       365: aload_2
+       366: iload         20
+       368: invokevirtual #713                // Method com/simibubi/create/content/trains/entity/CarriageBogey.getAnchorPosition:(Z)Lnet/minecraft/world/phys/Vec3;
+       371: goto          414
+       374: aload_0
+       375: aload         19
+       377: aload         17
+       379: aload         15
+       381: iload         14
+       383: ifeq          401
+       386: dload         5
+       388: ldc2_w        #699                // double 2.0d
+       391: ddiv
+       392: aload_0
+       393: getfield      #85                 // Field bogeySpacing:I
+       396: i2d
+       397: dadd
+       398: goto          407
+       401: dload         7
+       403: ldc2_w        #699                // double 2.0d
+       406: ddiv
+       407: iload         9
+       409: iload         10
+       411: invokevirtual #704                // Method pivoted:(Lcom/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity;Lnet/minecraft/resources/ResourceKey;Lcom/simibubi/create/content/trains/entity/TravellingPoint;DZZ)Lnet/minecraft/world/phys/Vec3;
+       414: invokevirtual #716                // Method net/createmod/catnip/data/Couple.setSecond:(Ljava/lang/Object;)V
+       417: goto          553
+       420: aload         17
+       422: aload         18
+       424: invokevirtual #492                // Method net/minecraft/resources/ResourceKey.equals:(Ljava/lang/Object;)Z
+       427: ifeq          451
+       430: aload         19
+       432: aload_1
+       433: getfield      #370                // Field com/simibubi/create/content/trains/entity/CarriageBogey.points:Lnet/createmod/catnip/data/Couple;
+       436: aload_0
+       437: invokedynamic #723,  0            // InvokeDynamic #11:apply:(Lcom/simibubi/create/content/trains/entity/Carriage;)Ljava/util/function/Function;
+       442: invokevirtual #726                // Method net/createmod/catnip/data/Couple.map:(Ljava/util/function/Function;)Lnet/createmod/catnip/data/Couple;
+       445: putfield      #707                // Field com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.rotationAnchors:Lnet/createmod/catnip/data/Couple;
+       448: goto          553
+       451: aload         19
+       453: getfield      #707                // Field com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.rotationAnchors:Lnet/createmod/catnip/data/Couple;
+       456: aload_1
+       457: getfield      #370                // Field com/simibubi/create/content/trains/entity/CarriageBogey.points:Lnet/createmod/catnip/data/Couple;
+       460: invokevirtual #374                // Method net/createmod/catnip/data/Couple.getFirst:()Ljava/lang/Object;
+       463: aload         15
+       465: if_acmpne     483
+       468: aload         15
+       470: aload_0
+       471: getfield      #163                // Field train:Lcom/simibubi/create/content/trains/entity/Train;
+       474: getfield      #728                // Field com/simibubi/create/content/trains/entity/Train.graph:Lcom/simibubi/create/content/trains/graph/TrackGraph;
+       477: invokevirtual #732                // Method com/simibubi/create/content/trains/entity/TravellingPoint.getPosition:(Lcom/simibubi/create/content/trains/graph/TrackGraph;)Lnet/minecraft/world/phys/Vec3;
+       480: goto          499
+       483: aload_0
+       484: aload         19
+       486: aload         17
+       488: aload         15
+       490: dload         5
+       492: iload         9
+       494: iload         10
+       496: invokevirtual #704                // Method pivoted:(Lcom/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity;Lnet/minecraft/resources/ResourceKey;Lcom/simibubi/create/content/trains/entity/TravellingPoint;DZZ)Lnet/minecraft/world/phys/Vec3;
+       499: invokevirtual #710                // Method net/createmod/catnip/data/Couple.setFirst:(Ljava/lang/Object;)V
+       502: aload         19
+       504: getfield      #707                // Field com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.rotationAnchors:Lnet/createmod/catnip/data/Couple;
+       507: aload_1
+       508: getfield      #370                // Field com/simibubi/create/content/trains/entity/CarriageBogey.points:Lnet/createmod/catnip/data/Couple;
+       511: invokevirtual #377                // Method net/createmod/catnip/data/Couple.getSecond:()Ljava/lang/Object;
+       514: aload         15
+       516: if_acmpne     534
+       519: aload         15
+       521: aload_0
+       522: getfield      #163                // Field train:Lcom/simibubi/create/content/trains/entity/Train;
+       525: getfield      #728                // Field com/simibubi/create/content/trains/entity/Train.graph:Lcom/simibubi/create/content/trains/graph/TrackGraph;
+       528: invokevirtual #732                // Method com/simibubi/create/content/trains/entity/TravellingPoint.getPosition:(Lcom/simibubi/create/content/trains/graph/TrackGraph;)Lnet/minecraft/world/phys/Vec3;
+       531: goto          550
+       534: aload_0
+       535: aload         19
+       537: aload         17
+       539: aload         15
+       541: dload         5
+       543: iload         9
+       545: iload         10
+       547: invokevirtual #704                // Method pivoted:(Lcom/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity;Lnet/minecraft/resources/ResourceKey;Lcom/simibubi/create/content/trains/entity/TravellingPoint;DZZ)Lnet/minecraft/world/phys/Vec3;
+       550: invokevirtual #716                // Method net/createmod/catnip/data/Couple.setSecond:(Ljava/lang/Object;)V
+       553: aload         19
+       555: invokevirtual #735                // Method com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.minAllowedLocalCoord:()I
+       558: istore        21
+       560: aload         19
+       562: invokevirtual #738                // Method com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.maxAllowedLocalCoord:()I
+       565: istore        22
+       567: aload         19
+       569: iload         14
+       571: invokevirtual #742                // Method com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.updateCutoff:(Z)V
+       574: iload         21
+       576: aload         19
+       578: invokevirtual #735                // Method com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.minAllowedLocalCoord:()I
+       581: if_icmpne     594
+       584: iload         22
+       586: aload         19
+       588: invokevirtual #738                // Method com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.maxAllowedLocalCoord:()I
+       591: if_icmpeq     604
+       594: aload         19
+       596: invokevirtual #745                // Method com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.updateRenderedCutoff:()V
+       599: aload         19
+       601: invokevirtual #748                // Method com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.updatePassengerLoadout:()V
+       604: iinc          13, 1
+       607: goto          96
+       610: return
+
+  private net.minecraft.world.phys.Vec3 pivoted(com.simibubi.create.content.trains.entity.Carriage$DimensionalCarriageEntity, net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level>, com.simibubi.create.content.trains.entity.TravellingPoint, double, boolean, boolean);
+    Code:
+         0: aload_0
+         1: getfield      #163                // Field train:Lcom/simibubi/create/content/trains/entity/Train;
+         4: getfield      #728                // Field com/simibubi/create/content/trains/entity/Train.graph:Lcom/simibubi/create/content/trains/graph/TrackGraph;
+         7: ifnonnull     29
+        10: aload_1
+        11: getfield      #765                // Field com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.pivot:Lcom/simibubi/create/content/trains/graph/TrackNodeLocation;
+        14: ifnonnull     21
+        17: aconst_null
+        18: goto          28
+        21: aload_1
+        22: getfield      #765                // Field com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.pivot:Lcom/simibubi/create/content/trains/graph/TrackNodeLocation;
+        25: invokevirtual #767                // Method com/simibubi/create/content/trains/graph/TrackNodeLocation.getLocation:()Lnet/minecraft/world/phys/Vec3;
+        28: areturn
+        29: aload_1
+        30: aload_2
+        31: aload_3
+        32: aload_0
+        33: invokevirtual #470                // Method getLeadingPoint:()Lcom/simibubi/create/content/trains/entity/TravellingPoint;
+        36: if_acmpne     43
+        39: iconst_1
+        40: goto          44
+        43: iconst_0
+        44: invokevirtual #771                // Method com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.findPivot:(Lnet/minecraft/resources/ResourceKey;Z)Lcom/simibubi/create/content/trains/graph/TrackNodeLocation;
+        47: astore        8
+        49: aload         8
+        51: ifnonnull     56
+        54: aconst_null
+        55: areturn
+        56: aload_3
+        57: aload_0
+        58: invokevirtual #470                // Method getLeadingPoint:()Lcom/simibubi/create/content/trains/entity/TravellingPoint;
+        61: if_acmpeq     75
+        64: iload         6
+        66: iload         7
+        68: if_icmpeq     75
+        71: iconst_1
+        72: goto          76
+        75: iconst_0
+        76: istore        9
+        78: aload_3
+        79: aload_0
+        80: getfield      #163                // Field train:Lcom/simibubi/create/content/trains/entity/Train;
+        83: getfield      #728                // Field com/simibubi/create/content/trains/entity/Train.graph:Lcom/simibubi/create/content/trains/graph/TrackGraph;
+        86: iload         9
+        88: invokevirtual #774                // Method com/simibubi/create/content/trains/entity/TravellingPoint.getPosition:(Lcom/simibubi/create/content/trains/graph/TrackGraph;Z)Lnet/minecraft/world/phys/Vec3;
+        91: astore        10
+        93: aload         8
+        95: invokevirtual #767                // Method com/simibubi/create/content/trains/graph/TrackNodeLocation.getLocation:()Lnet/minecraft/world/phys/Vec3;
+        98: dconst_0
+        99: iload         6
+       101: ifeq          110
+       104: ldc2_w        #775                // double -1.0d
+       107: goto          111
+       110: dconst_1
+       111: dconst_0
+       112: invokevirtual #780                // Method net/minecraft/world/phys/Vec3.add:(DDD)Lnet/minecraft/world/phys/Vec3;
+       115: astore        11
+       117: dload         4
+       119: aload         10
+       121: aload         11
+       123: invokevirtual #523                // Method net/minecraft/world/phys/Vec3.distanceTo:(Lnet/minecraft/world/phys/Vec3;)D
+       126: ddiv
+       127: d2f
+       128: aload         10
+       130: aload         11
+       132: invokestatic  #786                // Method net/createmod/catnip/math/VecHelper.lerp:(FLnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+       135: areturn
+
+  public void alignEntity(net.minecraft.world.level.Level);
+    Code:
+         0: aload_0
+         1: getfield      #123                // Field entities:Ljava/util/Map;
+         4: aload_1
+         5: invokevirtual #275                // Method net/minecraft/world/level/Level.dimension:()Lnet/minecraft/resources/ResourceKey;
+         8: invokeinterface #195,  2          // InterfaceMethod java/util/Map.get:(Ljava/lang/Object;)Ljava/lang/Object;
+        13: checkcast     #7                  // class com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity
+        16: astore_2
+        17: aload_2
+        18: ifnull        41
+        21: aload_2
+        22: getfield      #547                // Field com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.entity:Ljava/lang/ref/WeakReference;
+        25: invokevirtual #551                // Method java/lang/ref/WeakReference.get:()Ljava/lang/Object;
+        28: checkcast     #230                // class com/simibubi/create/content/trains/entity/CarriageContraptionEntity
+        31: astore_3
+        32: aload_3
+        33: ifnull        41
+        36: aload_2
+        37: aload_3
+        38: invokevirtual #258                // Method com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.alignEntity:(Lcom/simibubi/create/content/trains/entity/CarriageContraptionEntity;)V
+        41: return
+
+  public com.simibubi.create.content.trains.entity.TravellingPoint getLeadingPoint();
+    Code:
+         0: aload_0
+         1: invokevirtual #147                // Method leadingBogey:()Lcom/simibubi/create/content/trains/entity/CarriageBogey;
+         4: invokevirtual #793                // Method com/simibubi/create/content/trains/entity/CarriageBogey.leading:()Lcom/simibubi/create/content/trains/entity/TravellingPoint;
+         7: areturn
+
+  public com.simibubi.create.content.trains.entity.TravellingPoint getTrailingPoint();
+    Code:
+         0: aload_0
+         1: invokevirtual #159                // Method trailingBogey:()Lcom/simibubi/create/content/trains/entity/CarriageBogey;
+         4: invokevirtual #796                // Method com/simibubi/create/content/trains/entity/CarriageBogey.trailing:()Lcom/simibubi/create/content/trains/entity/TravellingPoint;
+         7: areturn
+
+  public com.simibubi.create.content.trains.entity.CarriageBogey leadingBogey();
+    Code:
+         0: aload_0
+         1: getfield      #93                 // Field bogeys:Lnet/createmod/catnip/data/Couple;
+         4: invokevirtual #374                // Method net/createmod/catnip/data/Couple.getFirst:()Ljava/lang/Object;
+         7: checkcast     #130                // class com/simibubi/create/content/trains/entity/CarriageBogey
+        10: areturn
+
+  public com.simibubi.create.content.trains.entity.CarriageBogey trailingBogey();
+    Code:
+         0: aload_0
+         1: invokevirtual #334                // Method isOnTwoBogeys:()Z
+         4: ifeq          20
+         7: aload_0
+         8: getfield      #93                 // Field bogeys:Lnet/createmod/catnip/data/Couple;
+        11: invokevirtual #377                // Method net/createmod/catnip/data/Couple.getSecond:()Ljava/lang/Object;
+        14: checkcast     #130                // class com/simibubi/create/content/trains/entity/CarriageBogey
+        17: goto          24
+        20: aload_0
+        21: invokevirtual #147                // Method leadingBogey:()Lcom/simibubi/create/content/trains/entity/CarriageBogey;
+        24: areturn
+
+  public boolean isOnTwoBogeys();
+    Code:
+         0: aload_0
+         1: getfield      #93                 // Field bogeys:Lnet/createmod/catnip/data/Couple;
+         4: invokevirtual #377                // Method net/createmod/catnip/data/Couple.getSecond:()Ljava/lang/Object;
+         7: ifnull        14
+        10: iconst_1
+        11: goto          15
+        14: iconst_0
+        15: ireturn
+
+  public com.simibubi.create.content.trains.entity.CarriageContraptionEntity anyAvailableEntity();
+    Code:
+         0: aload_0
+         1: getfield      #123                // Field entities:Ljava/util/Map;
+         4: invokeinterface #496,  1          // InterfaceMethod java/util/Map.values:()Ljava/util/Collection;
+         9: invokeinterface #502,  1          // InterfaceMethod java/util/Collection.iterator:()Ljava/util/Iterator;
+        14: astore_1
+        15: aload_1
+        16: invokeinterface #507,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+        21: ifeq          54
+        24: aload_1
+        25: invokeinterface #510,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+        30: checkcast     #7                  // class com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity
+        33: astore_2
+        34: aload_2
+        35: getfield      #547                // Field com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.entity:Ljava/lang/ref/WeakReference;
+        38: invokevirtual #551                // Method java/lang/ref/WeakReference.get:()Ljava/lang/Object;
+        41: checkcast     #230                // class com/simibubi/create/content/trains/entity/CarriageContraptionEntity
+        44: astore_3
+        45: aload_3
+        46: ifnull        51
+        49: aload_3
+        50: areturn
+        51: goto          15
+        54: aconst_null
+        55: areturn
+
+  public net.createmod.catnip.data.Pair<net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level>, com.simibubi.create.content.trains.entity.Carriage$DimensionalCarriageEntity> anyAvailableDimensionalCarriage();
+    Code:
+         0: aload_0
+         1: getfield      #123                // Field entities:Ljava/util/Map;
+         4: invokeinterface #596,  1          // InterfaceMethod java/util/Map.entrySet:()Ljava/util/Set;
+         9: invokeinterface #597,  1          // InterfaceMethod java/util/Set.iterator:()Ljava/util/Iterator;
+        14: astore_1
+        15: aload_1
+        16: invokeinterface #507,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+        21: ifeq          77
+        24: aload_1
+        25: invokeinterface #510,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+        30: checkcast     #24                 // class java/util/Map$Entry
+        33: astore_2
+        34: aload_2
+        35: invokeinterface #620,  1          // InterfaceMethod java/util/Map$Entry.getValue:()Ljava/lang/Object;
+        40: checkcast     #7                  // class com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity
+        43: getfield      #547                // Field com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.entity:Ljava/lang/ref/WeakReference;
+        46: invokevirtual #551                // Method java/lang/ref/WeakReference.get:()Ljava/lang/Object;
+        49: ifnull        74
+        52: aload_2
+        53: invokeinterface #603,  1          // InterfaceMethod java/util/Map$Entry.getKey:()Ljava/lang/Object;
+        58: checkcast     #489                // class net/minecraft/resources/ResourceKey
+        61: aload_2
+        62: invokeinterface #620,  1          // InterfaceMethod java/util/Map$Entry.getValue:()Ljava/lang/Object;
+        67: checkcast     #7                  // class com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity
+        70: invokestatic  #805                // Method net/createmod/catnip/data/Pair.of:(Ljava/lang/Object;Ljava/lang/Object;)Lnet/createmod/catnip/data/Pair;
+        73: areturn
+        74: goto          15
+        77: aconst_null
+        78: areturn
+
+  public void forEachPresentEntity(java.util.function.Consumer<com.simibubi.create.content.trains.entity.CarriageContraptionEntity>);
+    Code:
+         0: aload_0
+         1: getfield      #123                // Field entities:Ljava/util/Map;
+         4: invokeinterface #496,  1          // InterfaceMethod java/util/Map.values:()Ljava/util/Collection;
+         9: invokeinterface #502,  1          // InterfaceMethod java/util/Collection.iterator:()Ljava/util/Iterator;
+        14: astore_2
+        15: aload_2
+        16: invokeinterface #507,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+        21: ifeq          62
+        24: aload_2
+        25: invokeinterface #510,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+        30: checkcast     #7                  // class com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity
+        33: astore_3
+        34: aload_3
+        35: getfield      #547                // Field com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.entity:Ljava/lang/ref/WeakReference;
+        38: invokevirtual #551                // Method java/lang/ref/WeakReference.get:()Ljava/lang/Object;
+        41: checkcast     #230                // class com/simibubi/create/content/trains/entity/CarriageContraptionEntity
+        44: astore        4
+        46: aload         4
+        48: ifnull        59
+        51: aload_1
+        52: aload         4
+        54: invokeinterface #811,  2          // InterfaceMethod java/util/function/Consumer.accept:(Ljava/lang/Object;)V
+        59: goto          15
+        62: return
+
+  public net.minecraft.nbt.CompoundTag write(com.simibubi.create.content.trains.graph.DimensionPalette);
+    Code:
+         0: new           #105                // class net/minecraft/nbt/CompoundTag
+         3: dup
+         4: invokespecial #106                // Method net/minecraft/nbt/CompoundTag."<init>":()V
+         7: astore_2
+         8: aload_2
+         9: ldc_w         #818                // String FirstBogey
+        12: aload_0
+        13: getfield      #93                 // Field bogeys:Lnet/createmod/catnip/data/Couple;
+        16: invokevirtual #374                // Method net/createmod/catnip/data/Couple.getFirst:()Ljava/lang/Object;
+        19: checkcast     #130                // class com/simibubi/create/content/trains/entity/CarriageBogey
+        22: aload_1
+        23: invokevirtual #820                // Method com/simibubi/create/content/trains/entity/CarriageBogey.write:(Lcom/simibubi/create/content/trains/graph/DimensionPalette;)Lnet/minecraft/nbt/CompoundTag;
+        26: invokevirtual #824                // Method net/minecraft/nbt/CompoundTag.put:(Ljava/lang/String;Lnet/minecraft/nbt/Tag;)Lnet/minecraft/nbt/Tag;
+        29: pop
+        30: aload_0
+        31: invokevirtual #334                // Method isOnTwoBogeys:()Z
+        34: ifeq          59
+        37: aload_2
+        38: ldc_w         #826                // String SecondBogey
+        41: aload_0
+        42: getfield      #93                 // Field bogeys:Lnet/createmod/catnip/data/Couple;
+        45: invokevirtual #377                // Method net/createmod/catnip/data/Couple.getSecond:()Ljava/lang/Object;
+        48: checkcast     #130                // class com/simibubi/create/content/trains/entity/CarriageBogey
+        51: aload_1
+        52: invokevirtual #820                // Method com/simibubi/create/content/trains/entity/CarriageBogey.write:(Lcom/simibubi/create/content/trains/graph/DimensionPalette;)Lnet/minecraft/nbt/CompoundTag;
+        55: invokevirtual #824                // Method net/minecraft/nbt/CompoundTag.put:(Ljava/lang/String;Lnet/minecraft/nbt/Tag;)Lnet/minecraft/nbt/Tag;
+        58: pop
+        59: aload_2
+        60: ldc_w         #828                // String Spacing
+        63: aload_0
+        64: getfield      #85                 // Field bogeySpacing:I
+        67: invokevirtual #832                // Method net/minecraft/nbt/CompoundTag.putInt:(Ljava/lang/String;I)V
+        70: aload_2
+        71: ldc_w         #834                // String FrontConductor
+        74: aload_0
+        75: getfield      #116                // Field presentConductors:Lnet/createmod/catnip/data/Couple;
+        78: invokevirtual #374                // Method net/createmod/catnip/data/Couple.getFirst:()Ljava/lang/Object;
+        81: checkcast     #110                // class java/lang/Boolean
+        84: invokevirtual #837                // Method java/lang/Boolean.booleanValue:()Z
+        87: invokevirtual #841                // Method net/minecraft/nbt/CompoundTag.putBoolean:(Ljava/lang/String;Z)V
+        90: aload_2
+        91: ldc_w         #843                // String BackConductor
+        94: aload_0
+        95: getfield      #116                // Field presentConductors:Lnet/createmod/catnip/data/Couple;
+        98: invokevirtual #377                // Method net/createmod/catnip/data/Couple.getSecond:()Ljava/lang/Object;
+       101: checkcast     #110                // class java/lang/Boolean
+       104: invokevirtual #837                // Method java/lang/Boolean.booleanValue:()Z
+       107: invokevirtual #841                // Method net/minecraft/nbt/CompoundTag.putBoolean:(Ljava/lang/String;Z)V
+       110: aload_2
+       111: ldc_w         #845                // String Stalled
+       114: aload_0
+       115: getfield      #847                // Field stalled:Z
+       118: invokevirtual #841                // Method net/minecraft/nbt/CompoundTag.putBoolean:(Ljava/lang/String;Z)V
+       121: new           #118                // class java/util/HashMap
+       124: dup
+       125: invokespecial #119                // Method java/util/HashMap."<init>":()V
+       128: astore_3
+       129: aload_0
+       130: getfield      #123                // Field entities:Ljava/util/Map;
+       133: invokeinterface #496,  1          // InterfaceMethod java/util/Map.values:()Ljava/util/Collection;
+       138: invokeinterface #502,  1          // InterfaceMethod java/util/Collection.iterator:()Ljava/util/Iterator;
+       143: astore        4
+       145: aload         4
+       147: invokeinterface #507,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+       152: ifeq          298
+       155: aload         4
+       157: invokeinterface #510,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+       162: checkcast     #7                  // class com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity
+       165: astore        5
+       167: aload         5
+       169: getfield      #547                // Field com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.entity:Ljava/lang/ref/WeakReference;
+       172: invokevirtual #551                // Method java/lang/ref/WeakReference.get:()Ljava/lang/Object;
+       175: checkcast     #230                // class com/simibubi/create/content/trains/entity/CarriageContraptionEntity
+       178: astore        6
+       180: aload         6
+       182: ifnonnull     188
+       185: goto          145
+       188: aload_0
+       189: aload         6
+       191: invokevirtual #851                // Method serialize:(Lnet/minecraft/world/entity/Entity;)V
+       194: aload         6
+       196: invokevirtual #855                // Method com/simibubi/create/content/trains/entity/CarriageContraptionEntity.getContraption:()Lcom/simibubi/create/content/contraptions/Contraption;
+       199: astore        7
+       201: aload         7
+       203: ifnonnull     209
+       206: goto          145
+       209: aload         7
+       211: invokevirtual #861                // Method com/simibubi/create/content/contraptions/Contraption.getSeatMapping:()Ljava/util/Map;
+       214: astore        8
+       216: aload         6
+       218: invokevirtual #864                // Method com/simibubi/create/content/trains/entity/CarriageContraptionEntity.getPassengers:()Ljava/util/List;
+       221: invokeinterface #867,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+       226: astore        9
+       228: aload         9
+       230: invokeinterface #507,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+       235: ifeq          295
+       238: aload         9
+       240: invokeinterface #510,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+       245: checkcast     #869                // class net/minecraft/world/entity/Entity
+       248: astore        10
+       250: aload         8
+       252: aload         10
+       254: invokevirtual #873                // Method net/minecraft/world/entity/Entity.getUUID:()Ljava/util/UUID;
+       257: invokeinterface #876,  2          // InterfaceMethod java/util/Map.containsKey:(Ljava/lang/Object;)Z
+       262: ifeq          292
+       265: aload_3
+       266: aload         8
+       268: aload         10
+       270: invokevirtual #873                // Method net/minecraft/world/entity/Entity.getUUID:()Ljava/util/UUID;
+       273: invokeinterface #195,  2          // InterfaceMethod java/util/Map.get:(Ljava/lang/Object;)Ljava/lang/Object;
+       278: checkcast     #878                // class java/lang/Integer
+       281: aload         10
+       283: invokevirtual #882                // Method net/minecraft/world/entity/Entity.serializeNBT:()Lnet/minecraft/nbt/CompoundTag;
+       286: invokeinterface #884,  3          // InterfaceMethod java/util/Map.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+       291: pop
+       292: goto          228
+       295: goto          145
+       298: aload_2
+       299: ldc_w         #888                // String Entity
+       302: aload_0
+       303: getfield      #108                // Field serialisedEntity:Lnet/minecraft/nbt/CompoundTag;
+       306: invokevirtual #891                // Method net/minecraft/nbt/CompoundTag.copy:()Lnet/minecraft/nbt/CompoundTag;
+       309: invokevirtual #824                // Method net/minecraft/nbt/CompoundTag.put:(Ljava/lang/String;Lnet/minecraft/nbt/Tag;)Lnet/minecraft/nbt/Tag;
+       312: pop
+       313: new           #105                // class net/minecraft/nbt/CompoundTag
+       316: dup
+       317: invokespecial #106                // Method net/minecraft/nbt/CompoundTag."<init>":()V
+       320: astore        4
+       322: aload_3
+       323: aload_0
+       324: getfield      #121                // Field serialisedPassengers:Ljava/util/Map;
+       327: invokeinterface #895,  2          // InterfaceMethod java/util/Map.putAll:(Ljava/util/Map;)V
+       332: aload_3
+       333: aload         4
+       335: invokedynamic #907,  0            // InvokeDynamic #12:accept:(Lnet/minecraft/nbt/CompoundTag;)Ljava/util/function/BiConsumer;
+       340: invokeinterface #910,  2          // InterfaceMethod java/util/Map.forEach:(Ljava/util/function/BiConsumer;)V
+       345: aload_2
+       346: ldc_w         #912                // String Passengers
+       349: aload         4
+       351: invokevirtual #824                // Method net/minecraft/nbt/CompoundTag.put:(Ljava/lang/String;Lnet/minecraft/nbt/Tag;)Lnet/minecraft/nbt/Tag;
+       354: pop
+       355: aload_2
+       356: ldc_w         #914                // String EntityPositioning
+       359: aload_0
+       360: getfield      #123                // Field entities:Ljava/util/Map;
+       363: invokeinterface #596,  1          // InterfaceMethod java/util/Map.entrySet:()Ljava/util/Set;
+       368: aload_1
+       369: invokedynamic #924,  0            // InvokeDynamic #13:apply:(Lcom/simibubi/create/content/trains/graph/DimensionPalette;)Ljava/util/function/Function;
+       374: invokestatic  #930                // Method net/createmod/catnip/nbt/NBTHelper.writeCompoundList:(Ljava/lang/Iterable;Ljava/util/function/Function;)Lnet/minecraft/nbt/ListTag;
+       377: invokevirtual #824                // Method net/minecraft/nbt/CompoundTag.put:(Ljava/lang/String;Lnet/minecraft/nbt/Tag;)Lnet/minecraft/nbt/Tag;
+       380: pop
+       381: aload_2
+       382: areturn
+
+  private void serialize(net.minecraft.world.entity.Entity);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: invokevirtual #882                // Method net/minecraft/world/entity/Entity.serializeNBT:()Lnet/minecraft/nbt/CompoundTag;
+         5: putfield      #108                // Field serialisedEntity:Lnet/minecraft/nbt/CompoundTag;
+         8: aload_0
+         9: getfield      #108                // Field serialisedEntity:Lnet/minecraft/nbt/CompoundTag;
+        12: ldc_w         #912                // String Passengers
+        15: invokevirtual #943                // Method net/minecraft/nbt/CompoundTag.remove:(Ljava/lang/String;)V
+        18: aload_0
+        19: getfield      #108                // Field serialisedEntity:Lnet/minecraft/nbt/CompoundTag;
+        22: ldc_w         #945                // String Contraption
+        25: invokevirtual #949                // Method net/minecraft/nbt/CompoundTag.getCompound:(Ljava/lang/String;)Lnet/minecraft/nbt/CompoundTag;
+        28: ldc_w         #912                // String Passengers
+        31: invokevirtual #943                // Method net/minecraft/nbt/CompoundTag.remove:(Ljava/lang/String;)V
+        34: return
+
+  public static com.simibubi.create.content.trains.entity.Carriage read(net.minecraft.nbt.CompoundTag, com.simibubi.create.content.trains.graph.TrackGraph, com.simibubi.create.content.trains.graph.DimensionPalette);
+    Code:
+         0: aload_0
+         1: ldc_w         #818                // String FirstBogey
+         4: invokevirtual #949                // Method net/minecraft/nbt/CompoundTag.getCompound:(Ljava/lang/String;)Lnet/minecraft/nbt/CompoundTag;
+         7: aload_1
+         8: aload_2
+         9: invokestatic  #954                // Method com/simibubi/create/content/trains/entity/CarriageBogey.read:(Lnet/minecraft/nbt/CompoundTag;Lcom/simibubi/create/content/trains/graph/TrackGraph;Lcom/simibubi/create/content/trains/graph/DimensionPalette;)Lcom/simibubi/create/content/trains/entity/CarriageBogey;
+        12: astore_3
+        13: aload_0
+        14: ldc_w         #826                // String SecondBogey
+        17: invokevirtual #957                // Method net/minecraft/nbt/CompoundTag.contains:(Ljava/lang/String;)Z
+        20: ifeq          38
+        23: aload_0
+        24: ldc_w         #826                // String SecondBogey
+        27: invokevirtual #949                // Method net/minecraft/nbt/CompoundTag.getCompound:(Ljava/lang/String;)Lnet/minecraft/nbt/CompoundTag;
+        30: aload_1
+        31: aload_2
+        32: invokestatic  #954                // Method com/simibubi/create/content/trains/entity/CarriageBogey.read:(Lnet/minecraft/nbt/CompoundTag;Lcom/simibubi/create/content/trains/graph/TrackGraph;Lcom/simibubi/create/content/trains/graph/DimensionPalette;)Lcom/simibubi/create/content/trains/entity/CarriageBogey;
+        35: goto          39
+        38: aconst_null
+        39: astore        4
+        41: new           #2                  // class com/simibubi/create/content/trains/entity/Carriage
+        44: dup
+        45: aload_3
+        46: aload         4
+        48: aload_0
+        49: ldc_w         #828                // String Spacing
+        52: invokevirtual #961                // Method net/minecraft/nbt/CompoundTag.getInt:(Ljava/lang/String;)I
+        55: invokespecial #963                // Method "<init>":(Lcom/simibubi/create/content/trains/entity/CarriageBogey;Lcom/simibubi/create/content/trains/entity/CarriageBogey;I)V
+        58: astore        5
+        60: aload         5
+        62: aload_0
+        63: ldc_w         #845                // String Stalled
+        66: invokevirtual #966                // Method net/minecraft/nbt/CompoundTag.getBoolean:(Ljava/lang/String;)Z
+        69: putfield      #847                // Field stalled:Z
+        72: aload         5
+        74: aload_0
+        75: ldc_w         #834                // String FrontConductor
+        78: invokevirtual #966                // Method net/minecraft/nbt/CompoundTag.getBoolean:(Ljava/lang/String;)Z
+        81: invokestatic  #114                // Method java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+        84: aload_0
+        85: ldc_w         #843                // String BackConductor
+        88: invokevirtual #966                // Method net/minecraft/nbt/CompoundTag.getBoolean:(Ljava/lang/String;)Z
+        91: invokestatic  #114                // Method java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+        94: invokestatic  #91                 // Method net/createmod/catnip/data/Couple.create:(Ljava/lang/Object;Ljava/lang/Object;)Lnet/createmod/catnip/data/Couple;
+        97: putfield      #116                // Field presentConductors:Lnet/createmod/catnip/data/Couple;
+       100: aload         5
+       102: aload_0
+       103: ldc_w         #888                // String Entity
+       106: invokevirtual #949                // Method net/minecraft/nbt/CompoundTag.getCompound:(Ljava/lang/String;)Lnet/minecraft/nbt/CompoundTag;
+       109: invokevirtual #891                // Method net/minecraft/nbt/CompoundTag.copy:()Lnet/minecraft/nbt/CompoundTag;
+       112: putfield      #108                // Field serialisedEntity:Lnet/minecraft/nbt/CompoundTag;
+       115: aload_0
+       116: ldc_w         #914                // String EntityPositioning
+       119: bipush        10
+       121: invokevirtual #970                // Method net/minecraft/nbt/CompoundTag.getList:(Ljava/lang/String;I)Lnet/minecraft/nbt/ListTag;
+       124: aload         5
+       126: aload_2
+       127: invokedynamic #980,  0            // InvokeDynamic #14:accept:(Lcom/simibubi/create/content/trains/entity/Carriage;Lcom/simibubi/create/content/trains/graph/DimensionPalette;)Ljava/util/function/Consumer;
+       132: invokestatic  #984                // Method net/createmod/catnip/nbt/NBTHelper.iterateCompoundList:(Lnet/minecraft/nbt/ListTag;Ljava/util/function/Consumer;)V
+       135: aload_0
+       136: ldc_w         #912                // String Passengers
+       139: invokevirtual #949                // Method net/minecraft/nbt/CompoundTag.getCompound:(Ljava/lang/String;)Lnet/minecraft/nbt/CompoundTag;
+       142: astore        6
+       144: aload         6
+       146: invokevirtual #987                // Method net/minecraft/nbt/CompoundTag.getAllKeys:()Ljava/util/Set;
+       149: aload         5
+       151: aload         6
+       153: invokedynamic #996,  0            // InvokeDynamic #15:accept:(Lcom/simibubi/create/content/trains/entity/Carriage;Lnet/minecraft/nbt/CompoundTag;)Ljava/util/function/Consumer;
+       158: invokeinterface #997,  2          // InterfaceMethod java/util/Set.forEach:(Ljava/util/function/Consumer;)V
+       163: aload         5
+       165: areturn
+
+  private static void lambda$read$16(com.simibubi.create.content.trains.entity.Carriage, net.minecraft.nbt.CompoundTag, java.lang.String);
+    Code:
+         0: aload_0
+         1: getfield      #121                // Field serialisedPassengers:Ljava/util/Map;
+         4: aload_2
+         5: iconst_4
+         6: invokevirtual #1004               // Method java/lang/String.substring:(I)Ljava/lang/String;
+         9: invokestatic  #1007               // Method java/lang/Integer.valueOf:(Ljava/lang/String;)Ljava/lang/Integer;
+        12: aload_1
+        13: aload_2
+        14: invokevirtual #949                // Method net/minecraft/nbt/CompoundTag.getCompound:(Ljava/lang/String;)Lnet/minecraft/nbt/CompoundTag;
+        17: invokeinterface #884,  3          // InterfaceMethod java/util/Map.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+        22: pop
+        23: return
+
+  private static void lambda$read$15(com.simibubi.create.content.trains.entity.Carriage, com.simibubi.create.content.trains.graph.DimensionPalette, net.minecraft.nbt.CompoundTag);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: aload_2
+         3: ldc_w         #1011               // String Dim
+         6: invokevirtual #961                // Method net/minecraft/nbt/CompoundTag.getInt:(Ljava/lang/String;)I
+         9: invokevirtual #1015               // Method com/simibubi/create/content/trains/graph/DimensionPalette.decode:(I)Lnet/minecraft/resources/ResourceKey;
+        12: invokevirtual #278                // Method getDimensional:(Lnet/minecraft/resources/ResourceKey;)Lcom/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity;
+        15: aload_2
+        16: invokevirtual #1017               // Method com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.read:(Lnet/minecraft/nbt/CompoundTag;)V
+        19: return
+
+  private static net.minecraft.nbt.CompoundTag lambda$write$14(com.simibubi.create.content.trains.graph.DimensionPalette, java.util.Map$Entry);
+    Code:
+         0: aload_1
+         1: invokeinterface #620,  1          // InterfaceMethod java/util/Map$Entry.getValue:()Ljava/lang/Object;
+         6: checkcast     #7                  // class com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity
+         9: invokevirtual #1020               // Method com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.write:()Lnet/minecraft/nbt/CompoundTag;
+        12: astore_2
+        13: aload_2
+        14: ldc_w         #1011               // String Dim
+        17: aload_0
+        18: aload_1
+        19: invokeinterface #603,  1          // InterfaceMethod java/util/Map$Entry.getKey:()Ljava/lang/Object;
+        24: checkcast     #489                // class net/minecraft/resources/ResourceKey
+        27: invokevirtual #1024               // Method com/simibubi/create/content/trains/graph/DimensionPalette.encode:(Lnet/minecraft/resources/ResourceKey;)I
+        30: invokevirtual #832                // Method net/minecraft/nbt/CompoundTag.putInt:(Ljava/lang/String;I)V
+        33: aload_2
+        34: areturn
+
+  private static void lambda$write$13(net.minecraft.nbt.CompoundTag, java.lang.Integer, net.minecraft.nbt.CompoundTag);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: invokedynamic #1037,  0           // InvokeDynamic #16:makeConcatWithConstants:(Ljava/lang/Integer;)Ljava/lang/String;
+         7: aload_2
+         8: invokevirtual #891                // Method net/minecraft/nbt/CompoundTag.copy:()Lnet/minecraft/nbt/CompoundTag;
+        11: invokevirtual #824                // Method net/minecraft/nbt/CompoundTag.put:(Ljava/lang/String;Lnet/minecraft/nbt/Tag;)Lnet/minecraft/nbt/Tag;
+        14: pop
+        15: return
+
+  private net.minecraft.world.phys.Vec3 lambda$updateContraptionAnchors$12(com.simibubi.create.content.trains.entity.TravellingPoint);
+    Code:
+         0: aload_1
+         1: aload_0
+         2: getfield      #163                // Field train:Lcom/simibubi/create/content/trains/entity/Train;
+         5: getfield      #728                // Field com/simibubi/create/content/trains/entity/Train.graph:Lcom/simibubi/create/content/trains/graph/TrackGraph;
+         8: invokevirtual #732                // Method com/simibubi/create/content/trains/entity/TravellingPoint.getPosition:(Lcom/simibubi/create/content/trains/graph/TrackGraph;)Lnet/minecraft/world/phys/Vec3;
+        11: areturn
+
+  private static boolean lambda$updateContraptionAnchors$11(com.simibubi.create.content.trains.entity.TravellingPoint);
+    Code:
+         0: aload_0
+         1: getfield      #1045               // Field com/simibubi/create/content/trains/entity/TravellingPoint.edge:Lcom/simibubi/create/content/trains/graph/TrackEdge;
+         4: ifnonnull     11
+         7: iconst_1
+         8: goto          12
+        11: iconst_0
+        12: ireturn
+
+  private static boolean lambda$updateContraptionAnchors$10(com.simibubi.create.content.trains.entity.TravellingPoint);
+    Code:
+         0: aload_0
+         1: getfield      #1045               // Field com/simibubi/create/content/trains/entity/TravellingPoint.edge:Lcom/simibubi/create/content/trains/graph/TrackEdge;
+         4: ifnonnull     11
+         7: iconst_1
+         8: goto          12
+        11: iconst_0
+        12: ireturn
+
+  private void lambda$manageEntities$9(com.simibubi.create.content.trains.entity.CarriageBogey);
+    Code:
+         0: aload_1
+         1: ifnonnull     5
+         4: return
+         5: aload_1
+         6: getfield      #370                // Field com/simibubi/create/content/trains/entity/CarriageBogey.points:Lnet/createmod/catnip/data/Couple;
+         9: aload_0
+        10: invokedynamic #1053,  0           // InvokeDynamic #17:accept:(Lcom/simibubi/create/content/trains/entity/Carriage;)Ljava/util/function/Consumer;
+        15: invokevirtual #593                // Method net/createmod/catnip/data/Couple.forEach:(Ljava/util/function/Consumer;)V
+        18: return
+
+  private void lambda$manageEntities$8(com.simibubi.create.content.trains.entity.TravellingPoint);
+    Code:
+         0: aload_1
+         1: getfield      #477                // Field com/simibubi/create/content/trains/entity/TravellingPoint.node1:Lcom/simibubi/create/content/trains/graph/TrackNode;
+         4: ifnonnull     8
+         7: return
+         8: aload_0
+         9: getfield      #80                 // Field currentlyTraversedDimensions:Ljava/util/Set;
+        12: aload_1
+        13: getfield      #477                // Field com/simibubi/create/content/trains/entity/TravellingPoint.node1:Lcom/simibubi/create/content/trains/graph/TrackNode;
+        16: invokevirtual #483                // Method com/simibubi/create/content/trains/graph/TrackNode.getLocation:()Lcom/simibubi/create/content/trains/graph/TrackNodeLocation;
+        19: getfield      #487                // Field com/simibubi/create/content/trains/graph/TrackNodeLocation.dimension:Lnet/minecraft/resources/ResourceKey;
+        22: invokeinterface #1056,  2         // InterfaceMethod java/util/Set.add:(Ljava/lang/Object;)Z
+        27: pop
+        28: return
+
+  private static java.lang.Boolean lambda$updateConductors$7(java.lang.Boolean, java.lang.Boolean);
+    Code:
+         0: aload_0
+         1: invokevirtual #837                // Method java/lang/Boolean.booleanValue:()Z
+         4: ifne          14
+         7: aload_1
+         8: invokevirtual #837                // Method java/lang/Boolean.booleanValue:()Z
+        11: ifeq          18
+        14: iconst_1
+        15: goto          19
+        18: iconst_0
+        19: invokestatic  #114                // Method java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+        22: areturn
+
+  private static java.lang.Boolean lambda$updateConductors$6(java.lang.Boolean);
+    Code:
+         0: iconst_0
+         1: invokestatic  #114                // Method java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+         4: areturn
+
+  private boolean lambda$travel$5(net.createmod.catnip.data.Couple);
+    Code:
+         0: aload_0
+         1: getfield      #123                // Field entities:Ljava/util/Map;
+         4: invokeinterface #496,  1          // InterfaceMethod java/util/Map.values:()Ljava/util/Collection;
+         9: invokeinterface #502,  1          // InterfaceMethod java/util/Collection.iterator:()Ljava/util/Iterator;
+        14: astore_2
+        15: aload_2
+        16: invokeinterface #507,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+        21: ifeq          52
+        24: aload_2
+        25: invokeinterface #510,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+        30: checkcast     #7                  // class com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity
+        33: astore_3
+        34: aload_1
+        35: aload_3
+        36: invokedynamic #1070,  0           // InvokeDynamic #18:test:(Lcom/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity;)Ljava/util/function/Predicate;
+        41: invokevirtual #678                // Method net/createmod/catnip/data/Couple.either:(Ljava/util/function/Predicate;)Z
+        44: ifeq          49
+        47: iconst_0
+        48: ireturn
+        49: goto          15
+        52: aload_0
+        53: getfield      #123                // Field entities:Ljava/util/Map;
+        56: invokeinterface #167,  1          // InterfaceMethod java/util/Map.size:()I
+        61: iconst_1
+        62: if_icmple     77
+        65: aload_0
+        66: getfield      #163                // Field train:Lcom/simibubi/create/content/trains/entity/Train;
+        69: getfield      #1074               // Field com/simibubi/create/content/trains/entity/Train.status:Lcom/simibubi/create/content/trains/entity/TrainStatus;
+        72: invokevirtual #1079               // Method com/simibubi/create/content/trains/entity/TrainStatus.doublePortal:()V
+        75: iconst_1
+        76: ireturn
+        77: iconst_0
+        78: ireturn
+
+  private static boolean lambda$travel$4(com.simibubi.create.content.trains.entity.Carriage$DimensionalCarriageEntity, com.simibubi.create.content.trains.graph.TrackNodeLocation);
+    Code:
+         0: aload_1
+         1: aload_0
+         2: getfield      #765                // Field com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.pivot:Lcom/simibubi/create/content/trains/graph/TrackNodeLocation;
+         5: invokevirtual #1082               // Method com/simibubi/create/content/trains/graph/TrackNodeLocation.equalsIgnoreDim:(Ljava/lang/Object;)Z
+         8: ireturn
+
+  private static com.simibubi.create.content.trains.entity.TravellingPoint$ITrackSelector lambda$travel$3(com.simibubi.create.content.trains.entity.TravellingPoint, com.simibubi.create.content.trains.entity.TravellingPoint);
+    Code:
+         0: aload_1
+         1: aload_0
+         2: invokevirtual #391                // Method com/simibubi/create/content/trains/entity/TravellingPoint.follow:(Lcom/simibubi/create/content/trains/entity/TravellingPoint;)Lcom/simibubi/create/content/trains/entity/TravellingPoint$ITrackSelector;
+         5: areturn
+
+  private static com.simibubi.create.content.trains.entity.TravellingPoint$ITrackSelector lambda$travel$2(com.simibubi.create.content.trains.entity.TravellingPoint, com.simibubi.create.content.trains.entity.TravellingPoint);
+    Code:
+         0: aload_1
+         1: aload_0
+         2: invokevirtual #391                // Method com/simibubi/create/content/trains/entity/TravellingPoint.follow:(Lcom/simibubi/create/content/trains/entity/TravellingPoint;)Lcom/simibubi/create/content/trains/entity/TravellingPoint$ITrackSelector;
+         5: areturn
+
+  private com.simibubi.create.content.trains.entity.Carriage$DimensionalCarriageEntity lambda$getDimensional$1(net.minecraft.resources.ResourceKey);
+    Code:
+         0: new           #7                  // class com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity
+         3: dup
+         4: aload_0
+         5: invokespecial #1086               // Method com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity."<init>":(Lcom/simibubi/create/content/trains/entity/Carriage;)V
+         8: areturn
+
+  private static net.minecraft.core.BlockPos lambda$getPositionInDimension$0(com.simibubi.create.content.trains.entity.Carriage$DimensionalCarriageEntity);
+    Code:
+         0: aload_0
+         1: getfield      #627                // Field com/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity.positionAnchor:Lnet/minecraft/world/phys/Vec3;
+         4: invokestatic  #633                // Method net/minecraft/core/BlockPos.containing:(Lnet/minecraft/core/Position;)Lnet/minecraft/core/BlockPos;
+         7: areturn
+
+  static {};
+    Code:
+         0: new           #97                 // class java/util/concurrent/atomic/AtomicInteger
+         3: dup
+         4: invokespecial #1088               // Method java/util/concurrent/atomic/AtomicInteger."<init>":()V
+         7: putstatic     #95                 // Field netIdGenerator:Ljava/util/concurrent/atomic/AtomicInteger;
+        10: return
+}

@@ -1,0 +1,21 @@
+{
+  "required": true,
+  "minVersion": "0.8.5",
+  "package": "com.createoptimizedtrains.mixin",
+  "refmap": "createoptimizedtrains.refmap.json",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "TrainMixin",
+    "CarriageMixin",
+    "CarriageEntityMixin",
+    "ContraptionCollisionMixin"
+  ],
+  "client": [
+    "client.CarriageRendererMixin",
+    "client.ContraptionEntityRendererMixin",
+    "client.ContraptionVisualMaterialMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}

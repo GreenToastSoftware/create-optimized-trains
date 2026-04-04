@@ -1,0 +1,2491 @@
+Compiled from "ContraptionCollider.java"
+public class com.simibubi.create.content.contraptions.ContraptionCollider {
+  private static org.apache.commons.lang3.tuple.MutablePair<java.lang.ref.WeakReference<com.simibubi.create.content.contraptions.AbstractContraptionEntity>, java.lang.Double> safetyLock;
+
+  private static java.util.Map<com.simibubi.create.content.contraptions.AbstractContraptionEntity, java.util.Map<net.minecraft.world.entity.player.Player, java.lang.Double>> remoteSafetyLocks;
+
+  private static int packetCooldown;
+
+  public com.simibubi.create.content.contraptions.ContraptionCollider();
+    Code:
+         0: aload_0
+         1: invokespecial #58                 // Method java/lang/Object."<init>":()V
+         4: return
+
+  static void collideEntities(com.simibubi.create.content.contraptions.AbstractContraptionEntity);
+    Code:
+         0: aload_0
+         1: invokevirtual #66                 // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity.getCommandSenderWorld:()Lnet/minecraft/world/level/Level;
+         4: astore_1
+         5: aload_0
+         6: invokevirtual #70                 // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity.getContraption:()Lcom/simibubi/create/content/contraptions/Contraption;
+         9: astore_2
+        10: aload_0
+        11: invokevirtual #74                 // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity.getBoundingBox:()Lnet/minecraft/world/phys/AABB;
+        14: astore_3
+        15: aload_2
+        16: ifnonnull     20
+        19: return
+        20: aload_3
+        21: ifnonnull     25
+        24: return
+        25: aload_0
+        26: invokevirtual #84                 // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity.position:()Lnet/minecraft/world/phys/Vec3;
+        29: astore        4
+        31: aload         4
+        33: aload_0
+        34: invokevirtual #87                 // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity.getPrevPositionVec:()Lnet/minecraft/world/phys/Vec3;
+        37: invokevirtual #93                 // Method net/minecraft/world/phys/Vec3.subtract:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+        40: astore        5
+        42: aload_0
+        43: invokevirtual #96                 // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity.getAnchorVec:()Lnet/minecraft/world/phys/Vec3;
+        46: astore        6
+        48: aconst_null
+        49: astore        7
+        51: aload_1
+        52: invokevirtual #100                // Method net/minecraft/world/level/Level.isClientSide:()Z
+        55: ifeq          97
+        58: getstatic     #102                // Field safetyLock:Lorg/apache/commons/lang3/tuple/MutablePair;
+        61: getfield      #108                // Field org/apache/commons/lang3/tuple/MutablePair.left:Ljava/lang/Object;
+        64: ifnull        97
+        67: getstatic     #102                // Field safetyLock:Lorg/apache/commons/lang3/tuple/MutablePair;
+        70: getfield      #108                // Field org/apache/commons/lang3/tuple/MutablePair.left:Ljava/lang/Object;
+        73: checkcast     #110                // class java/lang/ref/WeakReference
+        76: invokevirtual #114                // Method java/lang/ref/WeakReference.get:()Ljava/lang/Object;
+        79: aload_0
+        80: if_acmpne     97
+        83: getstatic     #120                // Field net/minecraftforge/api/distmarker/Dist.CLIENT:Lnet/minecraftforge/api/distmarker/Dist;
+        86: aload_0
+        87: aload         5
+        89: invokedynamic #138,  0            // InvokeDynamic #0:get:(Lcom/simibubi/create/content/contraptions/AbstractContraptionEntity;Lnet/minecraft/world/phys/Vec3;)Ljava/util/function/Supplier;
+        94: invokestatic  #144                // Method net/minecraftforge/fml/DistExecutor.unsafeRunWhenOn:(Lnet/minecraftforge/api/distmarker/Dist;Ljava/util/function/Supplier;)V
+        97: iconst_0
+        98: istore        8
+       100: aload_1
+       101: ldc           #146                // class net/minecraft/world/entity/Entity
+       103: aload_3
+       104: ldc2_w        #147                // double 2.0d
+       107: invokevirtual #152                // Method net/minecraft/world/phys/AABB.inflate:(D)Lnet/minecraft/world/phys/AABB;
+       110: dconst_0
+       111: ldc2_w        #153                // double 32.0d
+       114: dconst_0
+       115: invokevirtual #158                // Method net/minecraft/world/phys/AABB.expandTowards:(DDD)Lnet/minecraft/world/phys/AABB;
+       118: aload_0
+       119: dup
+       120: invokestatic  #164                // Method java/util/Objects.requireNonNull:(Ljava/lang/Object;)Ljava/lang/Object;
+       123: pop
+       124: invokedynamic #176,  0            // InvokeDynamic #1:test:(Lcom/simibubi/create/content/contraptions/AbstractContraptionEntity;)Ljava/util/function/Predicate;
+       129: invokevirtual #180                // Method net/minecraft/world/level/Level.getEntitiesOfClass:(Ljava/lang/Class;Lnet/minecraft/world/phys/AABB;Ljava/util/function/Predicate;)Ljava/util/List;
+       132: astore        9
+       134: aload         9
+       136: invokeinterface #186,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+       141: astore        10
+       143: aload         10
+       145: invokeinterface #191,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+       150: ifeq          2531
+       153: aload         10
+       155: invokeinterface #194,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+       160: checkcast     #146                // class net/minecraft/world/entity/Entity
+       163: astore        11
+       165: aload         11
+       167: invokevirtual #197                // Method net/minecraft/world/entity/Entity.isAlive:()Z
+       170: ifne          176
+       173: goto          143
+       176: aload         11
+       178: invokestatic  #201                // Method getPlayerType:(Lnet/minecraft/world/entity/Entity;)Lcom/simibubi/create/content/contraptions/ContraptionCollider$PlayerType;
+       181: astore        12
+       183: aload         12
+       185: getstatic     #205                // Field com/simibubi/create/content/contraptions/ContraptionCollider$PlayerType.REMOTE:Lcom/simibubi/create/content/contraptions/ContraptionCollider$PlayerType;
+       188: if_acmpne     220
+       191: aload_2
+       192: instanceof    #207                // class com/simibubi/create/content/contraptions/TranslatingContraption
+       195: ifne          201
+       198: goto          143
+       201: getstatic     #120                // Field net/minecraftforge/api/distmarker/Dist.CLIENT:Lnet/minecraftforge/api/distmarker/Dist;
+       204: aload         11
+       206: aload_0
+       207: aload         5
+       209: invokedynamic #215,  0            // InvokeDynamic #2:get:(Lnet/minecraft/world/entity/Entity;Lcom/simibubi/create/content/contraptions/AbstractContraptionEntity;Lnet/minecraft/world/phys/Vec3;)Ljava/util/function/Supplier;
+       214: invokestatic  #144                // Method net/minecraftforge/fml/DistExecutor.unsafeRunWhenOn:(Lnet/minecraftforge/api/distmarker/Dist;Ljava/util/function/Supplier;)V
+       217: goto          143
+       220: aload         11
+       222: invokevirtual #219                // Method net/minecraft/world/entity/Entity.getSelfAndPassengers:()Ljava/util/stream/Stream;
+       225: invokedynamic #231,  0            // InvokeDynamic #3:accept:()Ljava/util/function/Consumer;
+       230: invokeinterface #237,  2          // InterfaceMethod java/util/stream/Stream.forEach:(Ljava/util/function/Consumer;)V
+       235: aload         12
+       237: getstatic     #240                // Field com/simibubi/create/content/contraptions/ContraptionCollider$PlayerType.SERVER:Lcom/simibubi/create/content/contraptions/ContraptionCollider$PlayerType;
+       240: if_acmpne     246
+       243: goto          143
+       246: aload         12
+       248: getstatic     #242                // Field com/simibubi/create/content/contraptions/ContraptionCollider$PlayerType.CLIENT:Lcom/simibubi/create/content/contraptions/ContraptionCollider$PlayerType;
+       251: if_acmpne     265
+       254: iload         8
+       256: ifeq          262
+       259: goto          143
+       262: iconst_1
+       263: istore        8
+       265: aload         7
+       267: ifnonnull     276
+       270: aload_0
+       271: invokevirtual #246                // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity.getRotationState:()Lcom/simibubi/create/content/contraptions/AbstractContraptionEntity$ContraptionRotationState;
+       274: astore        7
+       276: aload         7
+       278: invokevirtual #250                // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity$ContraptionRotationState.asMatrix:()Lcom/simibubi/create/foundation/collision/Matrix3d;
+       281: astore        13
+       283: aload         11
+       285: invokevirtual #251                // Method net/minecraft/world/entity/Entity.position:()Lnet/minecraft/world/phys/Vec3;
+       288: astore        14
+       290: aload         11
+       292: invokevirtual #252                // Method net/minecraft/world/entity/Entity.getBoundingBox:()Lnet/minecraft/world/phys/AABB;
+       295: astore        15
+       297: aload         11
+       299: invokevirtual #255                // Method net/minecraft/world/entity/Entity.getDeltaMovement:()Lnet/minecraft/world/phys/Vec3;
+       302: astore        16
+       304: aload         7
+       306: invokevirtual #259                // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity$ContraptionRotationState.getYawOffset:()F
+       309: fstore        17
+       311: aload         11
+       313: aload         6
+       315: aload         13
+       317: fload         17
+       319: invokestatic  #263                // Method getWorldToLocalTranslation:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/Vec3;Lcom/simibubi/create/foundation/collision/Matrix3d;F)Lnet/minecraft/world/phys/Vec3;
+       322: astore        18
+       324: aload         12
+       326: getstatic     #242                // Field com/simibubi/create/content/contraptions/ContraptionCollider$PlayerType.CLIENT:Lcom/simibubi/create/content/contraptions/ContraptionCollider$PlayerType;
+       329: if_acmpne     354
+       332: aload         15
+       334: invokevirtual #267                // Method net/minecraft/world/phys/AABB.getYsize:()D
+       337: dconst_1
+       338: dcmpl
+       339: ifle          354
+       342: aload         15
+       344: dconst_0
+       345: ldc2_w        #268                // double 0.125d
+       348: dconst_0
+       349: invokevirtual #272                // Method net/minecraft/world/phys/AABB.contract:(DDD)Lnet/minecraft/world/phys/AABB;
+       352: astore        15
+       354: aload         16
+       356: aload         5
+       358: invokevirtual #93                 // Method net/minecraft/world/phys/Vec3.subtract:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+       361: astore        16
+       363: aload         13
+       365: aload         16
+       367: invokevirtual #277                // Method com/simibubi/create/foundation/collision/Matrix3d.transform:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+       370: astore        16
+       372: aload         15
+       374: aload         18
+       376: invokevirtual #281                // Method net/minecraft/world/phys/AABB.move:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/AABB;
+       379: ldc2_w        #282                // double 1.0E-7d
+       382: invokevirtual #152                // Method net/minecraft/world/phys/AABB.inflate:(D)Lnet/minecraft/world/phys/AABB;
+       385: astore        19
+       387: new           #285                // class com/simibubi/create/foundation/collision/OrientedBB
+       390: dup
+       391: aload         19
+       393: invokespecial #288                // Method com/simibubi/create/foundation/collision/OrientedBB."<init>":(Lnet/minecraft/world/phys/AABB;)V
+       396: astore        20
+       398: aload         20
+       400: aload         13
+       402: invokevirtual #292                // Method com/simibubi/create/foundation/collision/OrientedBB.setRotation:(Lcom/simibubi/create/foundation/collision/Matrix3d;)V
+       405: aload         16
+       407: astore        21
+       409: aload_2
+       410: invokevirtual #296                // Method com/simibubi/create/content/contraptions/Contraption.getSimplifiedEntityColliders:()Ljava/util/Optional;
+       413: aload_1
+       414: aload_2
+       415: aload         19
+       417: aload         21
+       419: invokedynamic #306,  0            // InvokeDynamic #4:get:(Lnet/minecraft/world/level/Level;Lcom/simibubi/create/content/contraptions/Contraption;Lnet/minecraft/world/phys/AABB;Lnet/minecraft/world/phys/Vec3;)Ljava/util/function/Supplier;
+       424: invokevirtual #312                // Method java/util/Optional.orElseGet:(Ljava/util/function/Supplier;)Ljava/lang/Object;
+       427: checkcast     #182                // class java/util/List
+       430: astore        22
+       432: new           #314                // class org/apache/commons/lang3/mutable/MutableObject
+       435: dup
+       436: getstatic     #318                // Field net/minecraft/world/phys/Vec3.ZERO:Lnet/minecraft/world/phys/Vec3;
+       439: invokespecial #320                // Method org/apache/commons/lang3/mutable/MutableObject."<init>":(Ljava/lang/Object;)V
+       442: astore        23
+       444: new           #314                // class org/apache/commons/lang3/mutable/MutableObject
+       447: dup
+       448: getstatic     #318                // Field net/minecraft/world/phys/Vec3.ZERO:Lnet/minecraft/world/phys/Vec3;
+       451: invokespecial #320                // Method org/apache/commons/lang3/mutable/MutableObject."<init>":(Ljava/lang/Object;)V
+       454: astore        24
+       456: new           #314                // class org/apache/commons/lang3/mutable/MutableObject
+       459: dup
+       460: getstatic     #318                // Field net/minecraft/world/phys/Vec3.ZERO:Lnet/minecraft/world/phys/Vec3;
+       463: invokespecial #320                // Method org/apache/commons/lang3/mutable/MutableObject."<init>":(Ljava/lang/Object;)V
+       466: astore        25
+       468: new           #322                // class org/apache/commons/lang3/mutable/MutableBoolean
+       471: dup
+       472: iconst_0
+       473: invokespecial #325                // Method org/apache/commons/lang3/mutable/MutableBoolean."<init>":(Z)V
+       476: astore        26
+       478: new           #327                // class org/apache/commons/lang3/mutable/MutableFloat
+       481: dup
+       482: fconst_1
+       483: invokespecial #330                // Method org/apache/commons/lang3/mutable/MutableFloat."<init>":(F)V
+       486: astore        27
+       488: aload         20
+       490: invokevirtual #333                // Method com/simibubi/create/foundation/collision/OrientedBB.getCenter:()Lnet/minecraft/world/phys/Vec3;
+       493: astore        28
+       495: aload         7
+       497: invokevirtual #336                // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity$ContraptionRotationState.hasVerticalRotation:()Z
+       500: ifne          507
+       503: iconst_1
+       504: goto          508
+       507: iconst_0
+       508: istore        29
+       510: getstatic     #342                // Field net/createmod/catnip/data/Iterate.trueAndFalse:[Z
+       513: astore        30
+       515: aload         30
+       517: arraylength
+       518: istore        31
+       520: iconst_0
+       521: istore        32
+       523: iload         32
+       525: iload         31
+       527: if_icmpge     1065
+       530: aload         30
+       532: iload         32
+       534: baload
+       535: istore        33
+       537: iload         33
+       539: ifeq          547
+       542: iload         29
+       544: ifne          551
+       547: iconst_1
+       548: goto          552
+       551: iconst_0
+       552: istore        34
+       554: aload         22
+       556: invokeinterface #186,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+       561: astore        35
+       563: aload         35
+       565: invokeinterface #191,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+       570: ifeq          969
+       573: aload         35
+       575: invokeinterface #194,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+       580: checkcast     #80                 // class net/minecraft/world/phys/AABB
+       583: astore        36
+       585: aload         23
+       587: invokevirtual #346                // Method org/apache/commons/lang3/mutable/MutableObject.getValue:()Ljava/lang/Object;
+       590: checkcast     #89                 // class net/minecraft/world/phys/Vec3
+       593: astore        37
+       595: aload         28
+       597: aload         37
+       599: invokevirtual #349                // Method net/minecraft/world/phys/Vec3.add:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+       602: astore        38
+       604: aload         38
+       606: getfield      #353                // Field net/minecraft/world/phys/Vec3.x:D
+       609: aload         36
+       611: invokevirtual #354                // Method net/minecraft/world/phys/AABB.getCenter:()Lnet/minecraft/world/phys/Vec3;
+       614: getfield      #353                // Field net/minecraft/world/phys/Vec3.x:D
+       617: dsub
+       618: invokestatic  #360                // Method java/lang/Math.abs:(D)D
+       621: aload         15
+       623: invokevirtual #363                // Method net/minecraft/world/phys/AABB.getXsize:()D
+       626: dsub
+       627: dconst_1
+       628: dsub
+       629: aload         36
+       631: invokevirtual #363                // Method net/minecraft/world/phys/AABB.getXsize:()D
+       634: ldc2_w        #147                // double 2.0d
+       637: ddiv
+       638: dcmpl
+       639: ifle          645
+       642: goto          563
+       645: aload         38
+       647: getfield      #366                // Field net/minecraft/world/phys/Vec3.y:D
+       650: aload         16
+       652: getfield      #366                // Field net/minecraft/world/phys/Vec3.y:D
+       655: dadd
+       656: aload         36
+       658: invokevirtual #354                // Method net/minecraft/world/phys/AABB.getCenter:()Lnet/minecraft/world/phys/Vec3;
+       661: getfield      #366                // Field net/minecraft/world/phys/Vec3.y:D
+       664: dsub
+       665: invokestatic  #360                // Method java/lang/Math.abs:(D)D
+       668: aload         15
+       670: invokevirtual #267                // Method net/minecraft/world/phys/AABB.getYsize:()D
+       673: dsub
+       674: dconst_1
+       675: dsub
+       676: aload         36
+       678: invokevirtual #267                // Method net/minecraft/world/phys/AABB.getYsize:()D
+       681: ldc2_w        #147                // double 2.0d
+       684: ddiv
+       685: dcmpl
+       686: ifle          692
+       689: goto          563
+       692: aload         38
+       694: getfield      #369                // Field net/minecraft/world/phys/Vec3.z:D
+       697: aload         36
+       699: invokevirtual #354                // Method net/minecraft/world/phys/AABB.getCenter:()Lnet/minecraft/world/phys/Vec3;
+       702: getfield      #369                // Field net/minecraft/world/phys/Vec3.z:D
+       705: dsub
+       706: invokestatic  #360                // Method java/lang/Math.abs:(D)D
+       709: aload         15
+       711: invokevirtual #372                // Method net/minecraft/world/phys/AABB.getZsize:()D
+       714: dsub
+       715: dconst_1
+       716: dsub
+       717: aload         36
+       719: invokevirtual #372                // Method net/minecraft/world/phys/AABB.getZsize:()D
+       722: ldc2_w        #147                // double 2.0d
+       725: ddiv
+       726: dcmpl
+       727: ifle          733
+       730: goto          563
+       733: aload         20
+       735: aload         38
+       737: invokevirtual #376                // Method com/simibubi/create/foundation/collision/OrientedBB.setCenter:(Lnet/minecraft/world/phys/Vec3;)V
+       740: aload         20
+       742: aload         36
+       744: aload         16
+       746: invokevirtual #380                // Method com/simibubi/create/foundation/collision/OrientedBB.intersect:(Lnet/minecraft/world/phys/AABB;Lnet/minecraft/world/phys/Vec3;)Lcom/simibubi/create/foundation/collision/ContinuousOBBCollider$ContinuousSeparationManifold;
+       749: astore        39
+       751: aload         39
+       753: ifnonnull     759
+       756: goto          563
+       759: iload         34
+       761: ifeq          782
+       764: aload         26
+       766: invokevirtual #383                // Method org/apache/commons/lang3/mutable/MutableBoolean.isFalse:()Z
+       769: ifeq          782
+       772: aload         26
+       774: aload         39
+       776: invokevirtual #386                // Method com/simibubi/create/foundation/collision/ContinuousOBBCollider$ContinuousSeparationManifold.isSurfaceCollision:()Z
+       779: invokevirtual #389                // Method org/apache/commons/lang3/mutable/MutableBoolean.setValue:(Z)V
+       782: aload         39
+       784: invokevirtual #392                // Method com/simibubi/create/foundation/collision/ContinuousOBBCollider$ContinuousSeparationManifold.getTimeOfImpact:()D
+       787: dstore        40
+       789: dload         40
+       791: dconst_0
+       792: dcmpl
+       793: ifle          807
+       796: dload         40
+       798: dconst_1
+       799: dcmpg
+       800: ifge          807
+       803: iconst_1
+       804: goto          808
+       807: iconst_0
+       808: istore        42
+       810: aload         39
+       812: invokevirtual #395                // Method com/simibubi/create/foundation/collision/ContinuousOBBCollider$ContinuousSeparationManifold.getCollisionNormal:()Lnet/minecraft/world/phys/Vec3;
+       815: astore        43
+       817: aload         39
+       819: invokevirtual #398                // Method com/simibubi/create/foundation/collision/ContinuousOBBCollider$ContinuousSeparationManifold.getCollisionPosition:()Lnet/minecraft/world/phys/Vec3;
+       822: astore        44
+       824: iload         42
+       826: ifne          873
+       829: aload         39
+       831: aload         11
+       833: invokevirtual #401                // Method net/minecraft/world/entity/Entity.getStepHeight:()F
+       836: f2d
+       837: invokevirtual #405                // Method com/simibubi/create/foundation/collision/ContinuousOBBCollider$ContinuousSeparationManifold.asSeparationVec:(D)Lnet/minecraft/world/phys/Vec3;
+       840: astore        45
+       842: aload         45
+       844: ifnull        873
+       847: aload         45
+       849: getstatic     #318                // Field net/minecraft/world/phys/Vec3.ZERO:Lnet/minecraft/world/phys/Vec3;
+       852: invokevirtual #408                // Method net/minecraft/world/phys/Vec3.equals:(Ljava/lang/Object;)Z
+       855: ifne          873
+       858: aload         23
+       860: aload         37
+       862: aload         45
+       864: invokevirtual #349                // Method net/minecraft/world/phys/Vec3.add:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+       867: invokevirtual #410                // Method org/apache/commons/lang3/mutable/MutableObject.setValue:(Ljava/lang/Object;)V
+       870: dconst_0
+       871: dstore        40
+       873: dload         40
+       875: dconst_0
+       876: dcmpl
+       877: iflt          899
+       880: aload         27
+       882: invokevirtual #413                // Method org/apache/commons/lang3/mutable/MutableFloat.getValue:()Ljava/lang/Float;
+       885: invokevirtual #418                // Method java/lang/Float.floatValue:()F
+       888: f2d
+       889: dload         40
+       891: dcmpl
+       892: ifle          899
+       895: iconst_1
+       896: goto          900
+       899: iconst_0
+       900: istore        45
+       902: aload         43
+       904: ifnull        919
+       907: iload         45
+       909: ifeq          919
+       912: aload         24
+       914: aload         43
+       916: invokevirtual #410                // Method org/apache/commons/lang3/mutable/MutableObject.setValue:(Ljava/lang/Object;)V
+       919: aload         44
+       921: ifnull        936
+       924: iload         45
+       926: ifeq          936
+       929: aload         25
+       931: aload         44
+       933: invokevirtual #410                // Method org/apache/commons/lang3/mutable/MutableObject.setValue:(Ljava/lang/Object;)V
+       936: iload         42
+       938: ifeq          966
+       941: aload         27
+       943: invokevirtual #413                // Method org/apache/commons/lang3/mutable/MutableFloat.getValue:()Ljava/lang/Float;
+       946: invokevirtual #418                // Method java/lang/Float.floatValue:()F
+       949: f2d
+       950: dload         40
+       952: dcmpl
+       953: ifle          966
+       956: aload         27
+       958: dload         40
+       960: invokestatic  #424                // Method java/lang/Double.valueOf:(D)Ljava/lang/Double;
+       963: invokevirtual #427                // Method org/apache/commons/lang3/mutable/MutableFloat.setValue:(Ljava/lang/Number;)V
+       966: goto          563
+       969: iload         34
+       971: ifeq          977
+       974: goto          1065
+       977: aload         27
+       979: invokevirtual #413                // Method org/apache/commons/lang3/mutable/MutableFloat.getValue:()Ljava/lang/Float;
+       982: invokevirtual #418                // Method java/lang/Float.floatValue:()F
+       985: fconst_1
+       986: fcmpl
+       987: ifne          994
+       990: iconst_1
+       991: goto          995
+       994: iconst_0
+       995: istore        35
+       997: aload         23
+       999: invokevirtual #346                // Method org/apache/commons/lang3/mutable/MutableObject.getValue:()Ljava/lang/Object;
+      1002: checkcast     #89                 // class net/minecraft/world/phys/Vec3
+      1005: getfield      #366                // Field net/minecraft/world/phys/Vec3.y:D
+      1008: dconst_0
+      1009: dcmpl
+      1010: ifne          1017
+      1013: iconst_1
+      1014: goto          1018
+      1017: iconst_0
+      1018: istore        36
+      1020: iload         36
+      1022: ifeq          1033
+      1025: iload         35
+      1027: ifeq          1033
+      1030: goto          1065
+      1033: aload         23
+      1035: aload         23
+      1037: invokevirtual #346                // Method org/apache/commons/lang3/mutable/MutableObject.getValue:()Ljava/lang/Object;
+      1040: checkcast     #89                 // class net/minecraft/world/phys/Vec3
+      1043: ldc2_w        #428                // double 1.0078125d
+      1046: dconst_0
+      1047: ldc2_w        #428                // double 1.0078125d
+      1050: invokevirtual #433                // Method net/minecraft/world/phys/Vec3.multiply:(DDD)Lnet/minecraft/world/phys/Vec3;
+      1053: invokevirtual #410                // Method org/apache/commons/lang3/mutable/MutableObject.setValue:(Ljava/lang/Object;)V
+      1056: goto          1059
+      1059: iinc          32, 1
+      1062: goto          523
+      1065: aload         11
+      1067: invokevirtual #255                // Method net/minecraft/world/entity/Entity.getDeltaMovement:()Lnet/minecraft/world/phys/Vec3;
+      1070: astore        30
+      1072: aload         30
+      1074: astore        31
+      1076: aload         24
+      1078: invokevirtual #346                // Method org/apache/commons/lang3/mutable/MutableObject.getValue:()Ljava/lang/Object;
+      1081: checkcast     #89                 // class net/minecraft/world/phys/Vec3
+      1084: astore        32
+      1086: aload         25
+      1088: invokevirtual #346                // Method org/apache/commons/lang3/mutable/MutableObject.getValue:()Ljava/lang/Object;
+      1091: checkcast     #89                 // class net/minecraft/world/phys/Vec3
+      1094: astore        33
+      1096: aload         23
+      1098: invokevirtual #346                // Method org/apache/commons/lang3/mutable/MutableObject.getValue:()Ljava/lang/Object;
+      1101: checkcast     #89                 // class net/minecraft/world/phys/Vec3
+      1104: astore        34
+      1106: aload         34
+      1108: getstatic     #318                // Field net/minecraft/world/phys/Vec3.ZERO:Lnet/minecraft/world/phys/Vec3;
+      1111: invokevirtual #408                // Method net/minecraft/world/phys/Vec3.equals:(Ljava/lang/Object;)Z
+      1114: ifne          1121
+      1117: iconst_1
+      1118: goto          1122
+      1121: iconst_0
+      1122: istore        35
+      1124: aload         27
+      1126: invokevirtual #413                // Method org/apache/commons/lang3/mutable/MutableFloat.getValue:()Ljava/lang/Float;
+      1129: invokevirtual #418                // Method java/lang/Float.floatValue:()F
+      1132: fconst_1
+      1133: fcmpl
+      1134: ifeq          1141
+      1137: iconst_1
+      1138: goto          1142
+      1141: iconst_0
+      1142: istore        36
+      1144: iload         36
+      1146: ifne          1154
+      1149: aload         16
+      1151: goto          1177
+      1154: aload         16
+      1156: invokevirtual #436                // Method net/minecraft/world/phys/Vec3.normalize:()Lnet/minecraft/world/phys/Vec3;
+      1159: aload         16
+      1161: invokevirtual #439                // Method net/minecraft/world/phys/Vec3.length:()D
+      1164: aload         27
+      1166: invokevirtual #413                // Method org/apache/commons/lang3/mutable/MutableFloat.getValue:()Ljava/lang/Float;
+      1169: invokevirtual #418                // Method java/lang/Float.floatValue:()F
+      1172: f2d
+      1173: dmul
+      1174: invokevirtual #442                // Method net/minecraft/world/phys/Vec3.scale:(D)Lnet/minecraft/world/phys/Vec3;
+      1177: astore        37
+      1179: aload         13
+      1181: invokevirtual #445                // Method com/simibubi/create/foundation/collision/Matrix3d.transpose:()Lcom/simibubi/create/foundation/collision/Matrix3d;
+      1184: pop
+      1185: aload         13
+      1187: aload         37
+      1189: invokevirtual #277                // Method com/simibubi/create/foundation/collision/Matrix3d.transform:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+      1192: aload         5
+      1194: invokevirtual #349                // Method net/minecraft/world/phys/Vec3.add:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+      1197: astore        37
+      1199: aload         13
+      1201: aload         34
+      1203: invokevirtual #277                // Method com/simibubi/create/foundation/collision/Matrix3d.transform:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+      1206: astore        34
+      1208: aload         34
+      1210: fload         17
+      1212: f2d
+      1213: getstatic     #449                // Field net/minecraft/core/Direction$Axis.Y:Lnet/minecraft/core/Direction$Axis;
+      1216: invokestatic  #455                // Method net/createmod/catnip/math/VecHelper.rotate:(Lnet/minecraft/world/phys/Vec3;DLnet/minecraft/core/Direction$Axis;)Lnet/minecraft/world/phys/Vec3;
+      1219: astore        34
+      1221: aload         13
+      1223: aload         32
+      1225: invokevirtual #277                // Method com/simibubi/create/foundation/collision/Matrix3d.transform:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+      1228: astore        32
+      1230: aload         32
+      1232: fload         17
+      1234: f2d
+      1235: getstatic     #449                // Field net/minecraft/core/Direction$Axis.Y:Lnet/minecraft/core/Direction$Axis;
+      1238: invokestatic  #455                // Method net/createmod/catnip/math/VecHelper.rotate:(Lnet/minecraft/world/phys/Vec3;DLnet/minecraft/core/Direction$Axis;)Lnet/minecraft/world/phys/Vec3;
+      1241: astore        32
+      1243: aload         32
+      1245: invokevirtual #436                // Method net/minecraft/world/phys/Vec3.normalize:()Lnet/minecraft/world/phys/Vec3;
+      1248: astore        32
+      1250: aload         13
+      1252: aload         33
+      1254: invokevirtual #277                // Method com/simibubi/create/foundation/collision/Matrix3d.transform:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+      1257: astore        33
+      1259: aload         33
+      1261: fload         17
+      1263: f2d
+      1264: getstatic     #449                // Field net/minecraft/core/Direction$Axis.Y:Lnet/minecraft/core/Direction$Axis;
+      1267: invokestatic  #455                // Method net/createmod/catnip/math/VecHelper.rotate:(Lnet/minecraft/world/phys/Vec3;DLnet/minecraft/core/Direction$Axis;)Lnet/minecraft/world/phys/Vec3;
+      1270: astore        33
+      1272: aload         13
+      1274: invokevirtual #445                // Method com/simibubi/create/foundation/collision/Matrix3d.transpose:()Lcom/simibubi/create/foundation/collision/Matrix3d;
+      1277: pop
+      1278: dconst_0
+      1279: dstore        38
+      1281: dconst_0
+      1282: dstore        40
+      1284: aload         33
+      1286: getstatic     #318                // Field net/minecraft/world/phys/Vec3.ZERO:Lnet/minecraft/world/phys/Vec3;
+      1289: invokevirtual #408                // Method net/minecraft/world/phys/Vec3.equals:(Ljava/lang/Object;)Z
+      1292: ifne          1529
+      1295: aload         33
+      1297: aload         11
+      1299: invokevirtual #251                // Method net/minecraft/world/entity/Entity.position:()Lnet/minecraft/world/phys/Vec3;
+      1302: aload         11
+      1304: invokevirtual #252                // Method net/minecraft/world/entity/Entity.getBoundingBox:()Lnet/minecraft/world/phys/AABB;
+      1307: invokevirtual #354                // Method net/minecraft/world/phys/AABB.getCenter:()Lnet/minecraft/world/phys/Vec3;
+      1310: invokevirtual #349                // Method net/minecraft/world/phys/Vec3.add:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+      1313: ldc2_w        #456                // double 0.5d
+      1316: invokevirtual #442                // Method net/minecraft/world/phys/Vec3.scale:(D)Lnet/minecraft/world/phys/Vec3;
+      1319: invokevirtual #349                // Method net/minecraft/world/phys/Vec3.add:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+      1322: astore        33
+      1324: iload         36
+      1326: ifeq          1343
+      1329: aload         33
+      1331: dconst_0
+      1332: aload         37
+      1334: getfield      #366                // Field net/minecraft/world/phys/Vec3.y:D
+      1337: dconst_0
+      1338: invokevirtual #459                // Method net/minecraft/world/phys/Vec3.add:(DDD)Lnet/minecraft/world/phys/Vec3;
+      1341: astore        33
+      1343: aload_0
+      1344: aload         11
+      1346: invokevirtual #251                // Method net/minecraft/world/entity/Entity.position:()Lnet/minecraft/world/phys/Vec3;
+      1349: fconst_0
+      1350: invokevirtual #463                // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity.toLocalVector:(Lnet/minecraft/world/phys/Vec3;F)Lnet/minecraft/world/phys/Vec3;
+      1353: invokestatic  #469                // Method net/minecraft/core/BlockPos.containing:(Lnet/minecraft/core/Position;)Lnet/minecraft/core/BlockPos;
+      1356: astore        42
+      1358: aload_2
+      1359: invokevirtual #473                // Method com/simibubi/create/content/contraptions/Contraption.getBlocks:()Ljava/util/Map;
+      1362: aload         42
+      1364: invokeinterface #478,  2          // InterfaceMethod java/util/Map.containsKey:(Ljava/lang/Object;)Z
+      1369: ifeq          1419
+      1372: aload_2
+      1373: invokevirtual #473                // Method com/simibubi/create/content/contraptions/Contraption.getBlocks:()Ljava/util/Map;
+      1376: aload         42
+      1378: invokeinterface #480,  2          // InterfaceMethod java/util/Map.get:(Ljava/lang/Object;)Ljava/lang/Object;
+      1383: checkcast     #25                 // class net/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplate$StructureBlockInfo
+      1386: invokevirtual #484                // Method net/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplate$StructureBlockInfo.state:()Lnet/minecraft/world/level/block/state/BlockState;
+      1389: astore        43
+      1391: aload         43
+      1393: getstatic     #490                // Field net/minecraft/tags/BlockTags.CLIMBABLE:Lnet/minecraft/tags/TagKey;
+      1396: invokevirtual #496                // Method net/minecraft/world/level/block/state/BlockState.is:(Lnet/minecraft/tags/TagKey;)Z
+      1399: ifeq          1419
+      1402: aload         26
+      1404: invokevirtual #499                // Method org/apache/commons/lang3/mutable/MutableBoolean.setTrue:()V
+      1407: aload         34
+      1409: dconst_0
+      1410: ldc2_w        #500                // double 0.10000000149011612d
+      1413: dconst_0
+      1414: invokevirtual #459                // Method net/minecraft/world/phys/Vec3.add:(DDD)Lnet/minecraft/world/phys/Vec3;
+      1417: astore        34
+      1419: aload_0
+      1420: aload         33
+      1422: fconst_0
+      1423: invokevirtual #463                // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity.toLocalVector:(Lnet/minecraft/world/phys/Vec3;F)Lnet/minecraft/world/phys/Vec3;
+      1426: invokestatic  #469                // Method net/minecraft/core/BlockPos.containing:(Lnet/minecraft/core/Position;)Lnet/minecraft/core/BlockPos;
+      1429: astore        42
+      1431: aload_2
+      1432: invokevirtual #473                // Method com/simibubi/create/content/contraptions/Contraption.getBlocks:()Ljava/util/Map;
+      1435: aload         42
+      1437: invokeinterface #478,  2          // InterfaceMethod java/util/Map.containsKey:(Ljava/lang/Object;)Z
+      1442: ifeq          1529
+      1445: aload_2
+      1446: invokevirtual #473                // Method com/simibubi/create/content/contraptions/Contraption.getBlocks:()Ljava/util/Map;
+      1449: aload         42
+      1451: invokeinterface #480,  2          // InterfaceMethod java/util/Map.get:(Ljava/lang/Object;)Ljava/lang/Object;
+      1456: checkcast     #25                 // class net/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplate$StructureBlockInfo
+      1459: invokevirtual #484                // Method net/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplate$StructureBlockInfo.state:()Lnet/minecraft/world/level/block/state/BlockState;
+      1462: astore        43
+      1464: aload_2
+      1465: getfield      #504                // Field com/simibubi/create/content/contraptions/Contraption.interactors:Ljava/util/Map;
+      1468: aload         42
+      1470: invokeinterface #480,  2          // InterfaceMethod java/util/Map.get:(Ljava/lang/Object;)Ljava/lang/Object;
+      1475: checkcast     #506                // class com/simibubi/create/api/behaviour/interaction/MovingInteractionBehaviour
+      1478: astore        44
+      1480: aload         44
+      1482: ifnull        1495
+      1485: aload         44
+      1487: aload         11
+      1489: aload         42
+      1491: aload_0
+      1492: invokevirtual #510                // Method com/simibubi/create/api/behaviour/interaction/MovingInteractionBehaviour.handleEntityCollision:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/core/BlockPos;Lcom/simibubi/create/content/contraptions/AbstractContraptionEntity;)V
+      1495: aload         43
+      1497: invokevirtual #514                // Method net/minecraft/world/level/block/state/BlockState.getBlock:()Lnet/minecraft/world/level/block/Block;
+      1500: invokestatic  #520                // Method com/simibubi/create/foundation/utility/BlockHelper.getBounceMultiplier:(Lnet/minecraft/world/level/block/Block;)D
+      1503: dstore        38
+      1505: fconst_0
+      1506: aload         43
+      1508: aload_2
+      1509: getfield      #524                // Field com/simibubi/create/content/contraptions/Contraption.collisionLevel:Lcom/simibubi/create/content/contraptions/ContraptionWorld;
+      1512: aload         42
+      1514: aload         11
+      1516: invokevirtual #528                // Method net/minecraft/world/level/block/state/BlockState.getFriction:(Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/entity/Entity;)F
+      1519: ldc_w         #529                // float 0.6f
+      1522: fsub
+      1523: invokestatic  #533                // Method java/lang/Math.max:(FF)F
+      1526: f2d
+      1527: dstore        40
+      1529: aload         32
+      1531: getstatic     #318                // Field net/minecraft/world/phys/Vec3.ZERO:Lnet/minecraft/world/phys/Vec3;
+      1534: invokevirtual #408                // Method net/minecraft/world/phys/Vec3.equals:(Ljava/lang/Object;)Z
+      1537: ifne          1544
+      1540: iconst_1
+      1541: goto          1545
+      1544: iconst_0
+      1545: istore        42
+      1547: iload         35
+      1549: ifne          1557
+      1552: iload         36
+      1554: ifeq          1561
+      1557: iconst_1
+      1558: goto          1562
+      1561: iconst_0
+      1562: istore        43
+      1564: dload         38
+      1566: dconst_0
+      1567: dcmpl
+      1568: ifle          1647
+      1571: iload         42
+      1573: ifeq          1647
+      1576: iload         43
+      1578: ifeq          1647
+      1581: aload         11
+      1583: aload         32
+      1585: aload_0
+      1586: dload         38
+      1588: invokestatic  #537                // Method bounceEntity:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/Vec3;Lcom/simibubi/create/content/contraptions/AbstractContraptionEntity;D)Z
+      1591: ifeq          1647
+      1594: aload         11
+      1596: invokevirtual #540                // Method net/minecraft/world/entity/Entity.level:()Lnet/minecraft/world/level/Level;
+      1599: aload         12
+      1601: getstatic     #242                // Field com/simibubi/create/content/contraptions/ContraptionCollider$PlayerType.CLIENT:Lcom/simibubi/create/content/contraptions/ContraptionCollider$PlayerType;
+      1604: if_acmpne     1615
+      1607: aload         11
+      1609: checkcast     #542                // class net/minecraft/world/entity/player/Player
+      1612: goto          1616
+      1615: aconst_null
+      1616: aload         11
+      1618: invokevirtual #545                // Method net/minecraft/world/entity/Entity.getX:()D
+      1621: aload         11
+      1623: invokevirtual #548                // Method net/minecraft/world/entity/Entity.getY:()D
+      1626: aload         11
+      1628: invokevirtual #551                // Method net/minecraft/world/entity/Entity.getZ:()D
+      1631: getstatic     #557                // Field net/minecraft/sounds/SoundEvents.SLIME_BLOCK_FALL:Lnet/minecraft/sounds/SoundEvent;
+      1634: getstatic     #563                // Field net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+      1637: ldc_w         #564                // float 0.5f
+      1640: fconst_1
+      1641: invokevirtual #568                // Method net/minecraft/world/level/Level.playSound:(Lnet/minecraft/world/entity/player/Player;DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V
+      1644: goto          143
+      1647: iload         36
+      1649: ifeq          1697
+      1652: aload         37
+      1654: getfield      #366                // Field net/minecraft/world/phys/Vec3.y:D
+      1657: dstore        44
+      1659: dload         44
+      1661: aload         30
+      1663: getfield      #366                // Field net/minecraft/world/phys/Vec3.y:D
+      1666: dcmpl
+      1667: ifeq          1697
+      1670: aload         11
+      1672: aload         30
+      1674: dconst_1
+      1675: dconst_0
+      1676: dconst_1
+      1677: invokevirtual #433                // Method net/minecraft/world/phys/Vec3.multiply:(DDD)Lnet/minecraft/world/phys/Vec3;
+      1680: dconst_0
+      1681: dload         44
+      1683: dconst_0
+      1684: invokevirtual #459                // Method net/minecraft/world/phys/Vec3.add:(DDD)Lnet/minecraft/world/phys/Vec3;
+      1687: invokevirtual #571                // Method net/minecraft/world/entity/Entity.setDeltaMovement:(Lnet/minecraft/world/phys/Vec3;)V
+      1690: aload         11
+      1692: invokevirtual #255                // Method net/minecraft/world/entity/Entity.getDeltaMovement:()Lnet/minecraft/world/phys/Vec3;
+      1695: astore        30
+      1697: iload         35
+      1699: ifeq          1920
+      1702: aload         30
+      1704: invokevirtual #573                // Method net/minecraft/world/phys/Vec3.x:()D
+      1707: dstore        44
+      1709: aload         30
+      1711: invokevirtual #575                // Method net/minecraft/world/phys/Vec3.y:()D
+      1714: dstore        46
+      1716: aload         30
+      1718: invokevirtual #577                // Method net/minecraft/world/phys/Vec3.z:()D
+      1721: dstore        48
+      1723: aload         34
+      1725: invokevirtual #573                // Method net/minecraft/world/phys/Vec3.x:()D
+      1728: dstore        50
+      1730: aload         34
+      1732: invokevirtual #575                // Method net/minecraft/world/phys/Vec3.y:()D
+      1735: dstore        52
+      1737: aload         34
+      1739: invokevirtual #577                // Method net/minecraft/world/phys/Vec3.z:()D
+      1742: dstore        54
+      1744: ldc2_w        #578                // double 0.0078125d
+      1747: dstore        56
+      1749: dload         44
+      1751: dconst_0
+      1752: dcmpl
+      1753: ifeq          1804
+      1756: dload         50
+      1758: invokestatic  #360                // Method java/lang/Math.abs:(D)D
+      1761: dload         56
+      1763: dcmpl
+      1764: ifle          1804
+      1767: dload         44
+      1769: dconst_0
+      1770: dcmpl
+      1771: ifle          1778
+      1774: iconst_1
+      1775: goto          1779
+      1778: iconst_0
+      1779: dload         50
+      1781: dconst_0
+      1782: dcmpg
+      1783: ifge          1790
+      1786: iconst_1
+      1787: goto          1791
+      1790: iconst_0
+      1791: if_icmpne     1804
+      1794: aload         30
+      1796: dconst_0
+      1797: dconst_1
+      1798: dconst_1
+      1799: invokevirtual #433                // Method net/minecraft/world/phys/Vec3.multiply:(DDD)Lnet/minecraft/world/phys/Vec3;
+      1802: astore        30
+      1804: dload         46
+      1806: dconst_0
+      1807: dcmpl
+      1808: ifeq          1865
+      1811: dload         52
+      1813: dconst_0
+      1814: dcmpl
+      1815: ifeq          1865
+      1818: dload         46
+      1820: dconst_0
+      1821: dcmpl
+      1822: ifle          1829
+      1825: iconst_1
+      1826: goto          1830
+      1829: iconst_0
+      1830: dload         52
+      1832: dconst_0
+      1833: dcmpg
+      1834: ifge          1841
+      1837: iconst_1
+      1838: goto          1842
+      1841: iconst_0
+      1842: if_icmpne     1865
+      1845: aload         30
+      1847: dconst_1
+      1848: dconst_0
+      1849: dconst_1
+      1850: invokevirtual #433                // Method net/minecraft/world/phys/Vec3.multiply:(DDD)Lnet/minecraft/world/phys/Vec3;
+      1853: dconst_0
+      1854: aload         5
+      1856: getfield      #366                // Field net/minecraft/world/phys/Vec3.y:D
+      1859: dconst_0
+      1860: invokevirtual #459                // Method net/minecraft/world/phys/Vec3.add:(DDD)Lnet/minecraft/world/phys/Vec3;
+      1863: astore        30
+      1865: dload         48
+      1867: dconst_0
+      1868: dcmpl
+      1869: ifeq          1920
+      1872: dload         54
+      1874: invokestatic  #360                // Method java/lang/Math.abs:(D)D
+      1877: dload         56
+      1879: dcmpl
+      1880: ifle          1920
+      1883: dload         48
+      1885: dconst_0
+      1886: dcmpl
+      1887: ifle          1894
+      1890: iconst_1
+      1891: goto          1895
+      1894: iconst_0
+      1895: dload         54
+      1897: dconst_0
+      1898: dcmpg
+      1899: ifge          1906
+      1902: iconst_1
+      1903: goto          1907
+      1906: iconst_0
+      1907: if_icmpne     1920
+      1910: aload         30
+      1912: dconst_1
+      1913: dconst_1
+      1914: dconst_0
+      1915: invokevirtual #433                // Method net/minecraft/world/phys/Vec3.multiply:(DDD)Lnet/minecraft/world/phys/Vec3;
+      1918: astore        30
+      1920: dload         38
+      1922: dconst_0
+      1923: dcmpl
+      1924: ifne          2075
+      1927: dload         40
+      1929: dconst_0
+      1930: dcmpl
+      1931: ifle          2075
+      1934: iload         42
+      1936: ifeq          2075
+      1939: iload         43
+      1941: ifeq          2075
+      1944: aload         7
+      1946: invokevirtual #336                // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity$ContraptionRotationState.hasVerticalRotation:()Z
+      1949: ifeq          2075
+      1952: aload         32
+      1954: dconst_1
+      1955: dconst_0
+      1956: dconst_1
+      1957: invokevirtual #433                // Method net/minecraft/world/phys/Vec3.multiply:(DDD)Lnet/minecraft/world/phys/Vec3;
+      1960: invokevirtual #439                // Method net/minecraft/world/phys/Vec3.length:()D
+      1963: ldc2_w        #580                // double 1.25d
+      1966: dmul
+      1967: dstore        44
+      1969: aload         31
+      1971: dconst_0
+      1972: ldc2_w        #582                // double 0.9d
+      1975: dconst_0
+      1976: invokevirtual #433                // Method net/minecraft/world/phys/Vec3.multiply:(DDD)Lnet/minecraft/world/phys/Vec3;
+      1979: dconst_0
+      1980: ldc2_w        #584                // double -0.009999999776482582d
+      1983: dconst_0
+      1984: invokevirtual #459                // Method net/minecraft/world/phys/Vec3.add:(DDD)Lnet/minecraft/world/phys/Vec3;
+      1987: astore        46
+      1989: aload         32
+      1991: aload         46
+      1993: aload         32
+      1995: invokevirtual #588                // Method net/minecraft/world/phys/Vec3.cross:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+      1998: invokevirtual #588                // Method net/minecraft/world/phys/Vec3.cross:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+      2001: invokevirtual #436                // Method net/minecraft/world/phys/Vec3.normalize:()Lnet/minecraft/world/phys/Vec3;
+      2004: astore        47
+      2006: aload         30
+      2008: ldc2_w        #589                // double 0.85d
+      2011: dconst_0
+      2012: ldc2_w        #589                // double 0.85d
+      2015: invokevirtual #433                // Method net/minecraft/world/phys/Vec3.multiply:(DDD)Lnet/minecraft/world/phys/Vec3;
+      2018: aload         47
+      2020: ldc2_w        #591                // double 0.20000000298023224d
+      2023: dload         40
+      2025: dadd
+      2026: aload         46
+      2028: invokevirtual #439                // Method net/minecraft/world/phys/Vec3.length:()D
+      2031: dmul
+      2032: dload         44
+      2034: dmul
+      2035: invokevirtual #442                // Method net/minecraft/world/phys/Vec3.scale:(D)Lnet/minecraft/world/phys/Vec3;
+      2038: dconst_0
+      2039: ldc2_w        #593                // double -0.10000000149011612d
+      2042: aload         32
+      2044: getfield      #366                // Field net/minecraft/world/phys/Vec3.y:D
+      2047: ldc2_w        #268                // double 0.125d
+      2050: dmul
+      2051: dsub
+      2052: dconst_0
+      2053: invokevirtual #459                // Method net/minecraft/world/phys/Vec3.add:(DDD)Lnet/minecraft/world/phys/Vec3;
+      2056: invokevirtual #349                // Method net/minecraft/world/phys/Vec3.add:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+      2059: astore        48
+      2061: aload         11
+      2063: aload         48
+      2065: invokevirtual #571                // Method net/minecraft/world/entity/Entity.setDeltaMovement:(Lnet/minecraft/world/phys/Vec3;)V
+      2068: aload         11
+      2070: invokevirtual #255                // Method net/minecraft/world/entity/Entity.getDeltaMovement:()Lnet/minecraft/world/phys/Vec3;
+      2073: astore        30
+      2075: iload         35
+      2077: ifne          2091
+      2080: aload         26
+      2082: invokevirtual #383                // Method org/apache/commons/lang3/mutable/MutableBoolean.isFalse:()Z
+      2085: ifeq          2091
+      2088: goto          143
+      2091: aload         34
+      2093: aload         11
+      2095: invokestatic  #598                // Method collide:(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/entity/Entity;)Lnet/minecraft/world/phys/Vec3;
+      2098: astore        44
+      2100: aload         11
+      2102: aload         14
+      2104: getfield      #353                // Field net/minecraft/world/phys/Vec3.x:D
+      2107: aload         44
+      2109: getfield      #353                // Field net/minecraft/world/phys/Vec3.x:D
+      2112: dadd
+      2113: aload         14
+      2115: getfield      #366                // Field net/minecraft/world/phys/Vec3.y:D
+      2118: aload         44
+      2120: getfield      #366                // Field net/minecraft/world/phys/Vec3.y:D
+      2123: dadd
+      2124: aload         14
+      2126: getfield      #369                // Field net/minecraft/world/phys/Vec3.z:D
+      2129: aload         44
+      2131: getfield      #369                // Field net/minecraft/world/phys/Vec3.z:D
+      2134: dadd
+      2135: invokevirtual #602                // Method net/minecraft/world/entity/Entity.setPos:(DDD)V
+      2138: aload         11
+      2140: invokevirtual #251                // Method net/minecraft/world/entity/Entity.position:()Lnet/minecraft/world/phys/Vec3;
+      2143: astore        14
+      2145: aload_1
+      2146: aload_0
+      2147: aload         5
+      2149: aload         11
+      2151: aload         30
+      2153: aload         12
+      2155: invokestatic  #606                // Method handleDamageFromTrain:(Lnet/minecraft/world/level/Level;Lcom/simibubi/create/content/contraptions/AbstractContraptionEntity;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/Vec3;Lcom/simibubi/create/content/contraptions/ContraptionCollider$PlayerType;)Lnet/minecraft/world/phys/Vec3;
+      2158: astore        30
+      2160: aload         11
+      2162: iconst_1
+      2163: putfield      #610                // Field net/minecraft/world/entity/Entity.hurtMarked:Z
+      2166: getstatic     #318                // Field net/minecraft/world/phys/Vec3.ZERO:Lnet/minecraft/world/phys/Vec3;
+      2169: astore        45
+      2171: aload         26
+      2173: invokevirtual #613                // Method org/apache/commons/lang3/mutable/MutableBoolean.isTrue:()Z
+      2176: ifeq          2375
+      2179: aload_0
+      2180: aload         11
+      2182: invokevirtual #616                // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity.registerColliding:(Lnet/minecraft/world/entity/Entity;)V
+      2185: aload         11
+      2187: fconst_0
+      2188: putfield      #620                // Field net/minecraft/world/entity/Entity.fallDistance:F
+      2191: aload         11
+      2193: invokevirtual #624                // Method net/minecraft/world/entity/Entity.getIndirectPassengers:()Ljava/lang/Iterable;
+      2196: invokeinterface #627,  1          // InterfaceMethod java/lang/Iterable.iterator:()Ljava/util/Iterator;
+      2201: astore        46
+      2203: aload         46
+      2205: invokeinterface #191,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+      2210: ifeq          2259
+      2213: aload         46
+      2215: invokeinterface #194,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      2220: checkcast     #146                // class net/minecraft/world/entity/Entity
+      2223: astore        47
+      2225: aload         47
+      2227: invokestatic  #201                // Method getPlayerType:(Lnet/minecraft/world/entity/Entity;)Lcom/simibubi/create/content/contraptions/ContraptionCollider$PlayerType;
+      2230: getstatic     #242                // Field com/simibubi/create/content/contraptions/ContraptionCollider$PlayerType.CLIENT:Lcom/simibubi/create/content/contraptions/ContraptionCollider$PlayerType;
+      2233: if_acmpne     2256
+      2236: invokestatic  #633                // Method com/simibubi/create/AllPackets.getChannel:()Lnet/minecraftforge/network/simple/SimpleChannel;
+      2239: new           #635                // class com/simibubi/create/content/contraptions/sync/ClientMotionPacket
+      2242: dup
+      2243: aload         47
+      2245: invokevirtual #255                // Method net/minecraft/world/entity/Entity.getDeltaMovement:()Lnet/minecraft/world/phys/Vec3;
+      2248: iconst_1
+      2249: fconst_0
+      2250: invokespecial #638                // Method com/simibubi/create/content/contraptions/sync/ClientMotionPacket."<init>":(Lnet/minecraft/world/phys/Vec3;ZF)V
+      2253: invokevirtual #643                // Method net/minecraftforge/network/simple/SimpleChannel.sendToServer:(Ljava/lang/Object;)V
+      2256: goto          2203
+      2259: dload         38
+      2261: dconst_0
+      2262: dcmpl
+      2263: ifne          2273
+      2266: dload         40
+      2268: dconst_0
+      2269: dcmpl
+      2270: ifne          2277
+      2273: iconst_1
+      2274: goto          2278
+      2277: iconst_0
+      2278: istore        46
+      2280: iload         46
+      2282: ifne          2293
+      2285: aload         7
+      2287: invokevirtual #336                // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity$ContraptionRotationState.hasVerticalRotation:()Z
+      2290: ifne          2326
+      2293: iload         46
+      2295: ifeq          2304
+      2298: aload         11
+      2300: iconst_1
+      2301: invokevirtual #646                // Method net/minecraft/world/entity/Entity.setOnGround:(Z)V
+      2304: aload         11
+      2306: instanceof    #648                // class net/minecraft/world/entity/item/ItemEntity
+      2309: ifeq          2326
+      2312: aload         30
+      2314: ldc2_w        #456                // double 0.5d
+      2317: dconst_1
+      2318: ldc2_w        #456                // double 0.5d
+      2321: invokevirtual #433                // Method net/minecraft/world/phys/Vec3.multiply:(DDD)Lnet/minecraft/world/phys/Vec3;
+      2324: astore        30
+      2326: aload_0
+      2327: aload         14
+      2329: invokevirtual #651                // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity.getContactPointMotion:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+      2332: astore        45
+      2334: aload         45
+      2336: aload         11
+      2338: invokestatic  #598                // Method collide:(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/entity/Entity;)Lnet/minecraft/world/phys/Vec3;
+      2341: astore        44
+      2343: aload         11
+      2345: aload         14
+      2347: getfield      #353                // Field net/minecraft/world/phys/Vec3.x:D
+      2350: aload         44
+      2352: getfield      #353                // Field net/minecraft/world/phys/Vec3.x:D
+      2355: dadd
+      2356: aload         14
+      2358: getfield      #366                // Field net/minecraft/world/phys/Vec3.y:D
+      2361: aload         14
+      2363: getfield      #369                // Field net/minecraft/world/phys/Vec3.z:D
+      2366: aload         44
+      2368: getfield      #369                // Field net/minecraft/world/phys/Vec3.z:D
+      2371: dadd
+      2372: invokevirtual #602                // Method net/minecraft/world/entity/Entity.setPos:(DDD)V
+      2375: aload         11
+      2377: aload         30
+      2379: invokevirtual #571                // Method net/minecraft/world/entity/Entity.setDeltaMovement:(Lnet/minecraft/world/phys/Vec3;)V
+      2382: aload         12
+      2384: getstatic     #242                // Field com/simibubi/create/content/contraptions/ContraptionCollider$PlayerType.CLIENT:Lcom/simibubi/create/content/contraptions/ContraptionCollider$PlayerType;
+      2387: if_acmpeq     2393
+      2390: goto          143
+      2393: aload         11
+      2395: invokevirtual #545                // Method net/minecraft/world/entity/Entity.getX:()D
+      2398: aload         11
+      2400: getfield      #654                // Field net/minecraft/world/entity/Entity.xo:D
+      2403: dsub
+      2404: aload         45
+      2406: getfield      #353                // Field net/minecraft/world/phys/Vec3.x:D
+      2409: dsub
+      2410: dstore        46
+      2412: aload         11
+      2414: invokevirtual #551                // Method net/minecraft/world/entity/Entity.getZ:()D
+      2417: aload         11
+      2419: getfield      #657                // Field net/minecraft/world/entity/Entity.zo:D
+      2422: dsub
+      2423: aload         45
+      2425: getfield      #369                // Field net/minecraft/world/phys/Vec3.z:D
+      2428: dsub
+      2429: dstore        48
+      2431: dload         46
+      2433: dload         46
+      2435: dmul
+      2436: dload         48
+      2438: dload         48
+      2440: dmul
+      2441: dadd
+      2442: d2f
+      2443: invokestatic  #663                // Method net/minecraft/util/Mth.sqrt:(F)F
+      2446: ldc_w         #664                // float 4.0f
+      2449: fmul
+      2450: fstore        50
+      2452: fload         50
+      2454: fconst_1
+      2455: fcmpl
+      2456: ifle          2462
+      2459: fconst_1
+      2460: fstore        50
+      2462: invokestatic  #633                // Method com/simibubi/create/AllPackets.getChannel:()Lnet/minecraftforge/network/simple/SimpleChannel;
+      2465: new           #635                // class com/simibubi/create/content/contraptions/sync/ClientMotionPacket
+      2468: dup
+      2469: aload         30
+      2471: iconst_1
+      2472: fload         50
+      2474: invokespecial #638                // Method com/simibubi/create/content/contraptions/sync/ClientMotionPacket."<init>":(Lnet/minecraft/world/phys/Vec3;ZF)V
+      2477: invokevirtual #643                // Method net/minecraftforge/network/simple/SimpleChannel.sendToServer:(Ljava/lang/Object;)V
+      2480: aload         11
+      2482: invokevirtual #667                // Method net/minecraft/world/entity/Entity.onGround:()Z
+      2485: ifeq          2528
+      2488: aload_2
+      2489: instanceof    #207                // class com/simibubi/create/content/contraptions/TranslatingContraption
+      2492: ifeq          2528
+      2495: getstatic     #102                // Field safetyLock:Lorg/apache/commons/lang3/tuple/MutablePair;
+      2498: new           #110                // class java/lang/ref/WeakReference
+      2501: dup
+      2502: aload_0
+      2503: invokespecial #668                // Method java/lang/ref/WeakReference."<init>":(Ljava/lang/Object;)V
+      2506: invokevirtual #671                // Method org/apache/commons/lang3/tuple/MutablePair.setLeft:(Ljava/lang/Object;)V
+      2509: getstatic     #102                // Field safetyLock:Lorg/apache/commons/lang3/tuple/MutablePair;
+      2512: aload         11
+      2514: invokevirtual #548                // Method net/minecraft/world/entity/Entity.getY:()D
+      2517: aload_0
+      2518: invokevirtual #672                // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity.getY:()D
+      2521: dsub
+      2522: invokestatic  #424                // Method java/lang/Double.valueOf:(D)Ljava/lang/Double;
+      2525: invokevirtual #675                // Method org/apache/commons/lang3/tuple/MutablePair.setRight:(Ljava/lang/Object;)V
+      2528: goto          143
+      2531: return
+
+  private static void saveClientPlayerFromClipping(com.simibubi.create.content.contraptions.AbstractContraptionEntity, net.minecraft.world.phys.Vec3);
+    Code:
+         0: invokestatic  #779                // Method net/minecraft/client/Minecraft.getInstance:()Lnet/minecraft/client/Minecraft;
+         3: getfield      #783                // Field net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+         6: astore_2
+         7: aload_2
+         8: invokevirtual #788                // Method net/minecraft/client/player/LocalPlayer.isPassenger:()Z
+        11: ifeq          15
+        14: return
+        15: getstatic     #102                // Field safetyLock:Lorg/apache/commons/lang3/tuple/MutablePair;
+        18: getfield      #791                // Field org/apache/commons/lang3/tuple/MutablePair.right:Ljava/lang/Object;
+        21: checkcast     #420                // class java/lang/Double
+        24: invokevirtual #794                // Method java/lang/Double.doubleValue:()D
+        27: dstore_3
+        28: aload_2
+        29: invokevirtual #795                // Method net/minecraft/client/player/LocalPlayer.getY:()D
+        32: aload_0
+        33: invokevirtual #672                // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity.getY:()D
+        36: dsub
+        37: dstore        5
+        39: aload_1
+        40: aload_2
+        41: invokevirtual #796                // Method net/minecraft/client/player/LocalPlayer.getDeltaMovement:()Lnet/minecraft/world/phys/Vec3;
+        44: invokevirtual #93                 // Method net/minecraft/world/phys/Vec3.subtract:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+        47: getfield      #366                // Field net/minecraft/world/phys/Vec3.y:D
+        50: dstore        7
+        52: dload         5
+        54: dload_3
+        55: dsub
+        56: invokestatic  #799                // Method java/lang/Math.signum:(D)D
+        59: dstore        9
+        61: aload_2
+        62: getfield      #803                // Field net/minecraft/client/player/LocalPlayer.connection:Lnet/minecraft/client/multiplayer/ClientPacketListener;
+        65: astore        11
+        67: aload         11
+        69: invokevirtual #809                // Method net/minecraft/client/multiplayer/ClientPacketListener.getOnlinePlayers:()Ljava/util/Collection;
+        72: invokeinterface #815,  1          // InterfaceMethod java/util/Collection.size:()I
+        77: iconst_1
+        78: if_icmple     124
+        81: getstatic     #817                // Field packetCooldown:I
+        84: ifle          95
+        87: getstatic     #817                // Field packetCooldown:I
+        90: iconst_1
+        91: isub
+        92: putstatic     #817                // Field packetCooldown:I
+        95: getstatic     #817                // Field packetCooldown:I
+        98: ifne          124
+       101: invokestatic  #633                // Method com/simibubi/create/AllPackets.getChannel:()Lnet/minecraftforge/network/simple/SimpleChannel;
+       104: new           #30                 // class com/simibubi/create/content/contraptions/ContraptionColliderLockPacket$ContraptionColliderLockPacketRequest
+       107: dup
+       108: aload_0
+       109: invokevirtual #820                // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity.getId:()I
+       112: dload         5
+       114: invokespecial #823                // Method com/simibubi/create/content/contraptions/ContraptionColliderLockPacket$ContraptionColliderLockPacketRequest."<init>":(ID)V
+       117: invokevirtual #643                // Method net/minecraftforge/network/simple/SimpleChannel.sendToServer:(Ljava/lang/Object;)V
+       120: iconst_3
+       121: putstatic     #817                // Field packetCooldown:I
+       124: dload         9
+       126: dconst_0
+       127: dcmpl
+       128: ifne          132
+       131: return
+       132: dload         9
+       134: dload         7
+       136: invokestatic  #799                // Method java/lang/Math.signum:(D)D
+       139: dcmpl
+       140: ifne          144
+       143: return
+       144: aload_1
+       145: dconst_0
+       146: dconst_1
+       147: dconst_0
+       148: invokevirtual #433                // Method net/minecraft/world/phys/Vec3.multiply:(DDD)Lnet/minecraft/world/phys/Vec3;
+       151: invokevirtual #826                // Method net/minecraft/world/phys/Vec3.lengthSqr:()D
+       154: dstore        12
+       156: dload         9
+       158: dconst_0
+       159: dcmpl
+       160: ifle          173
+       163: dload         12
+       165: ldc2_w        #827                // double 0.1d
+       168: dcmpg
+       169: ifge          173
+       172: return
+       173: dload         12
+       175: ldc2_w        #829                // double 0.05d
+       178: dcmpg
+       179: ifge          183
+       182: return
+       183: aload_2
+       184: aload_0
+       185: aload_1
+       186: dload_3
+       187: invokestatic  #834                // Method savePlayerFromClipping:(Lnet/minecraft/world/entity/player/Player;Lcom/simibubi/create/content/contraptions/AbstractContraptionEntity;Lnet/minecraft/world/phys/Vec3;D)Z
+       190: ifne          200
+       193: getstatic     #102                // Field safetyLock:Lorg/apache/commons/lang3/tuple/MutablePair;
+       196: aconst_null
+       197: invokevirtual #671                // Method org/apache/commons/lang3/tuple/MutablePair.setLeft:(Ljava/lang/Object;)V
+       200: return
+
+  public static void lockPacketReceived(int, int, double);
+    Code:
+         0: invokestatic  #779                // Method net/minecraft/client/Minecraft.getInstance:()Lnet/minecraft/client/Minecraft;
+         3: getfield      #844                // Field net/minecraft/client/Minecraft.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+         6: astore        4
+         8: aload         4
+        10: iload_0
+        11: invokevirtual #850                // Method net/minecraft/client/multiplayer/ClientLevel.getEntity:(I)Lnet/minecraft/world/entity/Entity;
+        14: astore        6
+        16: aload         6
+        18: instanceof    #852                // class com/simibubi/create/content/contraptions/ControlledContraptionEntity
+        21: ifeq          34
+        24: aload         6
+        26: checkcast     #852                // class com/simibubi/create/content/contraptions/ControlledContraptionEntity
+        29: astore        5
+        31: goto          35
+        34: return
+        35: aload         4
+        37: iload_1
+        38: invokevirtual #850                // Method net/minecraft/client/multiplayer/ClientLevel.getEntity:(I)Lnet/minecraft/world/entity/Entity;
+        41: astore        7
+        43: aload         7
+        45: instanceof    #854                // class net/minecraft/client/player/RemotePlayer
+        48: ifeq          61
+        51: aload         7
+        53: checkcast     #854                // class net/minecraft/client/player/RemotePlayer
+        56: astore        6
+        58: goto          62
+        61: return
+        62: getstatic     #856                // Field remoteSafetyLocks:Ljava/util/Map;
+        65: aload         5
+        67: invokedynamic #867,  0            // InvokeDynamic #5:apply:()Ljava/util/function/Function;
+        72: invokeinterface #871,  3          // InterfaceMethod java/util/Map.computeIfAbsent:(Ljava/lang/Object;Ljava/util/function/Function;)Ljava/lang/Object;
+        77: checkcast     #475                // class java/util/Map
+        80: aload         6
+        82: dload_2
+        83: invokestatic  #424                // Method java/lang/Double.valueOf:(D)Ljava/lang/Double;
+        86: invokeinterface #875,  3          // InterfaceMethod java/util/Map.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+        91: pop
+        92: return
+
+  private static void saveRemotePlayerFromClipping(net.minecraft.world.entity.player.Player, com.simibubi.create.content.contraptions.AbstractContraptionEntity, net.minecraft.world.phys.Vec3);
+    Code:
+         0: aload_0
+         1: invokevirtual #883                // Method net/minecraft/world/entity/player/Player.isPassenger:()Z
+         4: ifeq          8
+         7: return
+         8: getstatic     #856                // Field remoteSafetyLocks:Ljava/util/Map;
+        11: aload_1
+        12: invokestatic  #888                // Method java/util/Collections.emptyMap:()Ljava/util/Map;
+        15: invokeinterface #891,  3          // InterfaceMethod java/util/Map.getOrDefault:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+        20: checkcast     #475                // class java/util/Map
+        23: astore_3
+        24: aload_3
+        25: aload_0
+        26: aload_0
+        27: invokevirtual #892                // Method net/minecraft/world/entity/player/Player.getY:()D
+        30: aload_1
+        31: invokevirtual #672                // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity.getY:()D
+        34: dsub
+        35: invokestatic  #424                // Method java/lang/Double.valueOf:(D)Ljava/lang/Double;
+        38: invokeinterface #891,  3          // InterfaceMethod java/util/Map.getOrDefault:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+        43: checkcast     #420                // class java/lang/Double
+        46: invokevirtual #794                // Method java/lang/Double.doubleValue:()D
+        49: dstore        4
+        51: aload_0
+        52: aload_1
+        53: aload_2
+        54: dload         4
+        56: invokestatic  #834                // Method savePlayerFromClipping:(Lnet/minecraft/world/entity/player/Player;Lcom/simibubi/create/content/contraptions/AbstractContraptionEntity;Lnet/minecraft/world/phys/Vec3;D)Z
+        59: ifne          80
+        62: aload_3
+        63: aload_0
+        64: invokeinterface #478,  2          // InterfaceMethod java/util/Map.containsKey:(Ljava/lang/Object;)Z
+        69: ifeq          80
+        72: aload_3
+        73: aload_0
+        74: invokeinterface #895,  2          // InterfaceMethod java/util/Map.remove:(Ljava/lang/Object;)Ljava/lang/Object;
+        79: pop
+        80: return
+
+  private static boolean savePlayerFromClipping(net.minecraft.world.entity.player.Player, com.simibubi.create.content.contraptions.AbstractContraptionEntity, net.minecraft.world.phys.Vec3, double);
+    Code:
+         0: aload_0
+         1: invokevirtual #899                // Method net/minecraft/world/entity/player/Player.getBoundingBox:()Lnet/minecraft/world/phys/AABB;
+         4: ldc2_w        #900                // double 0.25d
+         7: dconst_0
+         8: ldc2_w        #900                // double 0.25d
+        11: invokevirtual #904                // Method net/minecraft/world/phys/AABB.deflate:(DDD)Lnet/minecraft/world/phys/AABB;
+        14: astore        5
+        16: ldc2_w        #905                // double 1.7976931348623157E308d
+        19: dstore        6
+        21: aload_0
+        22: invokevirtual #907                // Method net/minecraft/world/entity/player/Player.getStepHeight:()F
+        25: f2d
+        26: aload_1
+        27: invokevirtual #672                // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity.getY:()D
+        30: dadd
+        31: dload_3
+        32: dadd
+        33: dstore        8
+        35: ldc2_w        #908                // double 5.0d
+        38: aload_0
+        39: invokevirtual #892                // Method net/minecraft/world/entity/player/Player.getY:()D
+        42: dload         8
+        44: dsub
+        45: invokestatic  #360                // Method java/lang/Math.abs:(D)D
+        48: invokestatic  #912                // Method java/lang/Math.max:(DD)D
+        51: dstore        10
+        53: iconst_0
+        54: istore        12
+        56: iload         12
+        58: iconst_4
+        59: if_icmpge     186
+        62: new           #89                 // class net/minecraft/world/phys/Vec3
+        65: dup
+        66: iload         12
+        68: iconst_2
+        69: idiv
+        70: ifne          81
+        73: aload         5
+        75: getfield      #915                // Field net/minecraft/world/phys/AABB.minX:D
+        78: goto          86
+        81: aload         5
+        83: getfield      #918                // Field net/minecraft/world/phys/AABB.maxX:D
+        86: dload         8
+        88: iload         12
+        90: iconst_2
+        91: irem
+        92: ifne          103
+        95: aload         5
+        97: getfield      #921                // Field net/minecraft/world/phys/AABB.minZ:D
+       100: goto          108
+       103: aload         5
+       105: getfield      #924                // Field net/minecraft/world/phys/AABB.maxZ:D
+       108: invokespecial #926                // Method net/minecraft/world/phys/Vec3."<init>":(DDD)V
+       111: astore        13
+       113: aload         13
+       115: dconst_0
+       116: dload         10
+       118: dneg
+       119: dconst_0
+       120: invokevirtual #459                // Method net/minecraft/world/phys/Vec3.add:(DDD)Lnet/minecraft/world/phys/Vec3;
+       123: astore        14
+       125: aload         13
+       127: aload         14
+       129: aload_1
+       130: invokestatic  #932                // Method com/simibubi/create/content/contraptions/ContraptionHandlerClient.rayTraceContraption:(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lcom/simibubi/create/content/contraptions/AbstractContraptionEntity;)Lnet/minecraft/world/phys/BlockHitResult;
+       133: astore        15
+       135: aload         15
+       137: ifnonnull     143
+       140: goto          180
+       143: aload_1
+       144: aload         15
+       146: invokevirtual #937                // Method net/minecraft/world/phys/BlockHitResult.getLocation:()Lnet/minecraft/world/phys/Vec3;
+       149: fconst_1
+       150: invokevirtual #940                // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity.toGlobalVector:(Lnet/minecraft/world/phys/Vec3;F)Lnet/minecraft/world/phys/Vec3;
+       153: astore        16
+       155: aload         13
+       157: getfield      #366                // Field net/minecraft/world/phys/Vec3.y:D
+       160: aload         16
+       162: getfield      #366                // Field net/minecraft/world/phys/Vec3.y:D
+       165: dsub
+       166: dstore        17
+       168: dload         6
+       170: dload         17
+       172: dcmpl
+       173: ifle          180
+       176: dload         17
+       178: dstore        6
+       180: iinc          12, 1
+       183: goto          56
+       186: dload         6
+       188: dload         10
+       190: dcmpl
+       191: ifle          196
+       194: iconst_0
+       195: ireturn
+       196: aload_0
+       197: aload_0
+       198: invokevirtual #941                // Method net/minecraft/world/entity/player/Player.getX:()D
+       201: dload         8
+       203: dload         6
+       205: dsub
+       206: aload_0
+       207: invokevirtual #942                // Method net/minecraft/world/entity/player/Player.getZ:()D
+       210: invokevirtual #943                // Method net/minecraft/world/entity/player/Player.setPos:(DDD)V
+       213: iconst_1
+       214: ireturn
+
+  private static net.minecraft.world.phys.Vec3 handleDamageFromTrain(net.minecraft.world.level.Level, com.simibubi.create.content.contraptions.AbstractContraptionEntity, net.minecraft.world.phys.Vec3, net.minecraft.world.entity.Entity, net.minecraft.world.phys.Vec3, com.simibubi.create.content.contraptions.ContraptionCollider$PlayerType);
+    Code:
+         0: aload_1
+         1: instanceof    #956                // class com/simibubi/create/content/trains/entity/CarriageContraptionEntity
+         4: ifeq          16
+         7: aload_1
+         8: checkcast     #956                // class com/simibubi/create/content/trains/entity/CarriageContraptionEntity
+        11: astore        6
+        13: goto          19
+        16: aload         4
+        18: areturn
+        19: aload_3
+        20: invokevirtual #667                // Method net/minecraft/world/entity/Entity.onGround:()Z
+        23: ifne          29
+        26: aload         4
+        28: areturn
+        29: aload_3
+        30: invokevirtual #960                // Method net/minecraft/world/entity/Entity.getPersistentData:()Lnet/minecraft/nbt/CompoundTag;
+        33: astore        7
+        35: aload         7
+        37: ldc_w         #962                // String ContraptionGrounded
+        40: invokevirtual #968                // Method net/minecraft/nbt/CompoundTag.contains:(Ljava/lang/String;)Z
+        43: ifeq          57
+        46: aload         7
+        48: ldc_w         #962                // String ContraptionGrounded
+        51: invokevirtual #971                // Method net/minecraft/nbt/CompoundTag.remove:(Ljava/lang/String;)V
+        54: aload         4
+        56: areturn
+        57: aload         6
+        59: getfield      #974                // Field com/simibubi/create/content/trains/entity/CarriageContraptionEntity.collidingEntities:Ljava/util/Map;
+        62: aload_3
+        63: invokeinterface #478,  2          // InterfaceMethod java/util/Map.containsKey:(Ljava/lang/Object;)Z
+        68: ifeq          74
+        71: aload         4
+        73: areturn
+        74: aload_3
+        75: instanceof    #648                // class net/minecraft/world/entity/item/ItemEntity
+        78: ifeq          84
+        81: aload         4
+        83: areturn
+        84: aload         6
+        86: getfield      #977                // Field com/simibubi/create/content/trains/entity/CarriageContraptionEntity.nonDamageTicks:I
+        89: ifeq          95
+        92: aload         4
+        94: areturn
+        95: invokestatic  #983                // Method com/simibubi/create/infrastructure/config/AllConfigs.server:()Lcom/simibubi/create/infrastructure/config/CServer;
+        98: getfield      #989                // Field com/simibubi/create/infrastructure/config/CServer.trains:Lcom/simibubi/create/infrastructure/config/CTrains;
+       101: getfield      #995                // Field com/simibubi/create/infrastructure/config/CTrains.trainsCauseDamage:Lnet/createmod/catnip/config/ConfigBase$ConfigBool;
+       104: invokevirtual #996                // Method net/createmod/catnip/config/ConfigBase$ConfigBool.get:()Ljava/lang/Object;
+       107: checkcast     #998                // class java/lang/Boolean
+       110: invokevirtual #1001               // Method java/lang/Boolean.booleanValue:()Z
+       113: ifne          119
+       116: aload         4
+       118: areturn
+       119: aload_2
+       120: aload_3
+       121: invokevirtual #255                // Method net/minecraft/world/entity/Entity.getDeltaMovement:()Lnet/minecraft/world/phys/Vec3;
+       124: invokevirtual #93                 // Method net/minecraft/world/phys/Vec3.subtract:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+       127: astore        8
+       129: aload         8
+       131: invokevirtual #439                // Method net/minecraft/world/phys/Vec3.length:()D
+       134: ldc2_w        #1002               // double 0.3499999940395355d
+       137: dcmpg
+       138: ifle          152
+       141: aload_2
+       142: invokevirtual #439                // Method net/minecraft/world/phys/Vec3.length:()D
+       145: ldc2_w        #1002               // double 0.3499999940395355d
+       148: dcmpg
+       149: ifgt          155
+       152: aload         4
+       154: areturn
+       155: aload_0
+       156: aload_1
+       157: invokestatic  #1009               // Method com/simibubi/create/foundation/damageTypes/CreateDamageSources.runOver:(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/Entity;)Lnet/minecraft/world/damagesource/DamageSource;
+       160: astore        9
+       162: aload         8
+       164: invokevirtual #439                // Method net/minecraft/world/phys/Vec3.length:()D
+       167: dstore        10
+       169: aload_3
+       170: iconst_0
+       171: invokevirtual #1013               // Method net/minecraft/world/entity/Entity.getClassification:(Z)Lnet/minecraft/world/entity/MobCategory;
+       174: getstatic     #1019               // Field net/minecraft/world/entity/MobCategory.MONSTER:Lnet/minecraft/world/entity/MobCategory;
+       177: if_acmpne     188
+       180: dload         10
+       182: ldc2_w        #147                // double 2.0d
+       185: dmul
+       186: dstore        10
+       188: aload_3
+       189: instanceof    #542                // class net/minecraft/world/entity/player/Player
+       192: ifeq          220
+       195: aload_3
+       196: checkcast     #542                // class net/minecraft/world/entity/player/Player
+       199: astore        12
+       201: aload         12
+       203: invokevirtual #1024               // Method net/minecraft/world/entity/player/Player.isCreative:()Z
+       206: ifne          217
+       209: aload         12
+       211: invokevirtual #1027               // Method net/minecraft/world/entity/player/Player.isSpectator:()Z
+       214: ifeq          220
+       217: aload         4
+       219: areturn
+       220: aload         5
+       222: getstatic     #242                // Field com/simibubi/create/content/contraptions/ContraptionCollider$PlayerType.CLIENT:Lcom/simibubi/create/content/contraptions/ContraptionCollider$PlayerType;
+       225: if_acmpne     277
+       228: invokestatic  #633                // Method com/simibubi/create/AllPackets.getChannel:()Lnet/minecraftforge/network/simple/SimpleChannel;
+       231: new           #1029               // class com/simibubi/create/content/contraptions/TrainCollisionPacket
+       234: dup
+       235: dload         10
+       237: ldc2_w        #1030               // double 16.0d
+       240: dmul
+       241: d2i
+       242: aload_1
+       243: invokevirtual #820                // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity.getId:()I
+       246: invokespecial #1034               // Method com/simibubi/create/content/contraptions/TrainCollisionPacket."<init>":(II)V
+       249: invokevirtual #643                // Method net/minecraftforge/network/simple/SimpleChannel.sendToServer:(Ljava/lang/Object;)V
+       252: aload_0
+       253: aload_3
+       254: checkcast     #542                // class net/minecraft/world/entity/player/Player
+       257: aload_3
+       258: invokevirtual #1038               // Method net/minecraft/world/entity/Entity.blockPosition:()Lnet/minecraft/core/BlockPos;
+       261: getstatic     #1041               // Field net/minecraft/sounds/SoundEvents.PLAYER_ATTACK_CRIT:Lnet/minecraft/sounds/SoundEvent;
+       264: getstatic     #1044               // Field net/minecraft/sounds/SoundSource.NEUTRAL:Lnet/minecraft/sounds/SoundSource;
+       267: fconst_1
+       268: ldc_w         #1045               // float 0.75f
+       271: invokevirtual #1048               // Method net/minecraft/world/level/Level.playSound:(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V
+       274: goto          352
+       277: aload_3
+       278: aload         9
+       280: dload         10
+       282: ldc2_w        #1030               // double 16.0d
+       285: dmul
+       286: d2i
+       287: i2f
+       288: invokevirtual #1052               // Method net/minecraft/world/entity/Entity.hurt:(Lnet/minecraft/world/damagesource/DamageSource;F)Z
+       291: pop
+       292: aload_0
+       293: aconst_null
+       294: aload_3
+       295: invokevirtual #1038               // Method net/minecraft/world/entity/Entity.blockPosition:()Lnet/minecraft/core/BlockPos;
+       298: getstatic     #1041               // Field net/minecraft/sounds/SoundEvents.PLAYER_ATTACK_CRIT:Lnet/minecraft/sounds/SoundEvent;
+       301: getstatic     #1044               // Field net/minecraft/sounds/SoundSource.NEUTRAL:Lnet/minecraft/sounds/SoundSource;
+       304: fconst_1
+       305: ldc_w         #1045               // float 0.75f
+       308: invokevirtual #1048               // Method net/minecraft/world/level/Level.playSound:(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V
+       311: aload_3
+       312: invokevirtual #197                // Method net/minecraft/world/entity/Entity.isAlive:()Z
+       315: ifne          352
+       318: aload_1
+       319: invokevirtual #1055               // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity.getControllingPlayer:()Ljava/util/Optional;
+       322: aload_0
+       323: dup
+       324: invokestatic  #164                // Method java/util/Objects.requireNonNull:(Ljava/lang/Object;)Ljava/lang/Object;
+       327: pop
+       328: invokedynamic #1066,  0           // InvokeDynamic #6:apply:(Lnet/minecraft/world/level/Level;)Ljava/util/function/Function;
+       333: invokevirtual #1070               // Method java/util/Optional.map:(Ljava/util/function/Function;)Ljava/util/Optional;
+       336: getstatic     #1076               // Field com/simibubi/create/foundation/advancement/AllAdvancements.TRAIN_ROADKILL:Lcom/simibubi/create/foundation/advancement/CreateAdvancement;
+       339: dup
+       340: invokestatic  #164                // Method java/util/Objects.requireNonNull:(Ljava/lang/Object;)Ljava/lang/Object;
+       343: pop
+       344: invokedynamic #1087,  0           // InvokeDynamic #7:accept:(Lcom/simibubi/create/foundation/advancement/CreateAdvancement;)Ljava/util/function/Consumer;
+       349: invokevirtual #1090               // Method java/util/Optional.ifPresent:(Ljava/util/function/Consumer;)V
+       352: aload         4
+       354: aload_2
+       355: dconst_1
+       356: dconst_0
+       357: dconst_1
+       358: invokevirtual #433                // Method net/minecraft/world/phys/Vec3.multiply:(DDD)Lnet/minecraft/world/phys/Vec3;
+       361: invokevirtual #436                // Method net/minecraft/world/phys/Vec3.normalize:()Lnet/minecraft/world/phys/Vec3;
+       364: dconst_0
+       365: ldc2_w        #900                // double 0.25d
+       368: dconst_0
+       369: invokevirtual #459                // Method net/minecraft/world/phys/Vec3.add:(DDD)Lnet/minecraft/world/phys/Vec3;
+       372: dload         10
+       374: ldc2_w        #1091               // double 4.0d
+       377: dmul
+       378: invokevirtual #442                // Method net/minecraft/world/phys/Vec3.scale:(D)Lnet/minecraft/world/phys/Vec3;
+       381: invokevirtual #349                // Method net/minecraft/world/phys/Vec3.add:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+       384: aload         8
+       386: invokevirtual #349                // Method net/minecraft/world/phys/Vec3.add:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+       389: astore        12
+       391: aload         12
+       393: ldc_w         #1093               // float 3.0f
+       396: invokestatic  #1096               // Method net/createmod/catnip/math/VecHelper.clamp:(Lnet/minecraft/world/phys/Vec3;F)Lnet/minecraft/world/phys/Vec3;
+       399: areturn
+
+  static boolean bounceEntity(net.minecraft.world.entity.Entity, net.minecraft.world.phys.Vec3, com.simibubi.create.content.contraptions.AbstractContraptionEntity, double);
+    Code:
+         0: dload_3
+         1: dconst_0
+         2: dcmpl
+         3: ifne          8
+         6: iconst_0
+         7: ireturn
+         8: aload_0
+         9: invokevirtual #1109               // Method net/minecraft/world/entity/Entity.isSuppressingBounce:()Z
+        12: ifeq          17
+        15: iconst_0
+        16: ireturn
+        17: aload_2
+        18: aload_0
+        19: invokevirtual #251                // Method net/minecraft/world/entity/Entity.position:()Lnet/minecraft/world/phys/Vec3;
+        22: invokevirtual #651                // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity.getContactPointMotion:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+        25: astore        5
+        27: aload_0
+        28: invokevirtual #255                // Method net/minecraft/world/entity/Entity.getDeltaMovement:()Lnet/minecraft/world/phys/Vec3;
+        31: aload         5
+        33: invokevirtual #93                 // Method net/minecraft/world/phys/Vec3.subtract:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+        36: astore        6
+        38: aload_1
+        39: dload_3
+        40: ldc2_w        #147                // double 2.0d
+        43: dmul
+        44: aload         6
+        46: aload_1
+        47: invokevirtual #1113               // Method net/minecraft/world/phys/Vec3.dot:(Lnet/minecraft/world/phys/Vec3;)D
+        50: dmul
+        51: invokevirtual #442                // Method net/minecraft/world/phys/Vec3.scale:(D)Lnet/minecraft/world/phys/Vec3;
+        54: astore        7
+        56: aload         7
+        58: aload         7
+        60: invokevirtual #1113               // Method net/minecraft/world/phys/Vec3.dot:(Lnet/minecraft/world/phys/Vec3;)D
+        63: ldc2_w        #500                // double 0.10000000149011612d
+        66: dcmpg
+        67: ifge          72
+        70: iconst_0
+        71: ireturn
+        72: aload_0
+        73: aload_0
+        74: invokevirtual #255                // Method net/minecraft/world/entity/Entity.getDeltaMovement:()Lnet/minecraft/world/phys/Vec3;
+        77: aload         7
+        79: invokevirtual #93                 // Method net/minecraft/world/phys/Vec3.subtract:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+        82: invokevirtual #571                // Method net/minecraft/world/entity/Entity.setDeltaMovement:(Lnet/minecraft/world/phys/Vec3;)V
+        85: iconst_1
+        86: ireturn
+
+  public static net.minecraft.world.phys.Vec3 getWorldToLocalTranslation(net.minecraft.world.entity.Entity, net.minecraft.world.phys.Vec3, com.simibubi.create.foundation.collision.Matrix3d, float);
+    Code:
+         0: aload_0
+         1: invokevirtual #251                // Method net/minecraft/world/entity/Entity.position:()Lnet/minecraft/world/phys/Vec3;
+         4: astore        4
+         6: new           #89                 // class net/minecraft/world/phys/Vec3
+         9: dup
+        10: dconst_0
+        11: aload_0
+        12: invokevirtual #252                // Method net/minecraft/world/entity/Entity.getBoundingBox:()Lnet/minecraft/world/phys/AABB;
+        15: invokevirtual #267                // Method net/minecraft/world/phys/AABB.getYsize:()D
+        18: ldc2_w        #147                // double 2.0d
+        21: ddiv
+        22: dconst_0
+        23: invokespecial #926                // Method net/minecraft/world/phys/Vec3."<init>":(DDD)V
+        26: astore        5
+        28: aload         4
+        30: astore        6
+        32: aload         6
+        34: aload         5
+        36: invokevirtual #349                // Method net/minecraft/world/phys/Vec3.add:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+        39: astore        6
+        41: aload         6
+        43: aload_1
+        44: aload_2
+        45: fload_3
+        46: invokestatic  #1119               // Method worldToLocalPos:(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lcom/simibubi/create/foundation/collision/Matrix3d;F)Lnet/minecraft/world/phys/Vec3;
+        49: astore        6
+        51: aload         6
+        53: aload         5
+        55: invokevirtual #93                 // Method net/minecraft/world/phys/Vec3.subtract:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+        58: astore        6
+        60: aload         6
+        62: aload         4
+        64: invokevirtual #93                 // Method net/minecraft/world/phys/Vec3.subtract:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+        67: astore        6
+        69: aload         6
+        71: areturn
+
+  public static net.minecraft.world.phys.Vec3 worldToLocalPos(net.minecraft.world.phys.Vec3, com.simibubi.create.content.contraptions.AbstractContraptionEntity);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: invokevirtual #96                 // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity.getAnchorVec:()Lnet/minecraft/world/phys/Vec3;
+         5: aload_1
+         6: invokevirtual #246                // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity.getRotationState:()Lcom/simibubi/create/content/contraptions/AbstractContraptionEntity$ContraptionRotationState;
+         9: invokestatic  #1124               // Method worldToLocalPos:(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lcom/simibubi/create/content/contraptions/AbstractContraptionEntity$ContraptionRotationState;)Lnet/minecraft/world/phys/Vec3;
+        12: areturn
+
+  public static net.minecraft.world.phys.Vec3 worldToLocalPos(net.minecraft.world.phys.Vec3, net.minecraft.world.phys.Vec3, com.simibubi.create.content.contraptions.AbstractContraptionEntity$ContraptionRotationState);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: aload_2
+         3: invokevirtual #250                // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity$ContraptionRotationState.asMatrix:()Lcom/simibubi/create/foundation/collision/Matrix3d;
+         6: aload_2
+         7: invokevirtual #259                // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity$ContraptionRotationState.getYawOffset:()F
+        10: invokestatic  #1119               // Method worldToLocalPos:(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lcom/simibubi/create/foundation/collision/Matrix3d;F)Lnet/minecraft/world/phys/Vec3;
+        13: areturn
+
+  public static net.minecraft.world.phys.Vec3 worldToLocalPos(net.minecraft.world.phys.Vec3, net.minecraft.world.phys.Vec3, com.simibubi.create.foundation.collision.Matrix3d, float);
+    Code:
+         0: aload_0
+         1: astore        4
+         3: aload         4
+         5: aload_1
+         6: invokevirtual #93                 // Method net/minecraft/world/phys/Vec3.subtract:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+         9: astore        4
+        11: aload         4
+        13: getstatic     #1128               // Field net/createmod/catnip/math/VecHelper.CENTER_OF_ORIGIN:Lnet/minecraft/world/phys/Vec3;
+        16: invokevirtual #93                 // Method net/minecraft/world/phys/Vec3.subtract:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+        19: astore        4
+        21: aload         4
+        23: fload_3
+        24: fneg
+        25: f2d
+        26: getstatic     #449                // Field net/minecraft/core/Direction$Axis.Y:Lnet/minecraft/core/Direction$Axis;
+        29: invokestatic  #455                // Method net/createmod/catnip/math/VecHelper.rotate:(Lnet/minecraft/world/phys/Vec3;DLnet/minecraft/core/Direction$Axis;)Lnet/minecraft/world/phys/Vec3;
+        32: astore        4
+        34: aload_2
+        35: aload         4
+        37: invokevirtual #277                // Method com/simibubi/create/foundation/collision/Matrix3d.transform:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+        40: astore        4
+        42: aload         4
+        44: getstatic     #1128               // Field net/createmod/catnip/math/VecHelper.CENTER_OF_ORIGIN:Lnet/minecraft/world/phys/Vec3;
+        47: invokevirtual #349                // Method net/minecraft/world/phys/Vec3.add:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+        50: astore        4
+        52: aload         4
+        54: areturn
+
+  static net.minecraft.world.phys.Vec3 collide(net.minecraft.world.phys.Vec3, net.minecraft.world.entity.Entity);
+    Code:
+         0: aload_1
+         1: invokevirtual #252                // Method net/minecraft/world/entity/Entity.getBoundingBox:()Lnet/minecraft/world/phys/AABB;
+         4: astore_2
+         5: aload_1
+         6: invokevirtual #540                // Method net/minecraft/world/entity/Entity.level:()Lnet/minecraft/world/level/Level;
+         9: aload_1
+        10: aload_2
+        11: aload_0
+        12: invokevirtual #1131               // Method net/minecraft/world/phys/AABB.expandTowards:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/AABB;
+        15: invokevirtual #1135               // Method net/minecraft/world/level/Level.getEntityCollisions:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/AABB;)Ljava/util/List;
+        18: astore_3
+        19: aload_0
+        20: invokevirtual #826                // Method net/minecraft/world/phys/Vec3.lengthSqr:()D
+        23: dconst_0
+        24: dcmpl
+        25: ifne          32
+        28: aload_0
+        29: goto          43
+        32: aload_1
+        33: aload_0
+        34: aload_2
+        35: aload_1
+        36: invokevirtual #540                // Method net/minecraft/world/entity/Entity.level:()Lnet/minecraft/world/level/Level;
+        39: aload_3
+        40: invokestatic  #1139               // Method net/minecraft/world/entity/Entity.collideBoundingBox:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/AABB;Lnet/minecraft/world/level/Level;Ljava/util/List;)Lnet/minecraft/world/phys/Vec3;
+        43: astore        4
+        45: aload_0
+        46: getfield      #353                // Field net/minecraft/world/phys/Vec3.x:D
+        49: aload         4
+        51: getfield      #353                // Field net/minecraft/world/phys/Vec3.x:D
+        54: dcmpl
+        55: ifeq          62
+        58: iconst_1
+        59: goto          63
+        62: iconst_0
+        63: istore        5
+        65: aload_0
+        66: getfield      #366                // Field net/minecraft/world/phys/Vec3.y:D
+        69: aload         4
+        71: getfield      #366                // Field net/minecraft/world/phys/Vec3.y:D
+        74: dcmpl
+        75: ifeq          82
+        78: iconst_1
+        79: goto          83
+        82: iconst_0
+        83: istore        6
+        85: aload_0
+        86: getfield      #369                // Field net/minecraft/world/phys/Vec3.z:D
+        89: aload         4
+        91: getfield      #369                // Field net/minecraft/world/phys/Vec3.z:D
+        94: dcmpl
+        95: ifeq          102
+        98: iconst_1
+        99: goto          103
+       102: iconst_0
+       103: istore        7
+       105: iload         6
+       107: ifeq          123
+       110: aload_0
+       111: getfield      #366                // Field net/minecraft/world/phys/Vec3.y:D
+       114: dconst_0
+       115: dcmpg
+       116: ifge          123
+       119: iconst_1
+       120: goto          124
+       123: iconst_0
+       124: istore        8
+       126: aload_1
+       127: invokevirtual #401                // Method net/minecraft/world/entity/Entity.getStepHeight:()F
+       130: fconst_0
+       131: fcmpl
+       132: ifle          345
+       135: iload         8
+       137: ifeq          345
+       140: iload         5
+       142: ifne          150
+       145: iload         7
+       147: ifeq          345
+       150: aload_1
+       151: new           #89                 // class net/minecraft/world/phys/Vec3
+       154: dup
+       155: aload_0
+       156: getfield      #353                // Field net/minecraft/world/phys/Vec3.x:D
+       159: aload_1
+       160: invokevirtual #401                // Method net/minecraft/world/entity/Entity.getStepHeight:()F
+       163: f2d
+       164: aload_0
+       165: getfield      #369                // Field net/minecraft/world/phys/Vec3.z:D
+       168: invokespecial #926                // Method net/minecraft/world/phys/Vec3."<init>":(DDD)V
+       171: aload_2
+       172: aload_1
+       173: invokevirtual #540                // Method net/minecraft/world/entity/Entity.level:()Lnet/minecraft/world/level/Level;
+       176: aload_3
+       177: invokestatic  #1139               // Method net/minecraft/world/entity/Entity.collideBoundingBox:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/AABB;Lnet/minecraft/world/level/Level;Ljava/util/List;)Lnet/minecraft/world/phys/Vec3;
+       180: astore        9
+       182: aload_1
+       183: new           #89                 // class net/minecraft/world/phys/Vec3
+       186: dup
+       187: dconst_0
+       188: aload_1
+       189: invokevirtual #401                // Method net/minecraft/world/entity/Entity.getStepHeight:()F
+       192: f2d
+       193: dconst_0
+       194: invokespecial #926                // Method net/minecraft/world/phys/Vec3."<init>":(DDD)V
+       197: aload_2
+       198: aload_0
+       199: getfield      #353                // Field net/minecraft/world/phys/Vec3.x:D
+       202: dconst_0
+       203: aload_0
+       204: getfield      #369                // Field net/minecraft/world/phys/Vec3.z:D
+       207: invokevirtual #158                // Method net/minecraft/world/phys/AABB.expandTowards:(DDD)Lnet/minecraft/world/phys/AABB;
+       210: aload_1
+       211: invokevirtual #540                // Method net/minecraft/world/entity/Entity.level:()Lnet/minecraft/world/level/Level;
+       214: aload_3
+       215: invokestatic  #1139               // Method net/minecraft/world/entity/Entity.collideBoundingBox:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/AABB;Lnet/minecraft/world/level/Level;Ljava/util/List;)Lnet/minecraft/world/phys/Vec3;
+       218: astore        10
+       220: aload         10
+       222: getfield      #366                // Field net/minecraft/world/phys/Vec3.y:D
+       225: aload_1
+       226: invokevirtual #401                // Method net/minecraft/world/entity/Entity.getStepHeight:()F
+       229: f2d
+       230: dcmpg
+       231: ifge          290
+       234: aload_1
+       235: new           #89                 // class net/minecraft/world/phys/Vec3
+       238: dup
+       239: aload_0
+       240: getfield      #353                // Field net/minecraft/world/phys/Vec3.x:D
+       243: dconst_0
+       244: aload_0
+       245: getfield      #369                // Field net/minecraft/world/phys/Vec3.z:D
+       248: invokespecial #926                // Method net/minecraft/world/phys/Vec3."<init>":(DDD)V
+       251: aload_2
+       252: aload         10
+       254: invokevirtual #281                // Method net/minecraft/world/phys/AABB.move:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/AABB;
+       257: aload_1
+       258: invokevirtual #540                // Method net/minecraft/world/entity/Entity.level:()Lnet/minecraft/world/level/Level;
+       261: aload_3
+       262: invokestatic  #1139               // Method net/minecraft/world/entity/Entity.collideBoundingBox:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/AABB;Lnet/minecraft/world/level/Level;Ljava/util/List;)Lnet/minecraft/world/phys/Vec3;
+       265: aload         10
+       267: invokevirtual #349                // Method net/minecraft/world/phys/Vec3.add:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+       270: astore        11
+       272: aload         11
+       274: invokevirtual #1142               // Method net/minecraft/world/phys/Vec3.horizontalDistanceSqr:()D
+       277: aload         9
+       279: invokevirtual #1142               // Method net/minecraft/world/phys/Vec3.horizontalDistanceSqr:()D
+       282: dcmpl
+       283: ifle          290
+       286: aload         11
+       288: astore        9
+       290: aload         9
+       292: invokevirtual #1142               // Method net/minecraft/world/phys/Vec3.horizontalDistanceSqr:()D
+       295: aload         4
+       297: invokevirtual #1142               // Method net/minecraft/world/phys/Vec3.horizontalDistanceSqr:()D
+       300: dcmpl
+       301: ifle          345
+       304: aload         9
+       306: aload_1
+       307: new           #89                 // class net/minecraft/world/phys/Vec3
+       310: dup
+       311: dconst_0
+       312: aload         9
+       314: getfield      #366                // Field net/minecraft/world/phys/Vec3.y:D
+       317: dneg
+       318: aload_0
+       319: getfield      #366                // Field net/minecraft/world/phys/Vec3.y:D
+       322: dadd
+       323: dconst_0
+       324: invokespecial #926                // Method net/minecraft/world/phys/Vec3."<init>":(DDD)V
+       327: aload_2
+       328: aload         9
+       330: invokevirtual #281                // Method net/minecraft/world/phys/AABB.move:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/AABB;
+       333: aload_1
+       334: invokevirtual #540                // Method net/minecraft/world/entity/Entity.level:()Lnet/minecraft/world/level/Level;
+       337: aload_3
+       338: invokestatic  #1139               // Method net/minecraft/world/entity/Entity.collideBoundingBox:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/AABB;Lnet/minecraft/world/level/Level;Ljava/util/List;)Lnet/minecraft/world/phys/Vec3;
+       341: invokevirtual #349                // Method net/minecraft/world/phys/Vec3.add:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+       344: areturn
+       345: aload         4
+       347: areturn
+
+  private static com.simibubi.create.content.contraptions.ContraptionCollider$PlayerType getPlayerType(net.minecraft.world.entity.Entity);
+    Code:
+         0: aload_0
+         1: instanceof    #542                // class net/minecraft/world/entity/player/Player
+         4: ifne          11
+         7: getstatic     #1158               // Field com/simibubi/create/content/contraptions/ContraptionCollider$PlayerType.NONE:Lcom/simibubi/create/content/contraptions/ContraptionCollider$PlayerType;
+        10: areturn
+        11: aload_0
+        12: invokevirtual #540                // Method net/minecraft/world/entity/Entity.level:()Lnet/minecraft/world/level/Level;
+        15: getfield      #1160               // Field net/minecraft/world/level/Level.isClientSide:Z
+        18: ifne          25
+        21: getstatic     #240                // Field com/simibubi/create/content/contraptions/ContraptionCollider$PlayerType.SERVER:Lcom/simibubi/create/content/contraptions/ContraptionCollider$PlayerType;
+        24: areturn
+        25: new           #322                // class org/apache/commons/lang3/mutable/MutableBoolean
+        28: dup
+        29: iconst_0
+        30: invokespecial #325                // Method org/apache/commons/lang3/mutable/MutableBoolean."<init>":(Z)V
+        33: astore_1
+        34: getstatic     #120                // Field net/minecraftforge/api/distmarker/Dist.CLIENT:Lnet/minecraftforge/api/distmarker/Dist;
+        37: aload_1
+        38: aload_0
+        39: invokedynamic #1168,  0           // InvokeDynamic #8:get:(Lorg/apache/commons/lang3/mutable/MutableBoolean;Lnet/minecraft/world/entity/Entity;)Ljava/util/function/Supplier;
+        44: invokestatic  #144                // Method net/minecraftforge/fml/DistExecutor.unsafeRunWhenOn:(Lnet/minecraftforge/api/distmarker/Dist;Ljava/util/function/Supplier;)V
+        47: aload_1
+        48: invokevirtual #1169               // Method org/apache/commons/lang3/mutable/MutableBoolean.booleanValue:()Z
+        51: ifeq          60
+        54: getstatic     #242                // Field com/simibubi/create/content/contraptions/ContraptionCollider$PlayerType.CLIENT:Lcom/simibubi/create/content/contraptions/ContraptionCollider$PlayerType;
+        57: goto          63
+        60: getstatic     #205                // Field com/simibubi/create/content/contraptions/ContraptionCollider$PlayerType.REMOTE:Lcom/simibubi/create/content/contraptions/ContraptionCollider$PlayerType;
+        63: areturn
+
+  private static boolean isClientPlayerEntity(net.minecraft.world.entity.Entity);
+    Code:
+         0: aload_0
+         1: instanceof    #785                // class net/minecraft/client/player/LocalPlayer
+         4: ireturn
+
+  private static java.util.List<net.minecraft.world.phys.shapes.VoxelShape> getPotentiallyCollidedShapes(net.minecraft.world.level.Level, com.simibubi.create.content.contraptions.Contraption, net.minecraft.world.phys.AABB);
+    Code:
+         0: aload_2
+         1: invokevirtual #267                // Method net/minecraft/world/phys/AABB.getYsize:()D
+         4: dstore_3
+         5: aload_2
+         6: invokevirtual #363                // Method net/minecraft/world/phys/AABB.getXsize:()D
+         9: dstore        5
+        11: dload_3
+        12: dload         5
+        14: dcmpl
+        15: ifle          32
+        18: dload         5
+        20: dconst_0
+        21: dcmpl
+        22: ifeq          32
+        25: dload_3
+        26: dload         5
+        28: ddiv
+        29: goto          33
+        32: dconst_1
+        33: dstore        7
+        35: dload         5
+        37: dload_3
+        38: dcmpl
+        39: ifle          55
+        42: dload_3
+        43: dconst_0
+        44: dcmpl
+        45: ifeq          55
+        48: dload         5
+        50: dload_3
+        51: ddiv
+        52: goto          56
+        55: dconst_1
+        56: dstore        9
+        58: aload_2
+        59: ldc2_w        #456                // double 0.5d
+        62: invokevirtual #152                // Method net/minecraft/world/phys/AABB.inflate:(D)Lnet/minecraft/world/phys/AABB;
+        65: astore        11
+        67: aload         11
+        69: dload         7
+        71: dload         9
+        73: dload         7
+        75: invokevirtual #1176               // Method net/minecraft/world/phys/AABB.inflate:(DDD)Lnet/minecraft/world/phys/AABB;
+        78: astore        11
+        80: aload         11
+        82: getfield      #915                // Field net/minecraft/world/phys/AABB.minX:D
+        85: aload         11
+        87: getfield      #1179               // Field net/minecraft/world/phys/AABB.minY:D
+        90: aload         11
+        92: getfield      #921                // Field net/minecraft/world/phys/AABB.minZ:D
+        95: invokestatic  #1182               // Method net/minecraft/core/BlockPos.containing:(DDD)Lnet/minecraft/core/BlockPos;
+        98: astore        12
+       100: aload         11
+       102: getfield      #918                // Field net/minecraft/world/phys/AABB.maxX:D
+       105: aload         11
+       107: getfield      #1185               // Field net/minecraft/world/phys/AABB.maxY:D
+       110: aload         11
+       112: getfield      #924                // Field net/minecraft/world/phys/AABB.maxZ:D
+       115: invokestatic  #1182               // Method net/minecraft/core/BlockPos.containing:(DDD)Lnet/minecraft/core/BlockPos;
+       118: astore        13
+       120: new           #1187               // class java/util/ArrayList
+       123: dup
+       124: invokespecial #1188               // Method java/util/ArrayList."<init>":()V
+       127: astore        14
+       129: aload         12
+       131: aload         13
+       133: invokestatic  #1192               // Method net/minecraft/core/BlockPos.betweenClosed:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/BlockPos;)Ljava/lang/Iterable;
+       136: invokeinterface #627,  1          // InterfaceMethod java/lang/Iterable.iterator:()Ljava/util/Iterator;
+       141: astore        15
+       143: aload         15
+       145: invokeinterface #191,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+       150: ifeq          270
+       153: aload         15
+       155: invokeinterface #194,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+       160: checkcast     #465                // class net/minecraft/core/BlockPos
+       163: astore        16
+       165: aload_1
+       166: getfield      #1195               // Field com/simibubi/create/content/contraptions/Contraption.blocks:Ljava/util/Map;
+       169: aload         16
+       171: invokeinterface #478,  2          // InterfaceMethod java/util/Map.containsKey:(Ljava/lang/Object;)Z
+       176: ifeq          267
+       179: aload_1
+       180: aload         16
+       182: invokevirtual #1199               // Method com/simibubi/create/content/contraptions/Contraption.isHiddenInPortal:(Lnet/minecraft/core/BlockPos;)Z
+       185: ifne          267
+       188: aload_1
+       189: invokevirtual #473                // Method com/simibubi/create/content/contraptions/Contraption.getBlocks:()Ljava/util/Map;
+       192: aload         16
+       194: invokeinterface #480,  2          // InterfaceMethod java/util/Map.get:(Ljava/lang/Object;)Ljava/lang/Object;
+       199: checkcast     #25                 // class net/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplate$StructureBlockInfo
+       202: astore        17
+       204: aload         17
+       206: invokevirtual #484                // Method net/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplate$StructureBlockInfo.state:()Lnet/minecraft/world/level/block/state/BlockState;
+       209: astore        18
+       211: aload         17
+       213: invokevirtual #1201               // Method net/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplate$StructureBlockInfo.pos:()Lnet/minecraft/core/BlockPos;
+       216: astore        19
+       218: aload         18
+       220: aload_0
+       221: aload         16
+       223: invokevirtual #1205               // Method net/minecraft/world/level/block/state/BlockState.getCollisionShape:(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+       226: aload         19
+       228: invokevirtual #1207               // Method net/minecraft/core/BlockPos.getX:()I
+       231: i2d
+       232: aload         19
+       234: invokevirtual #1209               // Method net/minecraft/core/BlockPos.getY:()I
+       237: i2d
+       238: aload         19
+       240: invokevirtual #1211               // Method net/minecraft/core/BlockPos.getZ:()I
+       243: i2d
+       244: invokevirtual #1216               // Method net/minecraft/world/phys/shapes/VoxelShape.move:(DDD)Lnet/minecraft/world/phys/shapes/VoxelShape;
+       247: astore        20
+       249: aload         20
+       251: invokevirtual #1219               // Method net/minecraft/world/phys/shapes/VoxelShape.isEmpty:()Z
+       254: ifne          267
+       257: aload         14
+       259: aload         20
+       261: invokeinterface #1221,  2         // InterfaceMethod java/util/List.add:(Ljava/lang/Object;)Z
+       266: pop
+       267: goto          143
+       270: aload         14
+       272: areturn
+
+  public static boolean collideBlocks(com.simibubi.create.content.contraptions.AbstractContraptionEntity);
+    Code:
+         0: aload_0
+         1: invokevirtual #1237               // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity.supportsTerrainCollision:()Z
+         4: ifne          9
+         7: iconst_0
+         8: ireturn
+         9: aload_0
+        10: invokevirtual #66                 // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity.getCommandSenderWorld:()Lnet/minecraft/world/level/Level;
+        13: astore_1
+        14: aload_0
+        15: invokevirtual #1238               // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity.getDeltaMovement:()Lnet/minecraft/world/phys/Vec3;
+        18: astore_2
+        19: aload_0
+        20: invokevirtual #70                 // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity.getContraption:()Lcom/simibubi/create/content/contraptions/Contraption;
+        23: checkcast     #207                // class com/simibubi/create/content/contraptions/TranslatingContraption
+        26: astore_3
+        27: aload_0
+        28: invokevirtual #74                 // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity.getBoundingBox:()Lnet/minecraft/world/phys/AABB;
+        31: astore        4
+        33: aload_0
+        34: invokevirtual #84                 // Method com/simibubi/create/content/contraptions/AbstractContraptionEntity.position:()Lnet/minecraft/world/phys/Vec3;
+        37: astore        5
+        39: aload         5
+        41: invokestatic  #469                // Method net/minecraft/core/BlockPos.containing:(Lnet/minecraft/core/Position;)Lnet/minecraft/core/BlockPos;
+        44: astore        6
+        46: aload_3
+        47: ifnonnull     52
+        50: iconst_0
+        51: ireturn
+        52: aload         4
+        54: ifnonnull     59
+        57: iconst_0
+        58: ireturn
+        59: aload_2
+        60: getstatic     #318                // Field net/minecraft/world/phys/Vec3.ZERO:Lnet/minecraft/world/phys/Vec3;
+        63: invokevirtual #408                // Method net/minecraft/world/phys/Vec3.equals:(Ljava/lang/Object;)Z
+        66: ifeq          71
+        69: iconst_0
+        70: ireturn
+        71: aload_2
+        72: getfield      #353                // Field net/minecraft/world/phys/Vec3.x:D
+        75: aload_2
+        76: getfield      #366                // Field net/minecraft/world/phys/Vec3.y:D
+        79: aload_2
+        80: getfield      #369                // Field net/minecraft/world/phys/Vec3.z:D
+        83: invokestatic  #1242               // Method net/minecraft/core/Direction.getNearest:(DDD)Lnet/minecraft/core/Direction;
+        86: astore        7
+        88: aload         7
+        90: invokevirtual #1246               // Method net/minecraft/core/Direction.getAxisDirection:()Lnet/minecraft/core/Direction$AxisDirection;
+        93: getstatic     #1250               // Field net/minecraft/core/Direction$AxisDirection.POSITIVE:Lnet/minecraft/core/Direction$AxisDirection;
+        96: if_acmpne     108
+        99: aload         6
+       101: aload         7
+       103: invokevirtual #1254               // Method net/minecraft/core/BlockPos.relative:(Lnet/minecraft/core/Direction;)Lnet/minecraft/core/BlockPos;
+       106: astore        6
+       108: aload_1
+       109: aload_3
+       110: aload         6
+       112: aload         7
+       114: invokestatic  #1258               // Method isCollidingWithWorld:(Lnet/minecraft/world/level/Level;Lcom/simibubi/create/content/contraptions/TranslatingContraption;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;)Z
+       117: ifeq          122
+       120: iconst_1
+       121: ireturn
+       122: aload_1
+       123: ldc_w         #852                // class com/simibubi/create/content/contraptions/ControlledContraptionEntity
+       126: aload         4
+       128: dconst_1
+       129: invokevirtual #152                // Method net/minecraft/world/phys/AABB.inflate:(D)Lnet/minecraft/world/phys/AABB;
+       132: aload_0
+       133: invokedynamic #1266,  0           // InvokeDynamic #9:test:(Lcom/simibubi/create/content/contraptions/AbstractContraptionEntity;)Ljava/util/function/Predicate;
+       138: invokevirtual #180                // Method net/minecraft/world/level/Level.getEntitiesOfClass:(Ljava/lang/Class;Lnet/minecraft/world/phys/AABB;Ljava/util/function/Predicate;)Ljava/util/List;
+       141: invokeinterface #186,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+       146: astore        8
+       148: aload         8
+       150: invokeinterface #191,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+       155: ifeq          324
+       158: aload         8
+       160: invokeinterface #194,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+       165: checkcast     #852                // class com/simibubi/create/content/contraptions/ControlledContraptionEntity
+       168: astore        9
+       170: aload         9
+       172: invokevirtual #1267               // Method com/simibubi/create/content/contraptions/ControlledContraptionEntity.supportsTerrainCollision:()Z
+       175: ifne          181
+       178: goto          148
+       181: aload         9
+       183: invokevirtual #1268               // Method com/simibubi/create/content/contraptions/ControlledContraptionEntity.getDeltaMovement:()Lnet/minecraft/world/phys/Vec3;
+       186: astore        10
+       188: aload         9
+       190: invokevirtual #1269               // Method com/simibubi/create/content/contraptions/ControlledContraptionEntity.getContraption:()Lcom/simibubi/create/content/contraptions/Contraption;
+       193: checkcast     #207                // class com/simibubi/create/content/contraptions/TranslatingContraption
+       196: astore        11
+       198: aload         9
+       200: invokevirtual #1270               // Method com/simibubi/create/content/contraptions/ControlledContraptionEntity.getBoundingBox:()Lnet/minecraft/world/phys/AABB;
+       203: astore        12
+       205: aload         9
+       207: invokevirtual #1271               // Method com/simibubi/create/content/contraptions/ControlledContraptionEntity.position:()Lnet/minecraft/world/phys/Vec3;
+       210: astore        13
+       212: aload         11
+       214: ifnonnull     219
+       217: iconst_0
+       218: ireturn
+       219: aload         12
+       221: ifnonnull     226
+       224: iconst_0
+       225: ireturn
+       226: aload         4
+       228: aload_2
+       229: invokevirtual #281                // Method net/minecraft/world/phys/AABB.move:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/AABB;
+       232: aload         12
+       234: aload         10
+       236: invokevirtual #281                // Method net/minecraft/world/phys/AABB.move:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/AABB;
+       239: invokevirtual #1275               // Method net/minecraft/world/phys/AABB.intersects:(Lnet/minecraft/world/phys/AABB;)Z
+       242: ifne          248
+       245: goto          148
+       248: aload_3
+       249: aload_1
+       250: aload         7
+       252: invokevirtual #1279               // Method com/simibubi/create/content/contraptions/TranslatingContraption.getOrCreateColliders:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/Direction;)Ljava/util/Set;
+       255: invokeinterface #1282,  1         // InterfaceMethod java/util/Set.iterator:()Ljava/util/Iterator;
+       260: astore        14
+       262: aload         14
+       264: invokeinterface #191,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+       269: ifeq          321
+       272: aload         14
+       274: invokeinterface #194,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+       279: checkcast     #465                // class net/minecraft/core/BlockPos
+       282: astore        15
+       284: aload         15
+       286: aload         6
+       288: invokevirtual #1286               // Method net/minecraft/core/BlockPos.offset:(Lnet/minecraft/core/Vec3i;)Lnet/minecraft/core/BlockPos;
+       291: aload         13
+       293: invokestatic  #469                // Method net/minecraft/core/BlockPos.containing:(Lnet/minecraft/core/Position;)Lnet/minecraft/core/BlockPos;
+       296: invokevirtual #1288               // Method net/minecraft/core/BlockPos.subtract:(Lnet/minecraft/core/Vec3i;)Lnet/minecraft/core/BlockPos;
+       299: astore        15
+       301: aload         11
+       303: invokevirtual #1289               // Method com/simibubi/create/content/contraptions/TranslatingContraption.getBlocks:()Ljava/util/Map;
+       306: aload         15
+       308: invokeinterface #478,  2          // InterfaceMethod java/util/Map.containsKey:(Ljava/lang/Object;)Z
+       313: ifne          319
+       316: goto          262
+       319: iconst_1
+       320: ireturn
+       321: goto          148
+       324: iconst_0
+       325: ireturn
+
+  public static boolean isCollidingWithWorld(net.minecraft.world.level.Level, com.simibubi.create.content.contraptions.TranslatingContraption, net.minecraft.core.BlockPos, net.minecraft.core.Direction);
+    Code:
+         0: aload_1
+         1: aload_0
+         2: aload_3
+         3: invokevirtual #1279               // Method com/simibubi/create/content/contraptions/TranslatingContraption.getOrCreateColliders:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/Direction;)Ljava/util/Set;
+         6: invokeinterface #1282,  1         // InterfaceMethod java/util/Set.iterator:()Ljava/util/Iterator;
+        11: astore        4
+        13: aload         4
+        15: invokeinterface #191,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+        20: ifeq          261
+        23: aload         4
+        25: invokeinterface #194,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+        30: checkcast     #465                // class net/minecraft/core/BlockPos
+        33: astore        5
+        35: aload         5
+        37: aload_2
+        38: invokevirtual #1286               // Method net/minecraft/core/BlockPos.offset:(Lnet/minecraft/core/Vec3i;)Lnet/minecraft/core/BlockPos;
+        41: astore        6
+        43: aload_0
+        44: aload         6
+        46: invokevirtual #1302               // Method net/minecraft/world/level/Level.isLoaded:(Lnet/minecraft/core/BlockPos;)Z
+        49: ifne          54
+        52: iconst_1
+        53: ireturn
+        54: aload_0
+        55: aload         6
+        57: invokevirtual #1306               // Method net/minecraft/world/level/Level.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+        60: astore        7
+        62: aload_1
+        63: invokevirtual #1289               // Method com/simibubi/create/content/contraptions/TranslatingContraption.getBlocks:()Ljava/util/Map;
+        66: aload         5
+        68: invokeinterface #480,  2          // InterfaceMethod java/util/Map.get:(Ljava/lang/Object;)Ljava/lang/Object;
+        73: checkcast     #25                 // class net/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplate$StructureBlockInfo
+        76: astore        8
+        78: aload         7
+        80: aload_0
+        81: aload         5
+        83: invokevirtual #1205               // Method net/minecraft/world/level/block/state/BlockState.getCollisionShape:(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+        86: invokevirtual #1219               // Method net/minecraft/world/phys/shapes/VoxelShape.isEmpty:()Z
+        89: istore        9
+        91: aload         7
+        93: invokevirtual #514                // Method net/minecraft/world/level/block/state/BlockState.getBlock:()Lnet/minecraft/world/level/block/Block;
+        96: instanceof    #1308               // class net/minecraft/world/level/block/CocoaBlock
+        99: ifeq          105
+       102: goto          13
+       105: getstatic     #1314               // Field com/simibubi/create/api/behaviour/movement/MovementBehaviour.REGISTRY:Lcom/simibubi/create/api/registry/SimpleRegistry;
+       108: aload         8
+       110: invokevirtual #484                // Method net/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplate$StructureBlockInfo.state:()Lnet/minecraft/world/level/block/state/BlockState;
+       113: invokeinterface #1319,  2         // InterfaceMethod com/simibubi/create/api/registry/SimpleRegistry.get:(Lnet/minecraft/world/level/block/state/StateHolder;)Ljava/lang/Object;
+       118: checkcast     #1310               // class com/simibubi/create/api/behaviour/movement/MovementBehaviour
+       121: astore        10
+       123: aload         10
+       125: ifnull        211
+       128: aload         10
+       130: instanceof    #1321               // class com/simibubi/create/content/kinetics/base/BlockBreakingMovementBehaviour
+       133: ifeq          163
+       136: aload         10
+       138: checkcast     #1321               // class com/simibubi/create/content/kinetics/base/BlockBreakingMovementBehaviour
+       141: astore        11
+       143: aload         11
+       145: aload_0
+       146: aload         6
+       148: aload         7
+       150: invokevirtual #1325               // Method com/simibubi/create/content/kinetics/base/BlockBreakingMovementBehaviour.canBreak:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Z
+       153: ifne          13
+       156: iload         9
+       158: ifne          13
+       161: iconst_1
+       162: ireturn
+       163: aload         10
+       165: instanceof    #1327               // class com/simibubi/create/content/contraptions/actors/harvester/HarvesterMovementBehaviour
+       168: ifeq          211
+       171: aload         10
+       173: checkcast     #1327               // class com/simibubi/create/content/contraptions/actors/harvester/HarvesterMovementBehaviour
+       176: astore        11
+       178: aload         11
+       180: aload_0
+       181: aload         6
+       183: aload         7
+       185: invokevirtual #1330               // Method com/simibubi/create/content/contraptions/actors/harvester/HarvesterMovementBehaviour.isValidCrop:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Z
+       188: ifne          13
+       191: aload         11
+       193: aload_0
+       194: aload         6
+       196: aload         7
+       198: invokevirtual #1333               // Method com/simibubi/create/content/contraptions/actors/harvester/HarvesterMovementBehaviour.isValidOther:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Z
+       201: ifne          13
+       204: iload         9
+       206: ifne          13
+       209: iconst_1
+       210: ireturn
+       211: getstatic     #1339               // Field com/simibubi/create/AllBlocks.PULLEY_MAGNET:Lcom/tterrag/registrate/util/entry/BlockEntry;
+       214: aload         7
+       216: invokevirtual #1345               // Method com/tterrag/registrate/util/entry/BlockEntry.has:(Lnet/minecraft/world/level/block/state/BlockState;)Z
+       219: ifeq          243
+       222: aload         5
+       224: getstatic     #1347               // Field net/minecraft/core/BlockPos.ZERO:Lnet/minecraft/core/BlockPos;
+       227: invokevirtual #1348               // Method net/minecraft/core/BlockPos.equals:(Ljava/lang/Object;)Z
+       230: ifeq          243
+       233: aload_3
+       234: getstatic     #1351               // Field net/minecraft/core/Direction.UP:Lnet/minecraft/core/Direction;
+       237: if_acmpne     243
+       240: goto          13
+       243: aload         7
+       245: invokevirtual #1354               // Method net/minecraft/world/level/block/state/BlockState.canBeReplaced:()Z
+       248: ifne          258
+       251: iload         9
+       253: ifne          258
+       256: iconst_1
+       257: ireturn
+       258: goto          13
+       261: iconst_0
+       262: ireturn
+
+  private static boolean lambda$collideBlocks$10(com.simibubi.create.content.contraptions.AbstractContraptionEntity, com.simibubi.create.content.contraptions.ControlledContraptionEntity);
+    Code:
+         0: aload_1
+         1: aload_0
+         2: invokevirtual #1365               // Method com/simibubi/create/content/contraptions/ControlledContraptionEntity.equals:(Ljava/lang/Object;)Z
+         5: ifne          12
+         8: iconst_1
+         9: goto          13
+        12: iconst_0
+        13: ireturn
+
+  private static java.lang.Runnable lambda$getPlayerType$9(org.apache.commons.lang3.mutable.MutableBoolean, net.minecraft.world.entity.Entity);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: invokedynamic #1374,  0           // InvokeDynamic #10:run:(Lorg/apache/commons/lang3/mutable/MutableBoolean;Lnet/minecraft/world/entity/Entity;)Ljava/lang/Runnable;
+         7: areturn
+
+  private static void lambda$getPlayerType$8(org.apache.commons.lang3.mutable.MutableBoolean, net.minecraft.world.entity.Entity);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: invokestatic  #1376               // Method isClientPlayerEntity:(Lnet/minecraft/world/entity/Entity;)Z
+         5: invokevirtual #389                // Method org/apache/commons/lang3/mutable/MutableBoolean.setValue:(Z)V
+         8: return
+
+  private static java.util.Map lambda$lockPacketReceived$7(com.simibubi.create.content.contraptions.AbstractContraptionEntity);
+    Code:
+         0: new           #1378               // class java/util/WeakHashMap
+         3: dup
+         4: invokespecial #1379               // Method java/util/WeakHashMap."<init>":()V
+         7: areturn
+
+  private static java.util.List lambda$collideEntities$6(net.minecraft.world.level.Level, com.simibubi.create.content.contraptions.Contraption, net.minecraft.world.phys.AABB, net.minecraft.world.phys.Vec3);
+    Code:
+         0: new           #1187               // class java/util/ArrayList
+         3: dup
+         4: invokespecial #1188               // Method java/util/ArrayList."<init>":()V
+         7: astore        4
+         9: aload_0
+        10: aload_1
+        11: aload_2
+        12: aload_3
+        13: invokevirtual #1131               // Method net/minecraft/world/phys/AABB.expandTowards:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/AABB;
+        16: invokestatic  #1382               // Method getPotentiallyCollidedShapes:(Lnet/minecraft/world/level/Level;Lcom/simibubi/create/content/contraptions/Contraption;Lnet/minecraft/world/phys/AABB;)Ljava/util/List;
+        19: astore        5
+        21: aload         5
+        23: aload         4
+        25: invokedynamic #1392,  0           // InvokeDynamic #11:accept:(Ljava/util/List;)Ljava/util/function/Consumer;
+        30: invokeinterface #1393,  2         // InterfaceMethod java/util/List.forEach:(Ljava/util/function/Consumer;)V
+        35: aload         4
+        37: areturn
+
+  private static void lambda$collideEntities$5(java.util.List, net.minecraft.world.phys.shapes.VoxelShape);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: invokevirtual #1397               // Method net/minecraft/world/phys/shapes/VoxelShape.toAabbs:()Ljava/util/List;
+         5: invokeinterface #1401,  2         // InterfaceMethod java/util/List.addAll:(Ljava/util/Collection;)Z
+        10: pop
+        11: return
+
+  private static void lambda$collideEntities$4(net.minecraft.world.entity.Entity);
+    Code:
+         0: aload_0
+         1: instanceof    #1404               // class net/minecraft/server/level/ServerPlayer
+         4: ifeq          18
+         7: aload_0
+         8: checkcast     #1404               // class net/minecraft/server/level/ServerPlayer
+        11: getfield      #1407               // Field net/minecraft/server/level/ServerPlayer.connection:Lnet/minecraft/server/network/ServerGamePacketListenerImpl;
+        14: iconst_0
+        15: putfield      #1412               // Field net/minecraft/server/network/ServerGamePacketListenerImpl.aboveGroundTickCount:I
+        18: return
+
+  private static java.lang.Runnable lambda$collideEntities$3(net.minecraft.world.entity.Entity, com.simibubi.create.content.contraptions.AbstractContraptionEntity, net.minecraft.world.phys.Vec3);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: aload_2
+         3: invokedynamic #1419,  0           // InvokeDynamic #12:run:(Lnet/minecraft/world/entity/Entity;Lcom/simibubi/create/content/contraptions/AbstractContraptionEntity;Lnet/minecraft/world/phys/Vec3;)Ljava/lang/Runnable;
+         8: areturn
+
+  private static void lambda$collideEntities$2(net.minecraft.world.entity.Entity, com.simibubi.create.content.contraptions.AbstractContraptionEntity, net.minecraft.world.phys.Vec3);
+    Code:
+         0: aload_0
+         1: checkcast     #542                // class net/minecraft/world/entity/player/Player
+         4: aload_1
+         5: aload_2
+         6: invokestatic  #1421               // Method saveRemotePlayerFromClipping:(Lnet/minecraft/world/entity/player/Player;Lcom/simibubi/create/content/contraptions/AbstractContraptionEntity;Lnet/minecraft/world/phys/Vec3;)V
+         9: return
+
+  private static java.lang.Runnable lambda$collideEntities$1(com.simibubi.create.content.contraptions.AbstractContraptionEntity, net.minecraft.world.phys.Vec3);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: invokedynamic #1427,  0           // InvokeDynamic #13:run:(Lcom/simibubi/create/content/contraptions/AbstractContraptionEntity;Lnet/minecraft/world/phys/Vec3;)Ljava/lang/Runnable;
+         7: areturn
+
+  private static void lambda$collideEntities$0(com.simibubi.create.content.contraptions.AbstractContraptionEntity, net.minecraft.world.phys.Vec3);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: invokestatic  #1429               // Method saveClientPlayerFromClipping:(Lcom/simibubi/create/content/contraptions/AbstractContraptionEntity;Lnet/minecraft/world/phys/Vec3;)V
+         5: return
+
+  static {};
+    Code:
+         0: new           #104                // class org/apache/commons/lang3/tuple/MutablePair
+         3: dup
+         4: invokespecial #1431               // Method org/apache/commons/lang3/tuple/MutablePair."<init>":()V
+         7: putstatic     #102                // Field safetyLock:Lorg/apache/commons/lang3/tuple/MutablePair;
+        10: new           #1378               // class java/util/WeakHashMap
+        13: dup
+        14: invokespecial #1379               // Method java/util/WeakHashMap."<init>":()V
+        17: putstatic     #856                // Field remoteSafetyLocks:Ljava/util/Map;
+        20: iconst_0
+        21: putstatic     #817                // Field packetCooldown:I
+        24: return
+}
