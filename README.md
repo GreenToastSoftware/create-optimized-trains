@@ -1,93 +1,93 @@
 # Create Optimized Trains
 
-Addon de otimização para comboios do **Create Mod** (Forge 1.20.1).
+Performance optimization addon for **Create Mod** trains (Forge 1.20.1).
 
-## Funcionalidades
+## Features
 
-### 1. LOD (Level of Detail) para Comboios
-- **FULL** — Carruagens reais com física completa (jogador perto)
-- **MEDIUM** — Física simplificada, renderização normal
-- **LOW** — Sem física, sem colisões, contraption updates mínimos
-- **GHOST** — Entidade fantasma, sem renderização, dados abstratos
+### 1. LOD (Level of Detail) for Trains
+- **FULL** — Real carriages with full physics (player nearby)
+- **MEDIUM** — Simplified physics, normal rendering
+- **LOW** — No physics, no collisions, minimal contraption updates
+- **GHOST** — Ghost entity, no rendering, abstract data only
 
-### 2. Agrupamento / Abstração de Carruagens
-- Transforma múltiplas carruagens em 1 entidade lógica (`TrainGroup`)
-- Guarda apenas: comprimento, velocidade, posição, lista de carruagens como NBT
-- Expande novamente quando o jogador se aproxima
+### 2. Carriage Grouping / Abstraction
+- Merges multiple carriages into a single logical entity (`TrainGroup`)
+- Stores only: length, speed, position, carriage list as NBT
+- Expands back when the player approaches
 
-### 3. Multi-threading Seguro
-**Thread secundária (seguro):**
-- Cálculo de rotas
-- Previsão de colisões
-- Otimização de horários
-- Gestão de prioridades
-- Decisão de LOD
-- Simulação preditiva
+### 3. Safe Multi-threading
+**Secondary thread (safe):**
+- Route calculation
+- Collision prediction
+- Schedule optimization
+- Priority management
+- LOD decisions
+- Predictive simulation
 
-**Main thread (obrigatório):**
-- Movimento real das entidades
-- Física do Create
-- Renderização
-- Interação com blocos
+**Main thread (required):**
+- Actual entity movement
+- Create physics
+- Rendering
+- Block interaction
 
-### 4. Tick Throttling (Atualização Parcial)
-- FULL: cada tick
-- MEDIUM: cada 3 ticks (configurável)
-- LOW: cada 8 ticks
-- GHOST: cada 20 ticks
+### 4. Tick Throttling (Partial Updates)
+- FULL: every tick
+- MEDIUM: every 3 ticks (configurable)
+- LOW: every 8 ticks
+- GHOST: every 20 ticks
 
-### 5. Otimização de Renderização
-- Desativa animações para comboios distantes
-- Saltar renderização completa para LOD GHOST
-- Reduz partículas e efeitos visuais
-- Oculta detalhes internos quando não visíveis
+### 5. Render Optimization
+- Disables animations for distant trains
+- Skips full rendering for GHOST LOD
+- Reduces particles and visual effects
+- Hides internal details when not visible
 
 ### 6. Proxy Entities
-- Entidade leve que representa o comboio inteiro
-- Substitui dezenas de contraptions
-- Mantém posição, velocidade e direção
-- Recria carruagens reais quando necessário
+- Lightweight entity representing the entire train
+- Replaces dozens of contraptions
+- Keeps position, speed and direction
+- Recreates real carriages when needed
 
-### 7. Gestão Inteligente de Chunk Loading
-- Carrega apenas chunks essenciais
-- Descarrega chunks atrás do comboio mais cedo
-- Pré-carrega chunks à frente
-- Anti-thrashing (evita carregar/descarregar repetidamente)
+### 7. Smart Chunk Loading Management
+- Loads only essential chunks
+- Unloads chunks behind the train earlier
+- Pre-loads chunks ahead
+- Anti-thrashing (prevents repeated load/unload cycles)
 
-### 8. Otimização de Física
-- Física simplificada para carruagens distantes
-- Desativa colisões entre carruagens em LOD baixo
-- Reduz checks de bogies
-- Desativa física interna de contraptions longe
+### 8. Physics Optimization
+- Simplified physics for distant carriages
+- Disables collisions between carriages at low LOD
+- Reduces bogie checks
+- Disables internal contraption physics when far away
 
-### 9. Otimização de Networking
-- Envia updates apenas quando velocidade/direção muda
-- Agrupa pacotes (delta compression)
-- Reduz frequência de sync para comboios distantes
+### 9. Networking Optimization
+- Sends updates only when speed/direction changes
+- Batches packets (delta compression)
+- Reduces sync frequency for distant trains
 
-### 10. Sistema de Prioridades
-- Prioridade por tipo (EXPRESS > PASSENGER > FREIGHT > LOW)
-- Resolução de conflitos em cruzamentos
-- Reserva de segmentos de via
-- Análise assíncrona de conflitos
+### 10. Priority System
+- Priority by type (EXPRESS > PASSENGER > FREIGHT > LOW)
+- Conflict resolution at junctions
+- Track segment reservation
+- Async conflict analysis
 
-### 11. Monitor de Performance Dinâmico
-- **NORMAL** (TPS >= 18): fidelidade completa
-- **DEGRADED** (15 <= TPS < 18): otimizações leves
-- **CRITICAL** (TPS < 15): otimizações agressivas, distâncias LOD reduzidas
+### 11. Dynamic Performance Monitor
+- **NORMAL** (TPS >= 18): full fidelity
+- **DEGRADED** (15 <= TPS < 18): light optimizations
+- **CRITICAL** (TPS < 15): aggressive optimizations, reduced LOD distances
 
-## Configuração
+## Configuration
 
-Ficheiro: `create_optimized_trains-common.toml`
+File: `create_optimized_trains-common.toml`
 
-Todas as funcionalidades são configuráveis individualmente com distâncias, intervalos e toggles.
+All features are individually configurable with distances, intervals and toggles.
 
-## Dependências
+## Dependencies
 
 - Minecraft 1.20.1
 - Forge 47.1.33+
 - Create Mod 6.0.8+
-- Flywheel 1.0.6+ (incluído pelo Create)
+- Flywheel 1.0.6+ (bundled with Create)
 
 ## Build
 
@@ -95,44 +95,44 @@ Todas as funcionalidades são configuráveis individualmente com distâncias, in
 ./gradlew build
 ```
 
-O JAR resultante estará em `build/libs/`.
+The resulting JAR will be in `build/libs/`.
 
-## Estrutura do Projeto
+## Project Structure
 
 ```
 src/main/java/com/createoptimizedtrains/
-├── CreateOptimizedTrains.java     # Classe principal do mod
-├── config/ModConfig.java          # Configuração TOML
-├── lod/                           # Sistema LOD
+├── CreateOptimizedTrains.java     # Main mod class
+├── config/ModConfig.java          # TOML configuration
+├── lod/                           # LOD system
 │   ├── LODLevel.java
 │   └── LODSystem.java
-├── grouping/                      # Agrupamento de carruagens
+├── grouping/                      # Carriage grouping
 │   ├── TrainGroup.java
 │   └── TrainGroupManager.java
-├── threading/                     # Multi-threading seguro
+├── threading/                     # Safe multi-threading
 │   └── AsyncTaskManager.java
 ├── throttling/                    # Tick throttling
 │   └── TickThrottler.java
-├── rendering/                     # Otimização de renderização
+├── rendering/                     # Render optimization
 │   └── RenderOptimizer.java
 ├── proxy/                         # Proxy entities
 │   ├── ProxyTrainEntity.java
 │   └── ProxyEntityManager.java
-├── chunks/                        # Gestão de chunk loading
+├── chunks/                        # Chunk loading management
 │   └── ChunkLoadManager.java
-├── physics/                       # Otimização de física
+├── physics/                       # Physics optimization
 │   └── PhysicsOptimizer.java
-├── networking/                    # Otimização de rede
+├── networking/                    # Network optimization
 │   ├── NetworkOptimizer.java
 │   └── TrainSyncPacket.java
-├── priority/                      # Sistema de prioridades
+├── priority/                      # Priority system
 │   ├── TrainPriority.java
 │   └── PriorityScheduler.java
-├── monitor/                       # Monitor de performance
+├── monitor/                       # Performance monitor
 │   └── PerformanceMonitor.java
-├── events/                        # Event handlers Forge
+├── events/                        # Forge event handlers
 │   └── TrainEventHandler.java
-└── mixin/                         # Mixins no Create mod
+└── mixin/                         # Create mod mixins
     ├── TrainMixin.java
     ├── CarriageMixin.java
     ├── CarriageEntityMixin.java
@@ -140,6 +140,6 @@ src/main/java/com/createoptimizedtrains/
         └── CarriageRendererMixin.java
 ```
 
-## Licença
+## License
 
 MIT
