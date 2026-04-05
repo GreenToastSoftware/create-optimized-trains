@@ -90,9 +90,18 @@ public class TrainGroupManager {
     private void removeCarriageEntities(Train train) {
         for (int i = 1; i < train.carriages.size(); i++) {
             Carriage carriage = train.carriages.get(i);
-            var entity = carriage.anyAvailableEntity();
-            if (entity != null) {
-                entity.discard();
+            // Iterar os DCEs para limpar a WeakReference correctamente.
+            // Se apenas chamarmos entity.discard(), o DCE mantém uma referência
+            // stale que confunde manageEntities() por 1-2 ticks, podendo causar
+            // criação de entidades duplicadas.
+            for (var dimKey : carriage.getPresentDimensions()) {
+                var dce = carriage.getDimensionalIfPresent(dimKey);
+                if (dce == null) continue;
+                var entity = dce.entity.get();
+                if (entity != null && entity.isAlive()) {
+                    entity.discard();
+                    dce.entity.clear();
+                }
             }
         }
     }

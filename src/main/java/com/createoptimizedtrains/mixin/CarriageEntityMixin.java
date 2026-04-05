@@ -1,5 +1,6 @@
 package com.createoptimizedtrains.mixin;
 
+import com.simibubi.create.content.trains.entity.Carriage;
 import com.simibubi.create.content.trains.entity.CarriageContraptionEntity;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
@@ -8,6 +9,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
 
 /**
@@ -90,9 +92,10 @@ public abstract class CarriageEntityMixin {
         // Tentar ligar ao comboio via reflexão (bindCarriage é private)
         tryBindCarriage(self);
 
-        // Se conseguiu ligar, perfeito — resetar e continuar
+        // Se conseguiu ligar, perfeito — resetar e reconciliar com o DCE
         if (self.getCarriage() != null) {
             serverBindGraceTicks = -1;
+            reconcileWithDimensionalEntity(self);
             return;
         }
 
@@ -119,6 +122,50 @@ public abstract class CarriageEntityMixin {
             cachedBindCarriage.invoke(self);
         } catch (Exception e) {
             // Silencioso — se falhar, o período de graça continua
+        }
+    }
+
+    /**
+     * Após bindCarriage() ter sucesso, reconciliar esta entidade com o
+     * DimensionalCarriageEntity (DCE) do Create.
+     *
+     * Problema: Quando o mundo carrega, a entidade é desserializada do chunk
+     * pelo Minecraft, mas o DCE do Create tem uma WeakReference vazia (transiente).
+     * Durante o período de graça, manageEntities() pode ver entity.get() == null
+     * no DCE e chamar createEntity() — criando uma SEGUNDA entidade para a mesma
+     * carruagem. Isto causa o bug visual de "2 carruagens sobrepostas".
+     *
+     * Solução: Depois do bind ter sucesso:
+     * - Se o DCE já tem outra entidade viva (manageEntities criou uma substituta),
+     *   descartar ESTA entidade (a do chunk) — a substituta é a correcta.
+     * - Se o DCE não tem entidade, registar esta entidade como a activa.
+     */
+    @Unique
+    private void reconcileWithDimensionalEntity(CarriageContraptionEntity self) {
+        try {
+            Carriage carriage = self.getCarriage();
+            if (carriage == null) return;
+
+            // Obter o DimensionalCarriageEntity para esta dimensão
+            Carriage.DimensionalCarriageEntity dce = carriage.getDimensional(self.level());
+            if (dce == null) return;
+
+            CarriageContraptionEntity existing = dce.entity.get();
+
+            if (existing != null && existing != self && existing.isAlive()) {
+                // manageEntities() já criou uma entidade substituta durante o
+                // período de graça — descartar esta entidade (a do chunk antigo)
+                // para evitar a duplicação visual.
+                self.discard();
+                return;
+            }
+
+            // Nenhuma outra entidade existe no DCE — registar esta entidade
+            // para que manageEntities() não crie uma duplicada no próximo tick.
+            dce.entity = new WeakReference<>(self);
+        } catch (Exception e) {
+            // Se falhar (API mudou), descartar por segurança para evitar duplicados
+            self.discard();
         }
     }
 }
