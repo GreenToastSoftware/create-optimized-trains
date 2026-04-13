@@ -13,6 +13,7 @@ public class ModConfig {
     public static final IntValue LOD_FULL_DISTANCE;
     public static final IntValue LOD_MEDIUM_DISTANCE;
     public static final IntValue LOD_LOW_DISTANCE;
+    public static final IntValue GHOST_DISTANCE;
 
     // --- Agrupamento ---
     public static final BooleanValue GROUPING_ENABLED;
@@ -31,6 +32,7 @@ public class ModConfig {
     public static final BooleanValue RENDER_OPTIMIZATION_ENABLED;
     public static final BooleanValue DISABLE_DISTANT_ANIMATIONS;
     public static final BooleanValue DISABLE_DISTANT_PARTICLES;
+    public static final IntValue RENDER_WARMUP_FRAMES;
 
     // --- Proxy Entities ---
     public static final BooleanValue PROXY_ENABLED;
@@ -39,6 +41,12 @@ public class ModConfig {
     public static final BooleanValue SMART_CHUNK_LOADING;
     public static final IntValue CHUNK_LOOKAHEAD;
     public static final IntValue CHUNK_TRAIL_KEEP;
+
+    // --- Directional Chunk Loading ---
+    public static final BooleanValue DIRECTIONAL_CHUNK_LOADING;
+    public static final IntValue DIRECTIONAL_FORWARD_CHUNKS;
+    public static final IntValue DIRECTIONAL_BACKWARD_CHUNKS;
+    public static final IntValue DIRECTIONAL_SIDE_CHUNKS;
 
     // --- Física ---
     public static final BooleanValue PHYSICS_OPTIMIZATION_ENABLED;
@@ -56,6 +64,9 @@ public class ModConfig {
     public static final IntValue TPS_LOW_THRESHOLD;
     public static final IntValue TPS_HIGH_THRESHOLD;
 
+    // --- Debug Overlay ---
+    public static final BooleanValue DEBUG_OVERLAY_ENABLED;
+
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
 
@@ -70,8 +81,13 @@ public class ModConfig {
                 .comment("Distância máxima (em blocos) para detail médio")
                 .defineInRange("mediumDistance", 96, 32, 512);
         LOD_LOW_DISTANCE = builder
-                .comment("Distância máxima (em blocos) para detail baixo (além = fantasma)")
+                .comment("Distância máxima (em blocos) para detail baixo")
                 .defineInRange("lowDistance", 192, 64, 1024);
+        GHOST_DISTANCE = builder
+                .comment("Distância (em blocos) a partir da qual comboios entram em modo fantasma",
+                         "Modo fantasma reduz significativamente o render para poupar FPS",
+                         "Aumenta este valor se queres ver comboios mais longe antes de ficarem fantasma")
+                .defineInRange("ghostDistance", 256, 32, 2048);
         builder.pop();
 
         // Agrupamento
@@ -118,6 +134,11 @@ public class ModConfig {
         DISABLE_DISTANT_PARTICLES = builder
                 .comment("Reduzir partículas para comboios distantes")
                 .define("disableDistantParticles", true);
+        RENDER_WARMUP_FRAMES = builder
+                .comment("Frames de atraso antes de comboios começarem a renderizar ao entrar em chunks",
+                         "Reduz spike de FPS quando comboios aparecem pela primeira vez",
+                         "0 = sem warmup, 1 = mínimo recomendado, 3+ = mais suave para PCs fracos")
+                .defineInRange("warmupFrames", 1, 0, 10);
         builder.pop();
 
         // Proxy Entities
@@ -133,11 +154,30 @@ public class ModConfig {
                 .comment("Ativar gestão inteligente de chunks")
                 .define("enabled", true);
         CHUNK_LOOKAHEAD = builder
-                .comment("Chunks a pré-carregar à frente do comboio")
-                .defineInRange("lookahead", 2, 0, 8);
+                .comment("Chunks mínimos a pré-carregar à frente do comboio (adaptativo por velocidade)")
+                .defineInRange("lookahead", 4, 0, 16);
         CHUNK_TRAIL_KEEP = builder
                 .comment("Chunks a manter atrás do comboio antes de descarregar")
                 .defineInRange("trailKeep", 1, 0, 4);
+        builder.pop();
+
+        // Directional Chunk Loading
+        builder.comment("Carregamento Direcional de Chunks",
+                "Quando o jogador está num comboio, redistribui as chunks visuais",
+                "para carregar mais no sentido do movimento e menos para os lados.",
+                "Ideal para quem usa Distant Horizons.").push("directional_chunks");
+        DIRECTIONAL_CHUNK_LOADING = builder
+                .comment("Ativar carregamento direcional de chunks quando num comboio")
+                .define("enabled", true);
+        DIRECTIONAL_FORWARD_CHUNKS = builder
+                .comment("Chunks a carregar à frente do comboio (no sentido do movimento)")
+                .defineInRange("forwardChunks", 8, 2, 32);
+        DIRECTIONAL_BACKWARD_CHUNKS = builder
+                .comment("Chunks a carregar atrás do comboio")
+                .defineInRange("backwardChunks", 6, 2, 32);
+        DIRECTIONAL_SIDE_CHUNKS = builder
+                .comment("Chunks a carregar para os lados do comboio")
+                .defineInRange("sideChunks", 3, 1, 16);
         builder.pop();
 
         // Física
@@ -178,6 +218,14 @@ public class ModConfig {
         TPS_HIGH_THRESHOLD = builder
                 .comment("TPS acima deste valor = restaurar fidelidade normal")
                 .defineInRange("tpsHighThreshold", 18, 10, 20);
+        builder.pop();
+
+        // Debug Overlay
+        builder.comment("Overlay de debug no ecrã F3").push("debug_overlay");
+        DEBUG_OVERLAY_ENABLED = builder
+                .comment("Mostrar informações do mod no ecrã de debug (F3)",
+                         "Inclui memória, threads, TPS/MSPT, FPS, chunks forçados")
+                .define("enabled", true);
         builder.pop();
 
         builder.pop(); // general

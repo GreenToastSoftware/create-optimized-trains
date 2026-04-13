@@ -1,5 +1,6 @@
 package com.createoptimizedtrains.mixin.client;
 
+import com.createoptimizedtrains.rendering.RenderOptimizer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
 import org.spongepowered.asm.mixin.Mixin;
@@ -28,6 +29,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  */
 @Mixin(value = LevelRenderer.class, priority = 500)
 public class LevelRendererFlushMixin {
+
+    /**
+     * Hook no início de renderLevel para atualizar caches per-frame do RenderOptimizer.
+     * Chamado uma vez por frame — atualiza contadores de frame, FPS, e limpa caches.
+     */
+    @Inject(method = "renderLevel", at = @At("HEAD"))
+    private void onRenderLevelStart(CallbackInfo ci) {
+        RenderOptimizer.onFrameStart();
+    }
 
     @Inject(
         method = "renderLevel",

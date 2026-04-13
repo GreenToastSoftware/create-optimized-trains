@@ -2,7 +2,11 @@ package com.createoptimizedtrains.mixin;
 
 import com.simibubi.create.content.trains.entity.Carriage;
 import com.simibubi.create.content.trains.entity.CarriageContraptionEntity;
+import com.simibubi.create.content.trains.entity.CarriageEntityHandler;
 import com.simibubi.create.content.trains.entity.Train;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
@@ -27,23 +31,20 @@ import java.util.Map;
  * presentConductors para {false, false}, mas depois é filtrada por isAlive() na
  * iteração interna → false positivo de "sem condutor".
  *
- * === Fix 2: Chunk Boundary Grace Period ===
+ * === Fix 2: Chunk Boundary Grace Period (SEM parar o comboio) ===
  * Quando uma carruagem entra num chunk section não-ticked (fronteira de view distance),
  * CarriageEntityHandler marca leftTickingChunks=true imediatamente.
  * manageEntities() vê o flag e chama removeAndSaveEntity() → entidade destruída.
  * Quando o chunk carrega (1-2 ticks depois), createEntity() recria a entidade →
  * o cliente vê despawn+respawn = BLINK visual.
  *
- * Para o jogador a andar no comboio, isto manifesta-se como:
- * - Carruagem da frente desaparece e reaparece (piscar)
- * - Se a remoção/recriação é rápida demais, o jogador pode cair no void brevemente
- * - Chunks em redor podem não estar carregados quando o jogador é reposicionado
- *
- * Correcção: Interceptar a leitura de leftTickingChunks em manageEntities() via
- * @Redirect. Durante um período de graça (15 ticks = 750ms), retornar false
- * para evitar a remoção da entidade. Simultaneamente, parar o comboio
- * (via carriageWaitingForChunks) para dar tempo aos chunks de carregar.
- * Se após o período o chunk ainda não é activo, permitir remoção normal.
+ * CORREÇÃO v1.1.1: NÃO usamos mais carriageWaitingForChunks pois isso para
+ * o comboio (speed=0) e causa o stutter de ~1 segundo. Em vez disso:
+ * - Retardamos a remoção da entidade por um período curto (6 ticks = 300ms)
+ * - O comboio CONTINUA A ANDAR durante o grace period
+ * - Se o chunk carregar nesse tempo, a entidade sobrevive sem blink
+ * - Se não carregar, a remoção normal acontece (despawn+respawn, mas raro
+ *   porque o ChunkLoadManager pré-carrega chunks à frente)
  */
 @Mixin(value = Carriage.class, remap = false)
 public abstract class CarriageMixin {
@@ -59,10 +60,6 @@ public abstract class CarriageMixin {
 
     // ======== Fix 1: Conductor Detection ========
 
-    /**
-     * Cancelar updateConductors() quando a entidade existe mas está morta.
-     * Preserva os presentConductors do tick anterior em vez de resetar.
-     */
     @Inject(method = "updateConductors", at = @At("HEAD"), cancellable = true)
     private void preserveConductorsIfEntityUnavailable(CallbackInfo ci) {
         CarriageContraptionEntity entity = anyAvailableEntity();
@@ -71,44 +68,57 @@ public abstract class CarriageMixin {
         }
     }
 
-    // ======== Fix 2: Chunk Boundary Grace Period ========
+    // ======== Fix 2: Entity Creation in Loaded Chunks ========
 
     /**
-     * Mapa de entity ID → ticks em estado leftTickingChunks.
-     * Rastreia quanto tempo cada entidade de carruagem está numa secção não-ticked.
+     * Redirect isActiveChunk in manageEntities to also accept force-loaded/loaded chunks.
+     * This allows entity creation earlier (when chunk data is in memory but not yet
+     * entity-ticking), spreading the rendering initialization over more ticks instead
+     * of all carriages spawning in the same tick.
      */
+    @Redirect(method = "manageEntities",
+        at = @At(value = "INVOKE",
+            target = "Lcom/simibubi/create/content/trains/entity/CarriageEntityHandler;isActiveChunk(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)Z"))
+    private boolean isActiveChunkOrLoadedInManage(Level level, BlockPos pos) {
+        if (CarriageEntityHandler.isActiveChunk(level, pos)) {
+            return true;
+        }
+        // Accept force-loaded chunks (our ChunkLoadManager pre-loads these)
+        if (level instanceof ServerLevel serverLevel) {
+            long packed = ChunkPos.asLong(pos.getX() >> 4, pos.getZ() >> 4);
+            if (serverLevel.getForcedChunks().contains(packed)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // ======== Fix 3: Chunk Boundary Grace Period ========
+
     @Unique
     private final Map<Integer, Integer> chunkGraceMap = new HashMap<>();
 
     /**
-     * Período de graça antes de permitir remoção de entidades que saíram de
-     * chunks com entity-ticking activo. 15 ticks = 750ms.
+     * Período de graça antes de permitir remoção. 60 ticks = 3 segundos.
+     * Muito mais longo que antes (6 ticks) porque o comboio agora NUNCA para
+     * à espera de chunks (carriageWaitingForChunks está neutralizado).
+     * O RouteChunkPreloader + ChunkLoadManager quase sempre carregam o chunk
+     * antes de 3 segundos. Se não carregar, a remoção acontece mas o comboio
+     * recria a entidade imediatamente a seguir (sem parar).
      *
-     * Porquê 15 ticks:
-     * - O servidor envia chunks com ~2-4 ticks de delay entre cada
-     * - Para chunks adjacentes à view distance, 750ms cobre a maioria dos cenários
-     * - Suficientemente curto para não causar stall perceptível
-     * - Suficientemente longo para cobrir loading de chunks a ~1.2 bl/tick
+     * NOTA: A entidade pode flutuar no vazio durante este período — é preferível
+     * a parar o comboio.
      */
     @Unique
-    private static final int CHUNK_ENTITY_GRACE_TICKS = 15;
+    private static final int CHUNK_ENTITY_GRACE_TICKS = 60;
 
     /**
      * Redirect na leitura do campo leftTickingChunks dentro de manageEntities().
      *
-     * No bytecode de Carriage.manageEntities(), o fluxo relevante é:
-     *   offset 261: CarriageEntityHandler.validateCarriageEntity(entity)
-     *              → pode marcar entity.leftTickingChunks = true
-     *   offset 268: entity.isAlive()
-     *   offset 276: entity.leftTickingChunks  ← ESTE GETFIELD é interceptado
-     *   offset 287: dce.removeAndSaveEntity(entity, shouldDiscard)
-     *
      * A condição original é: if (!isAlive || leftTickingChunks || shouldDiscard) → remove
-     * O nosso redirect intercepta APENAS a leitura de leftTickingChunks (offset 276).
-     * isAlive e shouldDiscard continuam a funcionar normalmente.
+     * O nosso redirect intercepta APENAS a leitura de leftTickingChunks.
      *
-     * @param entity a CarriageContraptionEntity cujo leftTickingChunks seria lido
-     * @return false durante período de graça (previne remoção), true após expirar
+     * Diferença da v1.0.0: NÃO definimos carriageWaitingForChunks — o comboio não para.
      */
     @Redirect(method = "manageEntities",
         at = @At(value = "FIELD",
@@ -117,7 +127,14 @@ public abstract class CarriageMixin {
     private boolean delayChunkBoundaryRemoval(CarriageContraptionEntity entity) {
         if (!entity.leftTickingChunks) {
             // Entidade em chunk activo — limpar qualquer grace period anterior
-            chunkGraceMap.remove(entity.getId());
+            int entityId = entity.getId();
+            if (chunkGraceMap.remove(entityId) != null) {
+                // Estava em grace period e o chunk carregou a tempo — sucesso!
+                // Se NÓS tínhamos definido carriageWaitingForChunks, limpar
+                if (train.carriageWaitingForChunks == id) {
+                    train.carriageWaitingForChunks = -1;
+                }
+            }
             return false;
         }
 
@@ -127,16 +144,15 @@ public abstract class CarriageMixin {
         chunkGraceMap.put(entityId, ticks);
 
         if (ticks <= CHUNK_ENTITY_GRACE_TICKS) {
-            // Período de graça: manter entidade viva + parar comboio
-            // O comboio para para não avançar mais para território não carregado
-            // e para dar tempo ao servidor de enviar chunks ao cliente
-            train.carriageWaitingForChunks = id;
+            // Grace period ativo — manter entidade viva SEM parar o comboio
+            // O comboio continua a andar normalmente enquanto esperamos que o
+            // chunk carregue (o ChunkLoadManager pré-carrega chunks à frente)
             return false;
         }
 
-        // Período expirado: chunk não carregou em 750ms — permitir remoção normal
+        // Período expirado: chunk não carregou em 300ms — permitir remoção normal
         chunkGraceMap.remove(entityId);
-        // Limpar o nosso wait flag para não bloquear o comboio
+        // Limpar wait flag se ainda estiver definido de versões anteriores
         if (train.carriageWaitingForChunks == id) {
             train.carriageWaitingForChunks = -1;
         }

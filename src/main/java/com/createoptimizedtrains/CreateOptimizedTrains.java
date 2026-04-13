@@ -1,6 +1,7 @@
 package com.createoptimizedtrains;
 
 import com.createoptimizedtrains.chunks.ChunkLoadManager;
+import com.createoptimizedtrains.chunks.RouteChunkPreloader;
 import com.createoptimizedtrains.config.ModConfig;
 import com.createoptimizedtrains.events.TrainEventHandler;
 import com.createoptimizedtrains.grouping.TrainGroupManager;
@@ -11,6 +12,7 @@ import com.createoptimizedtrains.physics.PhysicsOptimizer;
 import com.createoptimizedtrains.priority.PriorityScheduler;
 import com.createoptimizedtrains.proxy.ProxyEntityManager;
 import com.createoptimizedtrains.rendering.RenderOptimizer;
+import com.createoptimizedtrains.rendering.DebugOverlay;
 import com.createoptimizedtrains.threading.AsyncTaskManager;
 import com.createoptimizedtrains.throttling.TickThrottler;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -40,6 +42,7 @@ public class CreateOptimizedTrains {
     private TickThrottler tickThrottler;
     private ProxyEntityManager proxyEntityManager;
     private ChunkLoadManager chunkLoadManager;
+    private RouteChunkPreloader routeChunkPreloader;
     private PhysicsOptimizer physicsOptimizer;
     private NetworkOptimizer networkOptimizer;
     private PriorityScheduler priorityScheduler;
@@ -73,6 +76,7 @@ public class CreateOptimizedTrains {
             groupManager = new TrainGroupManager(lodSystem);
             proxyEntityManager = new ProxyEntityManager(lodSystem);
             chunkLoadManager = new ChunkLoadManager();
+            routeChunkPreloader = new RouteChunkPreloader();
             physicsOptimizer = new PhysicsOptimizer(lodSystem);
             networkOptimizer = new NetworkOptimizer(lodSystem);
             priorityScheduler = new PriorityScheduler(asyncTaskManager);
@@ -84,6 +88,7 @@ public class CreateOptimizedTrains {
     private void onClientSetup(final FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
             RenderOptimizer.init(lodSystem);
+            MinecraftForge.EVENT_BUS.register(new DebugOverlay());
             LOGGER.info("Create Optimized Trains: renderização otimizada ativa.");
         });
     }
@@ -121,6 +126,10 @@ public class CreateOptimizedTrains {
         return chunkLoadManager;
     }
 
+    public RouteChunkPreloader getRouteChunkPreloader() {
+        return routeChunkPreloader;
+    }
+
     public PhysicsOptimizer getPhysicsOptimizer() {
         return physicsOptimizer;
     }
@@ -140,6 +149,9 @@ public class CreateOptimizedTrains {
     public void shutdown() {
         if (asyncTaskManager != null) {
             asyncTaskManager.shutdown();
+        }
+        if (routeChunkPreloader != null) {
+            routeChunkPreloader.shutdown();
         }
         LOGGER.info("Create Optimized Trains: encerrado.");
     }

@@ -6,15 +6,21 @@
   "compatibilityLevel": "JAVA_17",
   "mixins": [
     "TrainMixin",
+    "SafeTrainTickMixin",
     "CarriageMixin",
     "CarriageEntityMixin",
-    "ContraptionCollisionMixin"
+    "DimensionalCarriageEntityMixin",
+    "ContraptionCollisionMixin",
+    "ChunkMapMixin"
   ],
   "client": [
     "client.CarriageRendererMixin",
+    "client.CarriageContraptionVisualMixin",
+    "client.CarriageEntityClientMixin",
     "client.ContraptionEntityRendererMixin",
     "client.ContraptionVisualMaterialMixin",
-    "client.LevelRendererFlushMixin"
+    "client.LevelRendererFlushMixin",
+    "client.OitDepthMixin"
   ],
   "injectors": {
     "defaultRequire": 0

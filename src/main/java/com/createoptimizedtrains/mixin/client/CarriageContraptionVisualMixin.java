@@ -65,8 +65,14 @@ public abstract class CarriageContraptionVisualMixin {
     @Inject(method = "beginFrame", at = @At("HEAD"), cancellable = true)
     private void onBeginFrame(CallbackInfo ci) {
         UUID trainId = getTrainId();
-        if (trainId != null && RenderOptimizer.shouldSkipFlywheelUpdate(trainId)) {
-            ci.cancel();
+        if (trainId != null) {
+            // Registar visibilidade
+            RenderOptimizer.shouldDeferForWarmup(trainId);
+
+            // Skip Flywheel updates para LOD distantes
+            if (RenderOptimizer.shouldSkipFlywheelUpdate(trainId)) {
+                ci.cancel();
+            }
         }
     }
 
