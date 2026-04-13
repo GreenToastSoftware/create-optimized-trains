@@ -2,6 +2,11 @@
 
 Performance optimization addon for **Create Mod** trains (Forge 1.20.1).
 
+=============================================
+ATTENTION: THIS MOD IS STILL IN BETA!
+PLEASE BACK UP YOUR MAP BEFORE USING THE MOD!
+=============================================
+
 ## Features
 
 ### 1. LOD (Level of Detail) for Trains

@@ -225,7 +225,7 @@ public class ModConfig {
         DEBUG_OVERLAY_ENABLED = builder
                 .comment("Mostrar informações do mod no ecrã de debug (F3)",
                          "Inclui memória, threads, TPS/MSPT, FPS, chunks forçados")
-                .define("enabled", true);
+                .define("enabled", false);
         builder.pop();
 
         builder.pop(); // general
