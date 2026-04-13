@@ -82,6 +82,25 @@ File: `create_optimized_trains-common.toml`
 
 All features are individually configurable with distances, intervals and toggles.
 
+## Backported Fixes from Create 6.0.9+
+
+Create 6.0.9 (for Minecraft 1.21.1) introduced several important fixes that were **never backported to 1.20.1**. Since 1.20.1 is no longer receiving updates from the Create team, this mod backports the following fixes for users staying on 1.20.1:
+
+### Contraption Collision Box GC Pressure ([#6902](https://github.com/Creators-of-Create/Create/issues/6902))
+**Original problem:** When train doors open/close at a station, `gatherBBsOffThread()` combines ALL block collision shapes into a single `VoxelShape` using `Shapes.joinUnoptimized()` — an O(n²) operation that creates massive temporary objects. The garbage collector can't keep up, causing **lag spikes of 1-30+ seconds** depending on train complexity.
+
+**Our fix:** `ContraptionCollisionMixin` replaces the collision gathering algorithm with the same O(n) approach used in Create 6.0.9 ([commit 8f30c2c](https://github.com/Creators-of-Create/Create/commit/8f30c2cccce4724ddae1067e4789f56dc3ee5eda)). Instead of joining VoxelShapes, it collects AABBs directly from each block's collision shape — no intermediate allocations, no GC pressure. Also includes related duplicates: [#4607](https://github.com/Creators-of-Create/Create/issues/4607), [#5685](https://github.com/Creators-of-Create/Create/issues/5685), [#9026](https://github.com/Creators-of-Create/Create/issues/9026), [#9389](https://github.com/Creators-of-Create/Create/issues/9389).
+
+### Train Stutter from carriageWaitingForChunks
+**Original problem:** In `Train.tick()`, when a carriage enters an unloaded chunk, Create sets `carriageWaitingForChunks` which forces `speed = 0` until the chunk finishes loading. On maps with many trains and limited view distance, this causes **0.5-1.5 second freezes** every time a train crosses a chunk boundary.
+
+**Our fix:** `TrainMixin` redirects all reads of `carriageWaitingForChunks` in `tick()` to always return -1, so speed is never zeroed. Combined with the Smart Chunk Loading system (pre-loading chunks ahead of the train), trains move continuously without stutter.
+
+### Collision Check Performance
+**Original problem:** `collideWithOtherTrains()` runs every tick for every train, which becomes expensive on maps with 20+ trains.
+
+**Our fix:** `TrainMixin` throttles collision checks adaptively based on server performance — every 4 ticks normally, every 8 when degraded, every 12 when critical. Each train's check is offset by its UUID hash to distribute the load evenly across ticks.
+
 ## Dependencies
 
 - Minecraft 1.20.1
