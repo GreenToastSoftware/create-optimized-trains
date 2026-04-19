@@ -46,7 +46,7 @@ public abstract class CarriageEntityMixin {
     private int serverBindGraceTicks = -1;
 
     @Unique
-    private static final int MAX_GRACE_TICKS = 40; // 2 segundos
+    private static final int MAX_GRACE_TICKS = 15; // 0.75 segundos
 
     @Unique
     private static Method cachedBindCarriage;

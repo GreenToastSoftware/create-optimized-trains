@@ -102,7 +102,9 @@ public class RenderOptimizer {
             return true;
         }
         LODLevel lod = getCachedLOD(trainId);
-        return lod == LODLevel.FULL || lod == LODLevel.MEDIUM;
+        // Animar para FULL, MEDIUM e LOW — só GHOST não anima
+        // Bogeys parados causam stutter visual percetivo mesmo quando o corpo se move
+        return lod != LODLevel.GHOST;
     }
 
     public static boolean shouldEmitParticles(UUID trainId) {
@@ -134,8 +136,8 @@ public class RenderOptimizer {
     }
 
     /**
-     * GHOST trains podem ser skipados no render vanilla quando Flywheel está ativo.
-     * Se FPS do cliente está abaixo de 30, skip mais agressivo.
+     * GHOST trains só são skipados quando FPS está crítico (<20).
+     * A 40+ FPS o custo visual de stutter não compensa o ganho de performance.
      */
     public static boolean shouldSkipRender(UUID trainId) {
         if (!initialized || !ModConfig.RENDER_OPTIMIZATION_ENABLED.get()) {
@@ -143,8 +145,8 @@ public class RenderOptimizer {
         }
         LODLevel lod = getCachedLOD(trainId);
 
-        // Skip GHOST quando FPS baixo (cliente a sofrer)
-        if (lod == LODLevel.GHOST && clientFPS < 40.0) {
+        // Skip GHOST apenas quando FPS crítico (cliente a sofrer muito)
+        if (lod == LODLevel.GHOST && clientFPS < 20.0) {
             return true;
         }
 
@@ -152,30 +154,13 @@ public class RenderOptimizer {
     }
 
     /**
-     * Flywheel visual update skip — usa contadores por comboio em vez de nanoTime().
-     * Mais eficiente e determinístico.
+     * Flywheel visual update — NUNCA saltar posição/transformação.
+     * Saltar beginFrame() causa stutter visível porque a posição congela por
+     * vários frames e depois salta. A posição deve ser sempre atualizada.
+     *
+     * Retorna sempre false — todas as atualizações visuais correm em todos os frames.
      */
     public static boolean shouldSkipFlywheelUpdate(UUID trainId) {
-        if (!initialized || !ModConfig.RENDER_OPTIMIZATION_ENABLED.get()) {
-            return false;
-        }
-        LODLevel lod = getCachedLOD(trainId);
-
-        if (lod == LODLevel.GHOST) {
-            // GHOST: atualizar apenas 1 em cada 6 frames
-            return incrementAndCheckSkip(trainId, 6);
-        }
-
-        if (lod == LODLevel.LOW) {
-            // LOW: atualizar apenas 1 em cada 3 frames
-            return incrementAndCheckSkip(trainId, LOW_LOD_UPDATE_EVERY_N_FRAMES);
-        }
-
-        // Sob pressão de FPS, saltar frames mesmo para MEDIUM
-        if (lod == LODLevel.MEDIUM && clientFPS < 30.0) {
-            return incrementAndCheckSkip(trainId, 2);
-        }
-
         return false;
     }
 

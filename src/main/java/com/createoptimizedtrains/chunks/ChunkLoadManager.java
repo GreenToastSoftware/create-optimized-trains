@@ -26,8 +26,8 @@ public class ChunkLoadManager {
 
     // Cap global: máximo de chunks forçadas em simultâneo para TODOS os comboios.
     // Entity-ticking de muitos chunks consome CPU e memória.
-    // 30 chunks forçados ~= 480MB de heap. Com 13GB de heap e 32 mods, 30 é seguro.
-    private static final int MAX_GLOBAL_FORCED_CHUNKS = 30;
+    // 60 chunks forçados ~= 960MB de heap. Com 19GB+ de heap e hardware moderno, 60 é seguro.
+    private static final int MAX_GLOBAL_FORCED_CHUNKS = 60;
 
     /**
      * Atualizar chunks carregados para um comboio.
@@ -117,9 +117,8 @@ public class ChunkLoadManager {
      * Pré-carregar chunks na direção de movimento do comboio.
      * Usa a diferença de posição entre ticks para determinar o vetor de movimento real.
      *
-     * Force-load é limitado a 6 chunks à frente (era 12) porque entity-ticking de
-     * muitos chunks sobrecarrega o server e atrasa o carregamento dos chunks visuais
-     * que o jogador realmente precisa ver.
+     * Force-load é limitado a 10 chunks à frente para cobrir comboios rápidos
+     * (~40 bl/s = ~4 segundos de pre-load a 10 chunks).
      */
     private void addDirectionalLookahead(Train train, Set<ChunkPos> chunks, int lookahead, ServerLevel level) {
         // Obter posição atual da carruagem da frente
@@ -163,10 +162,10 @@ public class ChunkLoadManager {
         double dirX = motionX / motionLength;
         double dirZ = motionZ / motionLength;
 
-        // Lookahead adaptativo: limitado a 6 chunks (entity-ticking é caro)
+        // Lookahead adaptativo: limitado a 10 chunks (cobre comboios a ~40 bl/s)
         double speedBlocks = Math.abs(train.speed) * 20.0;
         int adaptiveLookahead = Math.max(lookahead, (int) Math.ceil(speedBlocks * 2.0 / 16.0) + 1);
-        adaptiveLookahead = Math.min(adaptiveLookahead, 6); // Cap baixo para não sobrecarregar
+        adaptiveLookahead = Math.min(adaptiveLookahead, 10); // Cap para não sobrecarregar
 
         // Pré-carregar na direção de movimento
         // Só o centro para chunks distantes (>3), centro + lados para chunks próximos

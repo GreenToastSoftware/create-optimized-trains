@@ -99,18 +99,14 @@ public abstract class CarriageMixin {
     private final Map<Integer, Integer> chunkGraceMap = new HashMap<>();
 
     /**
-     * Período de graça antes de permitir remoção. 60 ticks = 3 segundos.
-     * Muito mais longo que antes (6 ticks) porque o comboio agora NUNCA para
-     * à espera de chunks (carriageWaitingForChunks está neutralizado).
+     * Período de graça antes de permitir remoção. 20 ticks = 1 segundo.
+     * O comboio NUNCA para à espera de chunks (carriageWaitingForChunks está neutralizado).
      * O RouteChunkPreloader + ChunkLoadManager quase sempre carregam o chunk
-     * antes de 3 segundos. Se não carregar, a remoção acontece mas o comboio
+     * antes de 1 segundo. Se não carregar, a remoção acontece mas o comboio
      * recria a entidade imediatamente a seguir (sem parar).
-     *
-     * NOTA: A entidade pode flutuar no vazio durante este período — é preferível
-     * a parar o comboio.
      */
     @Unique
-    private static final int CHUNK_ENTITY_GRACE_TICKS = 60;
+    private static final int CHUNK_ENTITY_GRACE_TICKS = 20;
 
     /**
      * Redirect na leitura do campo leftTickingChunks dentro de manageEntities().

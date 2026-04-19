@@ -66,13 +66,21 @@ public class ChunkMapMixin {
         int pcx = section.x();
         int pcz = section.z();
 
+        // Raio mínimo: chunks dentro de 5 chunks do jogador NUNCA são filtradas.
+        // Isto garante que o jogador tem sempre um círculo de chunks carregadas à volta,
+        // mesmo durante curvas. O filtro direcional só se aplica a chunks mais distantes.
+        int dx = pos.x - pcx;
+        int dz = pos.z - pcz;
+        int distSq = dx * dx + dz * dz;
+        if (distSq <= 25) return; // 5*5 = 25 — raio de 5 chunks sempre carrega
+
         // Verificar se a chunk está dentro da área direcional
         int forward = ModConfig.DIRECTIONAL_FORWARD_CHUNKS.get();
         int backward = ModConfig.DIRECTIONAL_BACKWARD_CHUNKS.get();
         int side = ModConfig.DIRECTIONAL_SIDE_CHUNKS.get();
 
         if (!dir.isInRange(pos.x, pos.z, pcx, pcz, forward, backward, side)) {
-            ci.cancel(); // Não carregar esta chunk lateral
+            ci.cancel(); // Não carregar esta chunk lateral distante
         }
     }
 }

@@ -21,8 +21,8 @@ public class DirectionalChunkShaper {
 
     private static final Map<UUID, PlayerDirection> playerDirections = new ConcurrentHashMap<>();
 
-    // Smoothing factor: 0.3 dá ~3 ticks de suavização (responde rápido o suficiente para comboios)
-    private static final double SMOOTH_FACTOR = 0.3;
+    // Smoothing factor: 0.5 dá ~2 ticks de suavização (resposta rápida para curvas)
+    private static final double SMOOTH_FACTOR = 0.5;
     // Velocidade mínima (blocos/tick) para considerar que o jogador está em movimento
     private static final double MIN_SPEED = 0.15;
 

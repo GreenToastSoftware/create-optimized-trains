@@ -50,11 +50,11 @@ public abstract class CarriageRendererMixin {
             return;
         }
 
-        // Culling rápido por distância à câmara
+        // Culling rápido por distância à câmara (512 blocos = 262144 blocosSq)
         if (!RenderOptimizer.shouldRenderDetailed(trainId)) {
             double distSq = RenderOptimizer.distanceSqToCamera(
                     entity.getX(), entity.getY(), entity.getZ());
-            if (distSq > 65536.0) {
+            if (distSq > 262144.0) {
                 ci.cancel();
                 return;
             }

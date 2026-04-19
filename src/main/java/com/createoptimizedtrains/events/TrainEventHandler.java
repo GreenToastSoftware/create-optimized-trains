@@ -39,10 +39,10 @@ public class TrainEventHandler {
 
     // Atraso de arranque: não processar chunks nos primeiros ticks após o servidor iniciar.
     // Isto evita um pico de memória enorme ao competir com spawn chunks + Distant Horizons.
-    private static final int STARTUP_DELAY_TICKS = 100; // 5 segundos
+    private static final int STARTUP_DELAY_TICKS = 40; // 2 segundos
     // Durante o período de ramp-up (após o delay), processar poucos comboios por tick
-    private static final int RAMP_UP_TICKS = 200; // 10 segundos de ramp-up gradual
-    private static final int RAMP_UP_BATCH_SIZE = 2; // Máximo 2 comboios por tick durante ramp-up
+    private static final int RAMP_UP_TICKS = 100; // 5 segundos de ramp-up gradual
+    private static final int RAMP_UP_BATCH_SIZE = 5; // 5 comboios por tick durante ramp-up
 
     // Stagger: distribuir updates de chunks/proxies ao longo dos ticks
     // Em vez de atualizar TODOS os comboios num só tick, dividir em batches
@@ -132,7 +132,7 @@ public class TrainEventHandler {
         }
 
         // 8. Route chunk pre-loading — atraso extra para rota estabilizar
-        if (tickCounter % ROUTE_PRELOAD_INTERVAL == 0 && tickCounter > STARTUP_DELAY_TICKS + 40) {
+        if (tickCounter % ROUTE_PRELOAD_INTERVAL == 0 && tickCounter > STARTUP_DELAY_TICKS + 20) {
             RouteChunkPreloader preloader = mod.getRouteChunkPreloader();
             if (preloader != null) {
                 List<Train> batch = getChunkBatch(trainListCache);

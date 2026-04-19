@@ -51,11 +51,11 @@ public abstract class TrainMixin {
     private int collisionTickCounter = -1;
 
     @Unique
-    private static final int COLLISION_CHECK_NORMAL = 4;
+    private static final int COLLISION_CHECK_NORMAL = 2;
     @Unique
-    private static final int COLLISION_CHECK_DEGRADED = 8;
+    private static final int COLLISION_CHECK_DEGRADED = 4;
     @Unique
-    private static final int COLLISION_CHECK_CRITICAL = 12;
+    private static final int COLLISION_CHECK_CRITICAL = 8;
 
     /**
      * Redirect da leitura do campo carriageWaitingForChunks em tick().

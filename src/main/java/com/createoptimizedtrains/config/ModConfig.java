@@ -177,7 +177,7 @@ public class ModConfig {
                 .defineInRange("backwardChunks", 6, 2, 32);
         DIRECTIONAL_SIDE_CHUNKS = builder
                 .comment("Chunks a carregar para os lados do comboio")
-                .defineInRange("sideChunks", 3, 1, 16);
+                .defineInRange("sideChunks", 5, 1, 16);
         builder.pop();
 
         // Física
