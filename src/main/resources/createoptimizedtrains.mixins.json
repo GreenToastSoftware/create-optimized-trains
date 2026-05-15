@@ -11,6 +11,8 @@
     "CarriageEntityMixin",
     "DimensionalCarriageEntityMixin",
     "ContraptionCollisionMixin",
+    "ContraptionColliderMixin",
+    "ContraptionTickThrottleMixin",
     "ChunkMapMixin"
   ],
   "client": [

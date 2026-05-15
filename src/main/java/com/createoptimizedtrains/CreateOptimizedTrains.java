@@ -153,6 +153,15 @@ public class CreateOptimizedTrains {
         if (routeChunkPreloader != null) {
             routeChunkPreloader.shutdown();
         }
+        lodSystem = null;
+        groupManager = null;
+        tickThrottler = null;
+        proxyEntityManager = null;
+        chunkLoadManager = null;
+        physicsOptimizer = null;
+        networkOptimizer = null;
+        priorityScheduler = null;
+        performanceMonitor = null;
         LOGGER.info("Create Optimized Trains: encerrado.");
     }
 }

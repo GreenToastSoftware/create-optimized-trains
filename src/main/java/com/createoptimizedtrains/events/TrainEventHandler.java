@@ -4,7 +4,9 @@ import com.createoptimizedtrains.CreateOptimizedTrains;
 import com.createoptimizedtrains.chunks.ChunkLoadManager;
 import com.createoptimizedtrains.chunks.DirectionalChunkShaper;
 import com.createoptimizedtrains.chunks.RouteChunkPreloader;
+import com.createoptimizedtrains.config.ModConfig;
 import com.createoptimizedtrains.grouping.TrainGroupManager;
+import com.createoptimizedtrains.util.PlayerTrainTracker;
 import com.createoptimizedtrains.lod.LODLevel;
 import com.createoptimizedtrains.lod.LODSystem;
 import com.createoptimizedtrains.monitor.PerformanceMonitor;
@@ -13,7 +15,8 @@ import com.createoptimizedtrains.proxy.ProxyEntityManager;
 import com.createoptimizedtrains.threading.AsyncTaskManager;
 import com.simibubi.create.content.trains.GlobalRailwayManager;
 import com.simibubi.create.content.trains.entity.Train;
-import com.simibubi.create.infrastructure.config.AllConfigs;import net.minecraft.server.level.ServerLevel;import net.minecraft.server.level.ServerLevel;
+import com.simibubi.create.infrastructure.config.AllConfigs;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
@@ -31,7 +34,7 @@ public class TrainEventHandler {
     private static final int LOD_UPDATE_INTERVAL = 10;
     private static final int CONFLICT_CHECK_INTERVAL = 40;
     private static final int CHUNK_UPDATE_INTERVAL = 1; // Cada tick: chunk loading é crítico para velocidade máxima
-    private static final int ROUTE_PRELOAD_INTERVAL = 5; // Route pre-load a cada 5 ticks (rota muda lentamente)
+    private static final int ROUTE_PRELOAD_INTERVAL = 3; // Route pre-load a cada 3 ticks (mais agressivo para comboios rápidos)
     private static final int PROXY_UPDATE_INTERVAL = 10;
 
     // Intervalo para verificar zona de buffer e trigger de fade-out (cada 5 ticks)
@@ -49,7 +52,8 @@ public class TrainEventHandler {
     private static final int BATCH_SIZE = 8;
 
     private long tickCounter = 0;
-
+    // Tracking de view distance original para restaurar quando o jogador sai do comboio
+    private final Map<UUID, Integer> originalViewDistances = new ConcurrentHashMap<>();
     // Cache para evitar recriação de listas a cada tick
     private List<Train> trainListCache = new ArrayList<>();
 
@@ -95,19 +99,39 @@ public class TrainEventHandler {
 
         List<ServerPlayer> players = server.getPlayerList().getPlayers();
 
-        // 4. Directional chunk shaper — atualizar direção de jogadores em comboios (cada tick)
+        // 4. Directional chunk shaper + rastrear comboios ocupados
+        Set<UUID> occupiedTrainIds = new HashSet<>();
         for (ServerPlayer player : players) {
             DirectionalChunkShaper.updatePlayer(player);
+            // Verificar se este jogador está num comboio
+            net.minecraft.world.entity.Entity vehicle = player.getVehicle();
+            int depth = 0;
+            while (vehicle != null && depth < 5) {
+                if (vehicle instanceof com.simibubi.create.content.trains.entity.CarriageContraptionEntity cce) {
+                    var carriage = cce.getCarriage();
+                    if (carriage != null && carriage.train != null) {
+                        occupiedTrainIds.add(carriage.train.id);
+                    }
+                    break;
+                }
+                vehicle = vehicle.getVehicle();
+                depth++;
+            }
         }
+        PlayerTrainTracker.setOccupiedTrains(occupiedTrainIds);
 
         // 5. LOD — cálculo PARALELO em threads secundárias
         if (tickCounter % LOD_UPDATE_INTERVAL == 0) {
             updateLODLevelsParallel(mod, trainListCache, players);
         }
 
-        // 6. Grouping/Proxies — staggered
+        // 6. Grouping/Proxies — staggered (só se pelo menos um estiver ativo)
         if (tickCounter % PROXY_UPDATE_INTERVAL == 0) {
-            updateGroupingAndProxiesStaggered(mod, trainListCache, server.overworld());
+            boolean proxyOn = ModConfig.PROXY_ENABLED.get();
+            boolean groupOn = ModConfig.GROUPING_ENABLED.get();
+            if (proxyOn || groupOn) {
+                updateGroupingAndProxiesStaggered(mod, trainListCache, server.overworld());
+            }
         }
 
         // 7. Chunks — atraso de arranque APENAS para chunk operations (pesadas em memória)
@@ -226,6 +250,9 @@ public class TrainEventHandler {
 
     private void onTrainLODChanged(CreateOptimizedTrains mod, Train train,
                                      LODLevel oldLevel, LODLevel newLevel) {
+        // Grouping é desativado por padrão. Quando ativo, gestiona collapse/expand.
+        if (!ModConfig.GROUPING_ENABLED.get()) return;
+
         TrainGroupManager groups = mod.getGroupManager();
         if (groups == null) return;
 
@@ -260,6 +287,8 @@ public class TrainEventHandler {
     /**
      * Atualizar chunks de TODOS os comboios sem staggering.
      * Chunk loading é crítico para evitar o stutter de 1 segundo.
+     * Corre para comboios em movimento E parados — carruagens paradas
+     * também precisam de ter os seus chunks forçados (especialmente as traseiras).
      */
     private void updateChunkLoadingAll(CreateOptimizedTrains mod,
                                         List<Train> trains, ServerLevel level) {
@@ -267,10 +296,7 @@ public class TrainEventHandler {
         if (chunks == null) return;
 
         for (Train train : trains) {
-            // Só atualizar chunks de comboios em movimento (otimização)
-            if (train.speed != 0) {
-                chunks.updateTrainChunks(train, level);
-            }
+            chunks.updateTrainChunks(train, level);
         }
     }
 

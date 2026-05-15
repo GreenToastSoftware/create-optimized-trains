@@ -1,7 +1,9 @@
 package com.createoptimizedtrains.mixin;
 
 import com.createoptimizedtrains.CreateOptimizedTrains;
+import com.createoptimizedtrains.config.ModConfig;
 import com.createoptimizedtrains.monitor.PerformanceMonitor;
+import com.createoptimizedtrains.util.PlayerTrainTracker;
 import com.simibubi.create.content.trains.entity.Carriage;
 import com.simibubi.create.content.trains.entity.Train;
 import net.minecraft.world.level.Level;
@@ -56,6 +58,8 @@ public abstract class TrainMixin {
     private static final int COLLISION_CHECK_DEGRADED = 4;
     @Unique
     private static final int COLLISION_CHECK_CRITICAL = 8;
+    @Unique
+    private static final double NEAR_PLAYER_RADIUS = 96.0;
 
     /**
      * Redirect da leitura do campo carriageWaitingForChunks em tick().
@@ -94,7 +98,23 @@ public abstract class TrainMixin {
 
     @Inject(method = "collideWithOtherTrains", at = @At("HEAD"), cancellable = true)
     private void throttleCollisionCheck(Level level, Carriage carriage, CallbackInfo ci) {
-        int interval = getAdaptiveInterval();
+        // Perfil estável (1.2): usar intervalo adaptativo normal.
+        // O modo agressivo 1.3 (dobrar intervalo para comboios não-ocupados)
+        // só é aplicado quando explicitamente ativado na config.
+        int interval;
+        boolean aggressiveMode;
+        try {
+            aggressiveMode = ModConfig.AGGRESSIVE_OTHER_TRAINS_THROTTLE.get();
+        } catch (Exception e) {
+            aggressiveMode = false;
+        }
+
+        if (aggressiveMode && !PlayerTrainTracker.isOccupied(this.id) && !isNearAnyPlayer(carriage)) {
+            // Comboio sem jogador: colisão muito menos frequente
+            interval = getAdaptiveInterval() * 2; // Dobro do intervalo normal
+        } else {
+            interval = getAdaptiveInterval();
+        }
 
         if (collisionTickCounter % interval != 0) {
             ci.cancel();
@@ -114,5 +134,13 @@ public abstract class TrainMixin {
             case DEGRADED -> COLLISION_CHECK_DEGRADED;
             case CRITICAL -> COLLISION_CHECK_CRITICAL;
         };
+    }
+
+    @Unique
+    private boolean isNearAnyPlayer(Carriage carriage) {
+        if (carriage == null) return false;
+        var entity = carriage.anyAvailableEntity();
+        if (entity == null) return false;
+        return PlayerTrainTracker.isPlayerNear(entity, NEAR_PLAYER_RADIUS);
     }
 }

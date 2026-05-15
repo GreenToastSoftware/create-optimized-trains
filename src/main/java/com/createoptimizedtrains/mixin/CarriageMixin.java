@@ -2,11 +2,7 @@ package com.createoptimizedtrains.mixin;
 
 import com.simibubi.create.content.trains.entity.Carriage;
 import com.simibubi.create.content.trains.entity.CarriageContraptionEntity;
-import com.simibubi.create.content.trains.entity.CarriageEntityHandler;
 import com.simibubi.create.content.trains.entity.Train;
-import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
@@ -68,45 +64,48 @@ public abstract class CarriageMixin {
         }
     }
 
-    // ======== Fix 2: Entity Creation in Loaded Chunks ========
-
-    /**
-     * Redirect isActiveChunk in manageEntities to also accept force-loaded/loaded chunks.
-     * This allows entity creation earlier (when chunk data is in memory but not yet
-     * entity-ticking), spreading the rendering initialization over more ticks instead
-     * of all carriages spawning in the same tick.
-     */
-    @Redirect(method = "manageEntities",
-        at = @At(value = "INVOKE",
-            target = "Lcom/simibubi/create/content/trains/entity/CarriageEntityHandler;isActiveChunk(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)Z"))
-    private boolean isActiveChunkOrLoadedInManage(Level level, BlockPos pos) {
-        if (CarriageEntityHandler.isActiveChunk(level, pos)) {
-            return true;
-        }
-        // Accept force-loaded chunks (our ChunkLoadManager pre-loads these)
-        if (level instanceof ServerLevel serverLevel) {
-            long packed = ChunkPos.asLong(pos.getX() >> 4, pos.getZ() >> 4);
-            if (serverLevel.getForcedChunks().contains(packed)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    // ======== Fix 3: Chunk Boundary Grace Period ========
+    // ======== Fix 2: Chunk Boundary Grace Period ========
+    //
+    // NOTA IMPORTANTE: NÃO redirecionamos isActiveChunk em manageEntities para aceitar
+    // chunks force-loaded (não entity-ticking). Fazer isso causaria o bug de camera shake:
+    // entidades criadas em chunks não-entity-ticking não são tracked pelo EntityTracker,
+    // portanto as suas posições não são sincronizadas ao cliente. O jogador sentado dentro
+    // ficaria a ver a carruagem na posição antiga enquanto o servidor já a moveu → shake.
+    // A combinação do grace period abaixo + ChunkLoadManager (priority loading) é suficiente.
+    //
+    // Fluxo correto:
+    //   1. ChunkLoadManager force-load o chunk da carruagem (incluindo priority para
+    //      carruagens com jogadores, sem rate limit)
+    //   2. O chunk transita para entity-ticking em 1-3 ticks
+    //   3. manageEntities() vê isActiveChunk=true → cria entidade em chunk entity-ticking
+    //   4. EntityTracker sincroniza posição ao cliente corretamente
+    //   5. Jogador sentado: posição atualizada, sem shake
+    //
+    // Durante os 1-3 ticks de transição: grace period impede remoção prematura,
+    // e alignEntity() mantém a posição do servidor atualizada.
 
     @Unique
     private final Map<Integer, Integer> chunkGraceMap = new HashMap<>();
 
     /**
-     * Período de graça antes de permitir remoção. 20 ticks = 1 segundo.
-     * O comboio NUNCA para à espera de chunks (carriageWaitingForChunks está neutralizado).
-     * O RouteChunkPreloader + ChunkLoadManager quase sempre carregam o chunk
-     * antes de 1 segundo. Se não carregar, a remoção acontece mas o comboio
-     * recria a entidade imediatamente a seguir (sem parar).
+     * Período de graça antes de permitir remoção da entidade.
+     *
+     * MOVING (>0.001 blocks/tick): 5 ticks = 250ms
+     *   O ChunkLoadManager pré-carrega chunks à frente com prioridade;
+     *   chunks force-loaded ficam entity-ticking em 1-3 ticks.
+     *   Grace curto evita que o cliente veja a entidade "congelada"
+     *   na fronteira do chunk enquanto o comboio continua a andar no servidor.
+     *   Se os 5 ticks esgotarem sem o chunk carregar, a entidade é removida e
+     *   recriada no novo chunk (pop de ≤5 ticks vs lag de 20 ticks).
+     *
+     * STOPPED (speed≈0): 20 ticks = 1 segundo
+     *   Comboios parados não causam lag de posição visível; o grace longo
+     *   previne destroys/spawns desnecessários por variações de chunk ticking.
      */
     @Unique
-    private static final int CHUNK_ENTITY_GRACE_TICKS = 20;
+    private static final int CHUNK_ENTITY_GRACE_TICKS_MOVING = 5;
+    @Unique
+    private static final int CHUNK_ENTITY_GRACE_TICKS_STOPPED = 20;
 
     /**
      * Redirect na leitura do campo leftTickingChunks dentro de manageEntities().
@@ -139,7 +138,14 @@ public abstract class CarriageMixin {
         int ticks = chunkGraceMap.getOrDefault(entityId, 0) + 1;
         chunkGraceMap.put(entityId, ticks);
 
-        if (ticks <= CHUNK_ENTITY_GRACE_TICKS) {
+        // Grace period adaptativo: curto para comboios em movimento, longo para parados.
+        // Para comboios em movimento, o cliente NÃO recebe atualizações de posição enquanto
+        // a entidade está em secção não-entity-ticking → congelamento visível no JourneyMap.
+        // 5 ticks são suficientes para o ChunkLoadManager tornar o chunk entity-ticking.
+        boolean isMoving = train != null && Math.abs(train.speed) > 0.001;
+        int graceTicks = isMoving ? CHUNK_ENTITY_GRACE_TICKS_MOVING : CHUNK_ENTITY_GRACE_TICKS_STOPPED;
+
+        if (ticks <= graceTicks) {
             // Grace period ativo — manter entidade viva SEM parar o comboio
             // O comboio continua a andar normalmente enquanto esperamos que o
             // chunk carregue (o ChunkLoadManager pré-carrega chunks à frente)

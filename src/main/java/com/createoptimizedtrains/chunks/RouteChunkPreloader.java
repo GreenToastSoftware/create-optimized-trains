@@ -36,7 +36,9 @@ public class RouteChunkPreloader {
     private final Map<UUID, Set<ChunkPos>> lastRequestedChunks = new ConcurrentHashMap<>();
 
     // Tempo máximo para olhar à frente na rota (em blocos de track)
-    private static final double ROUTE_LOOKAHEAD_BLOCKS = 256.0; // ~6.5 segundos a 40bl/s
+    // Adaptativo: base 256 blocos, aumenta com velocidade (até 512 a >30 bl/s)
+    private static final double BASE_ROUTE_LOOKAHEAD_BLOCKS = 256.0;
+    private static final double MAX_ROUTE_LOOKAHEAD_BLOCKS = 512.0;
 
     // Máximo de chunks a pré-carregar por comboio
     private static final int MAX_PRELOAD_PER_TRAIN = 24;
@@ -75,7 +77,7 @@ public class RouteChunkPreloader {
         List<double[]> routePoints = traceRouteFromGraph(train);
         if (routePoints.isEmpty()) return;
 
-        // Converter pontos em chunks (apenas no centro da rota, sem vizinhos)
+        // Converter pontos em chunks
         Set<ChunkPos> routeChunks = new LinkedHashSet<>();
         for (double[] point : routePoints) {
             int chunkX = ((int) Math.floor(point[0])) >> 4;
@@ -117,6 +119,15 @@ public class RouteChunkPreloader {
 
         boolean forward = train.speed > 0;
 
+        // Lookahead adaptativo baseado na velocidade
+        double speedBps = Math.abs(train.speed) * 20.0;
+        double routeLookahead = BASE_ROUTE_LOOKAHEAD_BLOCKS;
+        if (speedBps > 15.0) {
+            // Escalar linearmente: 15 b/s -> 256, 40 b/s -> 512
+            double t = Math.min(1.0, (speedBps - 15.0) / 25.0);
+            routeLookahead = BASE_ROUTE_LOOKAHEAD_BLOCKS + t * (MAX_ROUTE_LOOKAHEAD_BLOCKS - BASE_ROUTE_LOOKAHEAD_BLOCKS);
+        }
+
         Carriage frontCarriage = forward ? train.carriages.get(0)
                 : train.carriages.get(train.carriages.size() - 1);
         CarriageBogey leadingBogey = frontCarriage.leadingBogey();
@@ -134,7 +145,7 @@ public class RouteChunkPreloader {
         Set<TrackNode> visited = new HashSet<>();
         visited.add(prevNode);
 
-        while (distanceTraced < ROUTE_LOOKAHEAD_BLOCKS && points.size() < MAX_PRELOAD_PER_TRAIN * 2) {
+        while (distanceTraced < routeLookahead && points.size() < MAX_PRELOAD_PER_TRAIN * 2) {
             if (currentNode == null || visited.contains(currentNode)) break;
             visited.add(currentNode);
 

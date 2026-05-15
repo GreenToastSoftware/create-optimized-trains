@@ -2,6 +2,7 @@ package com.createoptimizedtrains.lod;
 
 import com.createoptimizedtrains.config.ModConfig;
 import com.createoptimizedtrains.monitor.PerformanceMonitor;
+import com.simibubi.create.content.trains.entity.Carriage;
 import com.simibubi.create.content.trains.entity.CarriageContraptionEntity;
 import com.simibubi.create.content.trains.entity.Train;
 import net.minecraft.server.level.ServerPlayer;
@@ -44,13 +45,11 @@ public class LODSystem {
         double lowDist = ModConfig.LOD_LOW_DISTANCE.get();
         double ghostDist = ModConfig.GHOST_DISTANCE.get();
 
-        if (performanceMonitor != null && ModConfig.PERFORMANCE_MONITOR_ENABLED.get()) {
-            double tpsFactor = performanceMonitor.getPerformanceFactor();
-            fullDist *= tpsFactor;
-            mediumDist *= tpsFactor;
-            lowDist *= tpsFactor;
-            ghostDist *= tpsFactor;
-        }
+        // NÃO aplicar fator de TPS às distâncias LOD.
+        // Reduzir distâncias quando o servidor está lento causa proxies/collapses
+        // a acontecerem perto do jogador, piorando o lag em vez de o mitigar.
+        // O PerformanceMonitor é usado apenas para ajustar intervalos de colisão
+        // em TrainMixin (NORMAL/DEGRADED/CRITICAL), não para LOD visual.
 
         this.fullDistanceSq = fullDist * fullDist;
         this.mediumDistanceSq = mediumDist * mediumDist;
@@ -83,13 +82,12 @@ public class LODSystem {
 
         // Usar posições cacheadas se disponíveis (mais rápido, sem lock de entidade)
         if (playerPos.length > 0) {
-            minDistanceSq = calculateMinDistanceWithCache(train, playerPos);
+            minDistanceSq = calculateMinDistanceWithCache(train, playerPos, players);
         } else {
             // Fallback: usar iterador de jogadores diretamente
             for (var carriage : train.carriages) {
-                CarriageContraptionEntity entity = carriage.anyAvailableEntity();
-                if (entity == null) continue;
-                Vec3 carriagePos = entity.position();
+                Vec3 carriagePos = resolveCarriagePosition(carriage, players);
+                if (carriagePos == null) continue;
 
                 for (ServerPlayer player : players) {
                     double distSq = player.position().distanceToSqr(carriagePos);
@@ -120,16 +118,17 @@ public class LODSystem {
      * Cálculo de distância mínima usando posições cacheadas.
      * Sem lock de entidades — usa apenas doubles.
      */
-    private double calculateMinDistanceWithCache(Train train, double[][] playerPos) {
+    private double calculateMinDistanceWithCache(Train train, double[][] playerPos,
+                                                 Iterable<ServerPlayer> players) {
         double minDistSq = Double.MAX_VALUE;
 
         for (var carriage : train.carriages) {
-            CarriageContraptionEntity entity = carriage.anyAvailableEntity();
-            if (entity == null) continue;
+            Vec3 carriagePos = resolveCarriagePosition(carriage, players);
+            if (carriagePos == null) continue;
 
-            double cx = entity.getX();
-            double cy = entity.getY();
-            double cz = entity.getZ();
+            double cx = carriagePos.x;
+            double cy = carriagePos.y;
+            double cz = carriagePos.z;
 
             for (double[] pp : playerPos) {
                 double dx = pp[0] - cx;
@@ -143,6 +142,33 @@ public class LODSystem {
         }
 
         return minDistSq;
+    }
+
+    /**
+     * Obter a melhor posição conhecida de uma carruagem.
+     *
+     * Depois do fix do camera shake, entidades já não são criadas em chunks apenas
+     * force-loaded; por isso carruagens próximas podem existir temporariamente só via
+     * DimensionalCarriageEntity.positionAnchor. Se o LOD usar apenas anyAvailableEntity(),
+     * comboios perto do jogador parecem estar em LOD distante até a entidade spawnar.
+     */
+    private Vec3 resolveCarriagePosition(Carriage carriage, Iterable<ServerPlayer> players) {
+        CarriageContraptionEntity entity = carriage.anyAvailableEntity();
+        if (entity != null) {
+            return entity.position();
+        }
+
+        for (ServerPlayer player : players) {
+            try {
+                var dce = carriage.getDimensional(player.serverLevel());
+                if (dce != null && dce.positionAnchor != null) {
+                    return dce.positionAnchor;
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -177,7 +203,7 @@ public class LODSystem {
             return LODLevel.FULL;
         } else if (distanceSq <= mediumDistanceSq) {
             return LODLevel.MEDIUM;
-        } else if (distanceSq <= ghostDistanceSq) {
+        } else if (distanceSq <= lowDistanceSq) {
             return LODLevel.LOW;
         } else {
             return LODLevel.GHOST;

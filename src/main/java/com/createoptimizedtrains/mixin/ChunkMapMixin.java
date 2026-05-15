@@ -9,6 +9,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -29,6 +30,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(ChunkMap.class)
 public class ChunkMapMixin {
 
+    // Proteção de arranque: não filtrar durante os primeiros ticks após o mundo carregar.
+    // Garante que as chunks iniciais (spawn) chegam ao cliente sem interferência.
+    @Unique
+    private static long cot$firstCallTime = 0;
+    @Unique
+    private static final long COT$STARTUP_GRACE_MS = 10_000; // 10 segundos de graça
+
     /**
      * Interceptar updateChunkTracking para filtrar chunks novas fora da área direcional.
      *
@@ -47,40 +55,42 @@ public class ChunkMapMixin {
                                          MutableObject<ClientboundLevelChunkWithLightPacket> packet,
                                          boolean wasInRange, boolean isInRange,
                                          CallbackInfo ci) {
-        // Só filtrar quando vanilla quer CARREGAR uma chunk nova
-        if (wasInRange || !isInRange) return;
-
-        // Verificar se a feature está ativa
         try {
+            // Só filtrar quando vanilla quer CARREGAR uma chunk nova
+            if (wasInRange || !isInRange) return;
+
+            // Proteção de arranque: deixar TODAS as chunks passar nos primeiros segundos
+            if (cot$firstCallTime == 0) cot$firstCallTime = System.currentTimeMillis();
+            if (System.currentTimeMillis() - cot$firstCallTime < COT$STARTUP_GRACE_MS) return;
+
+            // Verificar se a feature está ativa
             if (!ModConfig.DIRECTIONAL_CHUNK_LOADING.get()) return;
+
+            // Verificar se o jogador está num comboio com direção conhecida
+            DirectionalChunkShaper.PlayerDirection dir = DirectionalChunkShaper.getDirection(player);
+            if (dir == null) return;
+
+            // Posição do jogador em chunk coordinates
+            SectionPos section = SectionPos.of(player);
+            int pcx = section.x();
+            int pcz = section.z();
+
+            // Raio mínimo: chunks dentro de 5 chunks do jogador NUNCA são filtradas.
+            int dx = pos.x - pcx;
+            int dz = pos.z - pcz;
+            int distSq = dx * dx + dz * dz;
+            if (distSq <= 25) return; // 5*5 = 25 — raio de 5 chunks sempre carrega
+
+            // Verificar se a chunk está dentro da área direcional
+            int forward = ModConfig.DIRECTIONAL_FORWARD_CHUNKS.get();
+            int backward = ModConfig.DIRECTIONAL_BACKWARD_CHUNKS.get();
+            int side = ModConfig.DIRECTIONAL_SIDE_CHUNKS.get();
+
+            if (!dir.isInRange(pos.x, pos.z, pcx, pcz, forward, backward, side)) {
+                ci.cancel(); // Não carregar esta chunk lateral distante
+            }
         } catch (Exception e) {
-            return; // Config não carregada ainda
-        }
-
-        // Verificar se o jogador está num comboio com direção conhecida
-        DirectionalChunkShaper.PlayerDirection dir = DirectionalChunkShaper.getDirection(player);
-        if (dir == null) return;
-
-        // Posição do jogador em chunk coordinates
-        SectionPos section = SectionPos.of(player);
-        int pcx = section.x();
-        int pcz = section.z();
-
-        // Raio mínimo: chunks dentro de 5 chunks do jogador NUNCA são filtradas.
-        // Isto garante que o jogador tem sempre um círculo de chunks carregadas à volta,
-        // mesmo durante curvas. O filtro direcional só se aplica a chunks mais distantes.
-        int dx = pos.x - pcx;
-        int dz = pos.z - pcz;
-        int distSq = dx * dx + dz * dz;
-        if (distSq <= 25) return; // 5*5 = 25 — raio de 5 chunks sempre carrega
-
-        // Verificar se a chunk está dentro da área direcional
-        int forward = ModConfig.DIRECTIONAL_FORWARD_CHUNKS.get();
-        int backward = ModConfig.DIRECTIONAL_BACKWARD_CHUNKS.get();
-        int side = ModConfig.DIRECTIONAL_SIDE_CHUNKS.get();
-
-        if (!dir.isInRange(pos.x, pos.z, pcx, pcz, forward, backward, side)) {
-            ci.cancel(); // Não carregar esta chunk lateral distante
+            // NUNCA bloquear chunk loading — qualquer exceção deixa o vanilla correr
         }
     }
 }

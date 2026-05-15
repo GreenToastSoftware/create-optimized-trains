@@ -91,6 +91,7 @@ public class DebugOverlay {
         if (clientFps > 0) {
             lines.add(PREFIX + String.format("Client FPS: \u00A7a%.0f", clientFps));
         }
+        lines.add(PREFIX + "Shader Boost: " + (RenderOptimizer.isShaderBoostCurrentlyActive() ? "\u00A7aON" : "\u00A77OFF"));
     }
 
     private void addChunkInfo(List<String> lines, CreateOptimizedTrains mod) {

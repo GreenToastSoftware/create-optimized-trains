@@ -66,8 +66,15 @@ public abstract class CarriageContraptionVisualMixin {
     private void onBeginFrame(CallbackInfo ci) {
         UUID trainId = getTrainId();
         if (trainId != null) {
+            Entity ent = getEntity();
             // Registar visibilidade
             RenderOptimizer.shouldDeferForWarmup(trainId);
+
+            // Para comboios parados e não ocupados, saltar updates em vários frames.
+            if (ent != null && RenderOptimizer.shouldSkipStationaryNonOccupied(trainId, ent)) {
+                ci.cancel();
+                return;
+            }
 
             // Skip Flywheel updates para LOD distantes
             if (RenderOptimizer.shouldSkipFlywheelUpdate(trainId)) {

@@ -3,7 +3,9 @@ package com.createoptimizedtrains.rendering;
 import com.createoptimizedtrains.config.ModConfig;
 import com.createoptimizedtrains.lod.LODLevel;
 import com.createoptimizedtrains.lod.LODSystem;
+import com.simibubi.create.content.trains.entity.CarriageContraptionEntity;
 import net.minecraft.client.Minecraft;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -36,11 +38,26 @@ public class RenderOptimizer {
     private static int framesSinceLastSample = 0;
     private static final int FPS_SAMPLE_FRAMES = 30;
 
+    // === Player Train Detection (client-side) ===
+    // Cache do train ID do jogador local, atualizado uma vez por frame
+    private static UUID cachedLocalPlayerTrainId = null;
+    private static long localPlayerTrainCacheFrame = -1;
+
     // === Render Transition System ===
     // Comboios aparecem IMEDIATAMENTE em modo físico completo (sem ghost/warmup).
     // O sistema de proximity buffer garante que chunks e entidades já estão carregados.
     // Desaparecimento é vanilla (sem fade-out server-side para evitar bugs de invisibilidade).
     private static final Map<UUID, Long> trainFirstSeenFrame = new ConcurrentHashMap<>();
+
+    private static boolean isShaderBoostActive() {
+        return ModConfig.SHADER_BOOST_ENABLED.get() && ShaderCompat.isShaderPackActive();
+    }
+
+    private static LODLevel getEffectiveLOD(UUID trainId) {
+        // Paridade com 1.2.0: distâncias LOD são exclusivamente as do LODSystem
+        // (full/medium/low/ghost), sem degradação extra client-side.
+        return getCachedLOD(trainId);
+    }
 
     public static void init(LODSystem lod) {
         lodSystem = lod;
@@ -94,16 +111,14 @@ public class RenderOptimizer {
         if (!initialized || !ModConfig.RENDER_OPTIMIZATION_ENABLED.get()) {
             return true;
         }
-        return getCachedLOD(trainId).shouldRenderDetailed();
+        return getEffectiveLOD(trainId).shouldRenderDetailed();
     }
 
     public static boolean shouldAnimate(UUID trainId) {
         if (!initialized || !ModConfig.DISABLE_DISTANT_ANIMATIONS.get()) {
             return true;
         }
-        LODLevel lod = getCachedLOD(trainId);
-        // Animar para FULL, MEDIUM e LOW — só GHOST não anima
-        // Bogeys parados causam stutter visual percetivo mesmo quando o corpo se move
+        LODLevel lod = getEffectiveLOD(trainId);
         return lod != LODLevel.GHOST;
     }
 
@@ -111,22 +126,21 @@ public class RenderOptimizer {
         if (!initialized || !ModConfig.DISABLE_DISTANT_PARTICLES.get()) {
             return true;
         }
-        return getCachedLOD(trainId) == LODLevel.FULL;
+        return getEffectiveLOD(trainId) == LODLevel.FULL;
     }
 
     public static boolean shouldRenderInterior(UUID trainId) {
         if (!initialized || !ModConfig.RENDER_OPTIMIZATION_ENABLED.get()) {
             return true;
         }
-        return getCachedLOD(trainId) == LODLevel.FULL;
+        return getEffectiveLOD(trainId) == LODLevel.FULL;
     }
 
     public static float getModelSimplification(UUID trainId) {
         if (!initialized || !ModConfig.RENDER_OPTIMIZATION_ENABLED.get()) {
             return 0.0f;
         }
-
-        LODLevel lod = getCachedLOD(trainId);
+        LODLevel lod = getEffectiveLOD(trainId);
         return switch (lod) {
             case FULL -> 0.0f;
             case MEDIUM -> 0.3f;
@@ -143,25 +157,113 @@ public class RenderOptimizer {
         if (!initialized || !ModConfig.RENDER_OPTIMIZATION_ENABLED.get()) {
             return false;
         }
-        LODLevel lod = getCachedLOD(trainId);
-
-        // Skip GHOST apenas quando FPS crítico (cliente a sofrer muito)
+        LODLevel lod = getEffectiveLOD(trainId);
         if (lod == LODLevel.GHOST && clientFPS < 20.0) {
             return true;
         }
-
+        if (isShaderBoostActive() && lod == LODLevel.LOW && clientFPS < 35.0) {
+            return true;
+        }
         return false;
     }
 
     /**
-     * Flywheel visual update — NUNCA saltar posição/transformação.
-     * Saltar beginFrame() causa stutter visível porque a posição congela por
-     * vários frames e depois salta. A posição deve ser sempre atualizada.
+     * Flywheel visual update — NUNCA saltar posição/transformação para comboios EM MOVIMENTO.
+     * Saltar beginFrame() em comboios móveis causa stutter visível porque a posição congela.
      *
-     * Retorna sempre false — todas as atualizações visuais correm em todos os frames.
+     * Retorna sempre false — comboios móveis correm em todos os frames.
      */
     public static boolean shouldSkipFlywheelUpdate(UUID trainId) {
         return false;
+    }
+
+    /**
+     * Skip de beginFrame()/animate() para comboios PARADOS onde o jogador NÃO está.
+     *
+     * Para comboios estacionários, a posição não muda — saltar beginFrame() não causa
+     * stutter visível. Isto poupa recalcular matrizes de transformação, light sections,
+     * e child visuals para todas as carruagens dos outros comboios na estação.
+     *
+     * Redução: só processa 1 em cada 4 frames (75% menos trabalho GPU/CPU por comboio parado).
+     *
+     * @param trainId ID do comboio
+     * @param entity  Entidade da carruagem (para verificar movimento)
+     * @return true se este frame deve ser skipado
+     */
+    // Cache de posições anteriores para deteção de movimento real no cliente
+    private static final Map<Integer, double[]> lastEntityPositions = new ConcurrentHashMap<>();
+    private static final double NEAR_VISUAL_SKIP_RADIUS_SQ = 96.0 * 96.0;
+
+    public static boolean shouldSkipStationaryNonOccupied(UUID trainId, Entity entity) {
+        if (!initialized) return false;
+        try {
+            if (!ModConfig.REDUCE_OTHER_TRAINS_PHYSICS.get()) return false;
+        } catch (Exception e) {
+            return false;
+        }
+
+        // Nunca skipar o comboio do jogador
+        UUID playerTrainId = getLocalPlayerTrainId();
+        if (playerTrainId != null && trainId.equals(playerTrainId)) return false;
+
+        // Nunca aplicar throttle visual a comboios perto da câmara/jogador.
+        // Quando o jogador está ao lado do comboio sem estar sentado, saltar 75%
+        // dos beginFrame() faz o comboio parecer estar em LOD distante/choppy mesmo
+        // com chunks e entidades corretas.
+        if (distanceSqToCamera(entity.getX(), entity.getY(), entity.getZ()) <= NEAR_VISUAL_SKIP_RADIUS_SQ) {
+            return false;
+        }
+
+        // Detetar movimento real comparando posição atual com a do frame anterior.
+        // Não usar getDeltaMovement() (sempre ~0) nem train.speed (pode não estar
+        // sincronizado no cliente para comboios não-ocupados).
+        int eid = entity.getId();
+        double cx = entity.getX(), cy = entity.getY(), cz = entity.getZ();
+        double[] last = lastEntityPositions.get(eid);
+        lastEntityPositions.put(eid, new double[]{cx, cy, cz});
+        if (last != null) {
+            double dx = cx - last[0], dy = cy - last[1], dz = cz - last[2];
+            if (dx * dx + dy * dy + dz * dz > 0.0001) return false; // em movimento
+        } else {
+            return false; // primeiro frame — não skipar
+        }
+
+        int interval = isShaderBoostActive()
+            ? Math.max(2, ModConfig.SHADER_STATIONARY_SKIP_FRAMES.get())
+            : 4;
+
+        // Ex: interval=4 => processa 1 em cada 4 frames; interval=6 => 1 em cada 6
+        return (currentFrameId + entity.getId()) % interval != 0;
+    }
+
+    /**
+     * Obter o train ID do comboio onde o jogador local está sentado.
+     * Cacheado por frame para evitar percorrer a cadeia de veículos por entidade.
+     */
+    private static UUID getLocalPlayerTrainId() {
+        if (localPlayerTrainCacheFrame == currentFrameId) return cachedLocalPlayerTrainId;
+        localPlayerTrainCacheFrame = currentFrameId;
+
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) {
+            cachedLocalPlayerTrainId = null;
+            return null;
+        }
+        Entity vehicle = mc.player.getVehicle();
+        int depth = 0;
+        while (vehicle != null && depth < 5) {
+            if (vehicle instanceof CarriageContraptionEntity cce) {
+                var carriage = cce.getCarriage();
+                if (carriage != null && carriage.train != null) {
+                    cachedLocalPlayerTrainId = carriage.train.id;
+                    return cachedLocalPlayerTrainId;
+                }
+            }
+            vehicle = vehicle.getVehicle();
+            depth++;
+        }
+        cachedLocalPlayerTrainId = null;
+        return null;
     }
 
     /**
@@ -190,6 +292,10 @@ public class RenderOptimizer {
 
     public static double getClientFPS() {
         return clientFPS;
+    }
+
+    public static boolean isShaderBoostCurrentlyActive() {
+        return isShaderBoostActive();
     }
 
     public static long getCurrentFrameId() {

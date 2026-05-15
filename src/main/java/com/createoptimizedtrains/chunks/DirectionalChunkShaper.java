@@ -90,6 +90,11 @@ public class DirectionalChunkShaper {
         private double prevX, prevZ;
         private double smoothDirX, smoothDirZ;
         boolean hasDirection;
+
+        public boolean hasDirection() {
+            return hasDirection;
+        }
+
         private boolean hasPrevPos;
 
         void update(double x, double z) {

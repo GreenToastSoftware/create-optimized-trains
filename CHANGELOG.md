@@ -1,5 +1,60 @@
 # Changelog
 
+## v1.3.0
+
+### Focus
+
+- Stability-first release focused on fixing regressions introduced after v1.2.0
+- Restores smooth train behavior under real gameplay load (multiple trains, stations, chunk boundaries)
+- Keeps most aggressive optimizations optional behind config flags
+
+### Improvements
+
+#### Movement and Physics Stability
+- Added player proximity guards so nearby trains keep full physics/collision updates
+- Aggressive throttling for other trains is now optional (`AGGRESSIVE_OTHER_TRAINS_THROTTLE`), default OFF
+- Client-side `tickContraption()` throttling is blocked to avoid visual desync and “entry-state freeze”
+
+#### Chunk Loading and Spawn Smoothness
+- Startup grace period added to chunk filtering in `ChunkMapMixin` to avoid missing chunks on world join
+- Chunk force-load pipeline now uses per-train rate limiting to reduce tick spikes when new trains appear
+- Prioritizes immediate carriage chunks before lookahead/trailing chunks
+- Added trailing buffer logic based on train length so rear carriages stay stable on long consists
+
+#### LOD Consistency
+- Fixed LOD classification bug where `lowDistance` was not being applied correctly
+- Removed dynamic TPS-based shrinking of LOD distances (distance thresholds are now stable)
+- Restored effective LOD behavior to v1.2.0 profile (no extra client-side shader LOD shift)
+- Added fallback distance source (`positionAnchor`) when a carriage entity is not yet available
+
+### Bug Fixes
+
+#### Camera Shake While Sitting in Carriages
+- Root cause addressed by preventing premature carriage entity creation in non-entity-ticking chunks
+- Added priority chunk loading for carriages with player passengers to stabilize seat/camera sync
+
+#### Trains Appearing as Distant LOD While Nearby
+- Fixed client visual throttle path to never apply near the player/camera
+- Nearby stationary trains no longer look choppy or “far LOD” when standing next to them
+
+#### Visual and Flywheel Regressions
+- `CarriageContraptionVisualMixin` begin-frame flow aligned with safer behavior (no incorrect skip path for moving trains)
+- Removed problematic skip conditions that could freeze or under-update visuals
+
+### Configuration
+
+New/updated behavior in `create_optimized_trains-common.toml`:
+- `AGGRESSIVE_OTHER_TRAINS_THROTTLE` (default: `false`)
+- `GROUPING_ENABLED` default changed to `false` (experimental)
+- `PROXY_ENABLED` default changed to `false` (experimental)
+- `SHADER_BOOST_ENABLED` default changed to `false`
+- `SHADER_LOD_SHIFT` default changed to `0`
+
+### Notes
+
+- Recommended migration from older configs: review existing `.toml` values, because existing files keep old values instead of new defaults
+- This release is tuned for predictable behavior first; re-enable aggressive options only if needed per world/server
+
 ## v1.2.0
 
 ### New Features

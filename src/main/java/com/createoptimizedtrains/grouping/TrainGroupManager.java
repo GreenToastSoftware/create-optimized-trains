@@ -45,6 +45,7 @@ public class TrainGroupManager {
             snapshot.putInt("Index", train.carriages.indexOf(carriage));
             snapshot.putBoolean("IsLeading", carriage == train.carriages.get(0));
             carriageSnapshots.add(snapshot);
+            totalLength += carriage.bogeySpacing;
         }
 
         // Obter posição e direção do comboio (Create 6.x API)

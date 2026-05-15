@@ -13,3 +13,7 @@ out/
 logs/
 *.log
 mcmodsrepo/
+temp_120/
+temp_fw_classes/
+temp_flywheel/
+output/
