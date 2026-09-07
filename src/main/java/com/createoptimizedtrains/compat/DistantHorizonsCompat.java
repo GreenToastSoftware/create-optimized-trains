@@ -81,14 +81,9 @@ public class DistantHorizonsCompat {
      * @return lookahead efetivo
      */
     public static int getAdjustedLookahead(int configLookahead, double speed) {
-        if (!isDHPresent() || !ModConfig.DH_REDUCE_FORCE_LOAD.get()) {
-            return configLookahead;
-        }
-
-        // Com DH, o visual já está coberto. Podemos reduzir force-load lookahead
-        // em 1-2 chunks, libertando cap global para mais comboios.
-        // Mas NUNCA abaixo de 2 (mínimo para evitar entity pop-in).
-        return Math.max(2, configLookahead - 2);
+        // DH não reduz a necessidade de lookahead — chunks entity-ticking são
+        // necessárias para física/entidades independentemente do DH.
+        return configLookahead;
     }
 
     /**
@@ -99,7 +94,8 @@ public class DistantHorizonsCompat {
         if (!isDHPresent() || !ModConfig.DH_REDUCE_FORCE_LOAD.get()) {
             return defaultCap;
         }
-        // Reduzir cap em 30% — liberta RAM e I/O
-        return Math.max(30, (int) (defaultCap * 0.7));
+        // DH é renderização client-side; não reduz a necessidade de chunks entity-ticking
+        // no servidor. O cap não é ajustado com DH — manter o valor configurado.
+        return defaultCap;
     }
 }

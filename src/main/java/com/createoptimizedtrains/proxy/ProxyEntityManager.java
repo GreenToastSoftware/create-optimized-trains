@@ -4,6 +4,7 @@ import com.createoptimizedtrains.CreateOptimizedTrains;
 import com.createoptimizedtrains.config.ModConfig;
 import com.createoptimizedtrains.lod.LODLevel;
 import com.createoptimizedtrains.lod.LODSystem;
+import com.createoptimizedtrains.util.CarriageUtils;
 import com.simibubi.create.content.trains.entity.Train;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
@@ -67,7 +68,7 @@ public class ProxyEntityManager {
         // Create 6.x: usar anyAvailableEntity() para posição
         if (!train.carriages.isEmpty()) {
             var firstCarriage = train.carriages.get(0);
-            var entity = firstCarriage.anyAvailableEntity();
+            var entity = CarriageUtils.safeAnyAvailableEntity(firstCarriage);
             if (entity != null) {
                 posX = entity.getX();
                 posY = entity.getY();

@@ -4,6 +4,7 @@ import com.createoptimizedtrains.CreateOptimizedTrains;
 import com.createoptimizedtrains.config.ModConfig;
 import com.createoptimizedtrains.lod.LODLevel;
 import com.createoptimizedtrains.lod.LODSystem;
+import com.createoptimizedtrains.util.CarriageUtils;
 import com.simibubi.create.content.trains.entity.Carriage;
 import com.simibubi.create.content.trains.entity.Train;
 import net.minecraft.nbt.CompoundTag;
@@ -54,7 +55,7 @@ public class TrainGroupManager {
 
         if (!train.carriages.isEmpty()) {
             var firstCarriage = train.carriages.get(0);
-            var entity = firstCarriage.anyAvailableEntity();
+            var entity = CarriageUtils.safeAnyAvailableEntity(firstCarriage);
             if (entity != null) {
                 posX = entity.getX();
                 posY = entity.getY();
@@ -110,7 +111,7 @@ public class TrainGroupManager {
     private void restoreCarriageEntities(Train train, TrainGroup group) {
         // Forçar recriação das entidades solicitando reassemblagem
         for (Carriage carriage : train.carriages) {
-            var entity = carriage.anyAvailableEntity();
+            var entity = CarriageUtils.safeAnyAvailableEntity(carriage);
             if (entity != null) {
                 entity.setPos(entity.position());
             }

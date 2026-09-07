@@ -3,7 +3,9 @@ package com.createoptimizedtrains.chunks;
 import com.createoptimizedtrains.CreateOptimizedTrains;
 import com.createoptimizedtrains.compat.DistantHorizonsCompat;
 import com.createoptimizedtrains.config.ModConfig;
+import com.createoptimizedtrains.diagnostics.DebugLog;
 import com.createoptimizedtrains.lod.LODLevel;
+import com.createoptimizedtrains.util.CarriageUtils;
 import com.simibubi.create.content.trains.entity.Carriage;
 import com.simibubi.create.content.trains.entity.CarriageContraptionEntity;
 import com.simibubi.create.content.trains.entity.Train;
@@ -11,11 +13,16 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.Vec3;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ChunkLoadManager {
+
+    private static final Logger LOGGER = LogManager.getLogger("COT/ChunkLoadManager");
+    private static volatile long lastSuspiciousChunkLog = 0;
 
     // Chunks atualmente force-loaded por nós, por comboio
     private final Map<UUID, Set<ChunkPos>> trainChunks = new ConcurrentHashMap<>();
@@ -26,18 +33,26 @@ public class ChunkLoadManager {
 
     private static final int THRASH_HISTORY_SIZE = 12;
 
+    // Cache do total de chunks forçadas em todos os comboios.
+    // Atualizada incrementalmente em updateTrainChunks/release para evitar
+    // a iteração O(N×M) por tick que getLoadedChunkCount() causava antes.
+    private volatile int cachedTotalChunks = 0;
+
     // Cap global: máximo de chunks forçadas em simultâneo para TODOS os comboios.
     // Entity-ticking de muitos chunks consome CPU e memória.
-    // 80 chunks forçados ~= 1.3GB de heap. Com 19GB+ de heap e hardware moderno, 80 é seguro.
-    // Com DH, este cap é reduzido automaticamente (DistantHorizonsCompat).
+    // Com ghost mode ativo, apenas comboios próximos do jogador usam chunks force-loaded;
+    // os restantes correm via track graph sem entidades. Cap elevado para cobrir todos os
+    // comboios ativos perto do jogador (inclui lookahead direcional).
     // Cap global (padrão de segurança); o valor efetivo vem de ModConfig.MAX_FORCED_CHUNKS
-    private static final int MAX_GLOBAL_FORCED_CHUNKS_FALLBACK = 80;
+    private static final int MAX_GLOBAL_FORCED_CHUNKS_FALLBACK = 300;
 
     // Limite de novas chamadas setChunkForced por comboio por tick.
     // Evita picos de CPU/IO quando um novo comboio aparece e precisa de carregar
     // dezenas de chunks em simultâneo. As chunks de carruagem imediatas são
     // prioritárias (carregam primeiro) graças ao LinkedHashSet em calculateNeededChunks.
-    private static final int MAX_CHUNK_LOADS_PER_TRAIN_PER_TICK = 8;
+    private static final int MAX_CHUNK_LOADS_PER_TRAIN_PER_TICK = 6;
+    // Budget máximo por comboio por tick — impede que setChunkForced bloqueie o tick inteiro.
+    private static final long BUDGET_NS_PER_TRAIN = 5_000_000L; // 5ms
 
     /**
      * Atualizar chunks carregados para um comboio.
@@ -54,7 +69,12 @@ public class ChunkLoadManager {
         }
 
         UUID trainId = train.id;
-        Set<ChunkPos> needed = calculateNeededChunks(train, level);
+        long budgetStart = System.nanoTime();
+
+        long tCalc = System.nanoTime();
+        Set<ChunkPos> criticalChunks = new LinkedHashSet<>();
+        Set<ChunkPos> needed = calculateNeededChunks(train, level, criticalChunks);
+        long calcMs = (System.nanoTime() - tCalc) / 1_000_000L;
         Set<ChunkPos> current = trainChunks.getOrDefault(trainId, Collections.emptySet());
 
         // Chunks a descarregar (estavam forçadas, já não são necessárias)
@@ -68,45 +88,90 @@ public class ChunkLoadManager {
         Set<ChunkPos> toLoad = new LinkedHashSet<>(needed);
         toLoad.removeAll(current);
 
-        // Anti-thrashing: manter chunks recentes mesmo que não estejam em needed
+        // Anti-thrashing: manter chunks recentes mesmo que não estejam em needed.
+        // EXCEPÇÃO: quando o comboio está parado, o deque não avança (nada é carregado),
+        // portanto as chunks de lookahead da direcção anterior ficariam retidas indefinidamente.
+        // Quando parado, ignorar anti-thrash para que chunks desnecessárias descarreguem.
         Deque<ChunkPos> recent = recentChunks.computeIfAbsent(trainId, k -> new ArrayDeque<>());
-        toUnload.removeIf(recent::contains);
-
-        // Descarregar chunks desnecessárias
-        for (ChunkPos pos : toUnload) {
-            level.setChunkForced(pos.x, pos.z, false);
+        if (Math.abs(train.speed) >= 0.01) {
+            toUnload.removeIf(recent::contains);
+        } else {
+            // Comboio parado: limpar o deque para liberar chunks de lookahead imediatamente
+            recent.clear();
         }
+
+        // Rate-limit de descarregamento: distribui trabalho como os loads.
+        // Sem este limite, paragem de comboio descarrega 15+ chunks de só, bloqueando o tick.
+        int unloaded = 0;
+        long tUnload = System.nanoTime();
+        for (ChunkPos pos : toUnload) {
+            if (unloaded >= MAX_CHUNK_LOADS_PER_TRAIN_PER_TICK) break;
+            if (System.nanoTime() - budgetStart > BUDGET_NS_PER_TRAIN) break;
+            level.setChunkForced(pos.x, pos.z, false);
+            unloaded++;
+        }
+        long unloadMs = (System.nanoTime() - tUnload) / 1_000_000L;
 
         // Set de chunks REALMENTE forçadas após unload
         Set<ChunkPos> actuallyForced = new HashSet<>(current);
         actuallyForced.removeAll(toUnload);
 
-        // PRIORIDADE CRÍTICA: carregar imediatamente (sem rate limit) os chunks de
-        // carruagens que têm jogadores a bordo como passengers.
-        // Entidades em chunks não-entity-ticking não são tracked pelo EntityTracker —
-        // a sua posição não é sincronizada ao cliente, causando camera shake no jogador.
-        // Carregar estes chunks imediatamente garante que a entidade é criada em
-        // status entity-ticking desde o primeiro tick.
-        for (Carriage carriage : train.carriages) {
-            CarriageContraptionEntity cce = carriage.anyAvailableEntity();
-            if (cce == null || cce.getPassengers().isEmpty()) continue;
-            boolean hasPlayerPassenger = false;
-            for (var passenger : cce.getPassengers()) {
-                if (passenger instanceof net.minecraft.world.entity.player.Player) {
-                    hasPlayerPassenger = true;
-                    break;
+        // PRIORIDADE CRÍTICA: a chunk EXACTA de cada carruagem (onde ela fisicamente está)
+        // nunca fica sujeita ao rate limit, independentemente de o comboio estar ocupado.
+        // Sem isto, comboios longos (10+ carruagens) sem jogador a bordo podiam levar
+        // vários ticks a carregar a chunk da última carruagem (competia com lookahead/
+        // trailing pelo mesmo rate limit de 6/tick), atrasando a criação dessa entidade
+        // específica e causando SEM_ENTIDADE temporário + movimento irregular.
+        for (ChunkPos pos : criticalChunks) {
+            if (actuallyForced.contains(pos)) continue;
+            level.setChunkForced(pos.x, pos.z, true);
+            actuallyForced.add(pos);
+            toLoad.remove(pos);
+            recent.addLast(pos);
+            if (recent.size() > THRASH_HISTORY_SIZE) recent.removeFirst();
+        }
+
+        // Reforço adicional para comboios ocupados: carrega área extra à volta de cada
+        // carruagem (raio LOD) também sem rate limit, priorizando conforto do jogador.
+        boolean isOccupied = com.createoptimizedtrains.util.PlayerTrainTracker.isOccupied(trainId);
+        if (isOccupied) {
+            for (Carriage carriage : train.carriages) {
+                Vec3 pos = getCarriagePosition(carriage, level);
+                if (pos == null) continue;
+                int cx = (int) Math.floor(pos.x) >> 4;
+                int cz = (int) Math.floor(pos.z) >> 4;
+                ChunkPos pChunk = new ChunkPos(cx, cz);
+                if (!actuallyForced.contains(pChunk)) {
+                    level.setChunkForced(cx, cz, true);
+                    actuallyForced.add(pChunk);
+                    toLoad.remove(pChunk);
+                    recent.addLast(pChunk);
+                    if (recent.size() > THRASH_HISTORY_SIZE) recent.removeFirst();
                 }
             }
-            if (!hasPlayerPassenger) continue;
-            int cx = (int) Math.floor(cce.getX()) >> 4;
-            int cz = (int) Math.floor(cce.getZ()) >> 4;
-            ChunkPos pChunk = new ChunkPos(cx, cz);
-            if (!actuallyForced.contains(pChunk)) {
-                level.setChunkForced(cx, cz, true);
-                actuallyForced.add(pChunk);
-                toLoad.remove(pChunk); // já carregado — não contar no rate limit
-                recent.addLast(pChunk);
-                if (recent.size() > THRASH_HISTORY_SIZE) recent.removeFirst();
+        } else {
+            // Fallback para comboios NÃO ocupados: usar entity passengers (comportamento anterior)
+            for (Carriage carriage : train.carriages) {
+                CarriageContraptionEntity cce = CarriageUtils.safeAnyAvailableEntity(carriage);
+                if (cce == null || cce.getPassengers().isEmpty()) continue;
+                boolean hasPlayerPassenger = false;
+                for (var passenger : cce.getPassengers()) {
+                    if (passenger instanceof net.minecraft.world.entity.player.Player) {
+                        hasPlayerPassenger = true;
+                        break;
+                    }
+                }
+                if (!hasPlayerPassenger) continue;
+                int cx = (int) Math.floor(cce.getX()) >> 4;
+                int cz = (int) Math.floor(cce.getZ()) >> 4;
+                ChunkPos pChunk = new ChunkPos(cx, cz);
+                if (!actuallyForced.contains(pChunk)) {
+                    level.setChunkForced(cx, cz, true);
+                    actuallyForced.add(pChunk);
+                    toLoad.remove(pChunk);
+                    recent.addLast(pChunk);
+                    if (recent.size() > THRASH_HISTORY_SIZE) recent.removeFirst();
+                }
             }
         }
 
@@ -121,8 +186,10 @@ public class ChunkLoadManager {
         // Distribui o trabalho de IO ao longo de vários ticks em vez de um pico único.
         int maxThisTick = Math.min(allowedToLoad, MAX_CHUNK_LOADS_PER_TRAIN_PER_TICK);
         int loaded = 0;
+        long tLoad = System.nanoTime();
         for (ChunkPos pos : toLoad) {
             if (loaded >= maxThisTick) break;
+            if (System.nanoTime() - budgetStart > BUDGET_NS_PER_TRAIN) break;
             level.setChunkForced(pos.x, pos.z, true);
             actuallyForced.add(pos);
             recent.addLast(pos);
@@ -131,16 +198,33 @@ public class ChunkLoadManager {
             }
             loaded++;
         }
+        long loadMs = (System.nanoTime() - tLoad) / 1_000_000L;
+
+        long totalMs = (System.nanoTime() - budgetStart) / 1_000_000L;
+        if (DebugLog.ENABLED && totalMs > 10) {
+            long now = System.currentTimeMillis();
+            if (now - lastSuspiciousChunkLog > 2_000) {
+                lastSuspiciousChunkLog = now;
+                LOGGER.warn("[COT] updateTrainChunks detalhe: total={}ms calc={}ms unload={}ms({}) load={}ms({}) train={}",
+                    totalMs, calcMs, unloadMs, unloaded, loadMs, loaded,
+                    trainId.toString().substring(0, 8));
+            }
+        }
 
         // CRÍTICO: só guardar chunks que foram REALMENTE forçadas no servidor
+        // Atualizar cache incremental: subtrair tamanho anterior, adicionar novo
+        int prevCount = current.size();
+        int newCount = actuallyForced.size();
+        cachedTotalChunks += (newCount - prevCount);
+        if (cachedTotalChunks < 0) cachedTotalChunks = 0; // defesa contra overflow por corrida
         trainChunks.put(trainId, actuallyForced);
     }
 
-    private Set<ChunkPos> calculateNeededChunks(Train train, ServerLevel level) {
+    private Set<ChunkPos> calculateNeededChunks(Train train, ServerLevel level, Set<ChunkPos> criticalChunksOut) {
         // LinkedHashSet preserva a ordem de inserção.
-        // Prioridade 1 (inseridas primeiro): chunks exatas de cada carruagem.
-        // Prioridade 2 (inseridas depois): lookahead direcional + trailing buffer.
-        // O rate limit em updateTrainChunks carrega nesta ordem quando há burst.
+        // Prioridade 1 (inseridas primeiro): chunks exatas de cada carruagem (também
+        // colocadas em criticalChunksOut, sempre carregadas sem rate limit).
+        // Prioridade 2 (inseridas depois): raio LOD extra + lookahead direcional + trailing.
         Set<ChunkPos> chunks = new LinkedHashSet<>();
 
         if (train.carriages.isEmpty()) {
@@ -154,7 +238,7 @@ public class ChunkLoadManager {
         // Sem estas chunks, a entidade da carruagem não existe no servidor
         // e o Create não consegue simular a física dessa carruagem.
         for (Carriage carriage : train.carriages) {
-            addCarriageChunks(carriage, chunks, level);
+            addCarriageChunks(carriage, chunks, criticalChunksOut, level);
         }
 
         // Prioridade 2: lookahead direcional + trailing buffer.
@@ -190,7 +274,7 @@ public class ChunkLoadManager {
         int currentChunkZ = (int) Math.floor(currentZ) >> 4;
 
         // Calcular direção de movimento real a partir do deltaMovement da entidade
-        CarriageContraptionEntity frontEntity = frontCarriage.anyAvailableEntity();
+        CarriageContraptionEntity frontEntity = CarriageUtils.safeAnyAvailableEntity(frontCarriage);
         double motionX = 0;
         double motionZ = 0;
         if (frontEntity != null) {
@@ -219,13 +303,15 @@ public class ChunkLoadManager {
         double dirX = motionX / motionLength;
         double dirZ = motionZ / motionLength;
 
-        // Lookahead adaptativo: limitado a 10 chunks (cobre comboios a ~40 bl/s = ~3.2s margem)
+        // Lookahead adaptativo: 5 segundos de margem para cobrir loading de terrain frio (2-3s).
+        // Fórmula: ceil(speedBlocks * 5.0 / 16.0) + 2 → 40 bl/s = 15 chunks (~4.8s a 40 bl/s)
+        // Anteriormente era 2s de margem (6 chunks a 40 bl/s), insuficiente para terrain frio.
         double speedBlocks = Math.abs(train.speed) * 20.0;
-        int adaptiveLookahead = Math.max(lookahead, (int) Math.ceil(speedBlocks * 2.0 / 16.0) + 1);
+        int adaptiveLookahead = Math.max(lookahead, (int) Math.ceil(speedBlocks * 5.0 / 16.0) + 2);
         // Cap configurável: simulationDistance define o limite máximo de lookahead.
-        // 0 = desativado → fallback ao lookahead adaptativo puro (cap fixo de 10 chunks)
+        // 0 = desativado → fallback ao lookahead adaptativo puro (cap padrão 20 chunks)
         int simDist = safeGetSimulationDistance();
-        int cap = simDist > 0 ? simDist : 10;
+        int cap = simDist > 0 ? simDist : 20;
         adaptiveLookahead = Math.min(adaptiveLookahead, cap);
 
         // Pré-carregar na direção de movimento
@@ -281,14 +367,20 @@ public class ChunkLoadManager {
         }
     }
 
-    private void addCarriageChunks(Carriage carriage, Set<ChunkPos> chunks, ServerLevel level) {
+    private void addCarriageChunks(Carriage carriage, Set<ChunkPos> chunks, Set<ChunkPos> criticalChunksOut, ServerLevel level) {
         Vec3 pos = getCarriagePosition(carriage, level);
         if (pos != null) {
             int cx = (int) Math.floor(pos.x) >> 4;
             int cz = (int) Math.floor(pos.z) >> 4;
 
+            // Chunk exacta da carruagem: crítica, sempre sem rate limit (ver updateTrainChunks).
+            ChunkPos exact = new ChunkPos(cx, cz);
+            chunks.add(exact);
+            criticalChunksOut.add(exact);
+
             // Raio por nível LOD: comboios próximos carregam área maior,
             // comboios distantes carregam apenas a chunk da carruagem.
+            // Este raio extra é "soft" (sujeito a rate limit) — só a chunk exacta é crítica.
             LODLevel lod = (carriage.train != null) ? getTrainLOD(carriage.train.id) : LODLevel.FULL;
             int radius = getCarriageRadius(lod);
 
@@ -332,7 +424,14 @@ public class ChunkLoadManager {
     }
 
     private int safeGetMaxForcedChunks() {
-        try { return ModConfig.MAX_FORCED_CHUNKS.get(); } catch (Exception e) { return MAX_GLOBAL_FORCED_CHUNKS_FALLBACK; }
+        try {
+            // Mínimo de 300: com ghost mode, apenas comboios próximos do jogador usam
+            // chunks force-loaded. 300 cobre confortavelmente player's train (11 carruagens
+            // + 16 lookahead) + 5-6 comboios vizinhos completos com margens.
+            return Math.max(300, ModConfig.MAX_FORCED_CHUNKS.get());
+        } catch (Exception e) {
+            return MAX_GLOBAL_FORCED_CHUNKS_FALLBACK;
+        }
     }
 
     /**
@@ -342,7 +441,7 @@ public class ChunkLoadManager {
      * porque Train.tick() corre sempre (carriageWaitingForChunks = -1).
      */
     private Vec3 getCarriagePosition(Carriage carriage, ServerLevel level) {
-        var entity = carriage.anyAvailableEntity();
+        var entity = CarriageUtils.safeAnyAvailableEntity(carriage);
         if (entity != null) {
             return entity.position();
         }
@@ -402,6 +501,8 @@ public class ChunkLoadManager {
     public void releaseTrainChunks(UUID trainId, ServerLevel level) {
         Set<ChunkPos> chunks = trainChunks.remove(trainId);
         if (chunks != null) {
+            cachedTotalChunks -= chunks.size();
+            if (cachedTotalChunks < 0) cachedTotalChunks = 0;
             for (ChunkPos pos : chunks) {
                 level.setChunkForced(pos.x, pos.z, false);
             }
@@ -419,10 +520,11 @@ public class ChunkLoadManager {
         trainChunks.clear();
         recentChunks.clear();
         lastKnownPositions.clear();
+        cachedTotalChunks = 0;
     }
 
     public int getLoadedChunkCount() {
-        return trainChunks.values().stream().mapToInt(Set::size).sum();
+        return cachedTotalChunks;
     }
 
     public int getLoadedChunkCount(UUID trainId) {

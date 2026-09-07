@@ -3,6 +3,7 @@ package com.createoptimizedtrains.priority;
 import com.createoptimizedtrains.CreateOptimizedTrains;
 import com.createoptimizedtrains.config.ModConfig;
 import com.createoptimizedtrains.threading.AsyncTaskManager;
+import com.createoptimizedtrains.util.CarriageUtils;
 import com.simibubi.create.content.trains.entity.Train;
 
 import java.util.*;
@@ -66,7 +67,7 @@ public class PriorityScheduler {
         for (Train train : trains) {
             if (!train.carriages.isEmpty()) {
                 // Create 6.x: usar anyAvailableEntity() para posição
-                var entity = train.carriages.get(0).anyAvailableEntity();
+                var entity = CarriageUtils.safeAnyAvailableEntity(train.carriages.get(0));
                 if (entity != null) {
                     snapshots.add(new TrainSnapshot(
                             train.id,

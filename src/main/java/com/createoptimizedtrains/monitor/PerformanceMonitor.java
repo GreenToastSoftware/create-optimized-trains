@@ -2,6 +2,7 @@ package com.createoptimizedtrains.monitor;
 
 import com.createoptimizedtrains.CreateOptimizedTrains;
 import com.createoptimizedtrains.config.ModConfig;
+import com.createoptimizedtrains.diagnostics.DebugLog;
 
 public class PerformanceMonitor {
 
@@ -95,10 +96,12 @@ public class PerformanceMonitor {
         // Se há picos acima de 100ms, reagir imediatamente sem esperar janela completa
         if (peakMSPT > 100.0 && state != PerformanceState.CRITICAL) {
             state = PerformanceState.CRITICAL;
-            CreateOptimizedTrains.LOGGER.info(
-                    "Performance spike detetado: {}ms — modo CRITICAL ativado",
-                    String.format("%.1f", peakMSPT)
-            );
+            if (DebugLog.ENABLED) {
+                CreateOptimizedTrains.LOGGER.info(
+                        "Performance spike detetado: {}ms — modo CRITICAL ativado",
+                        String.format("%.1f", peakMSPT)
+                );
+            }
         }
     }
 
@@ -116,13 +119,15 @@ public class PerformanceMonitor {
         }
 
         if (newState != state) {
-            CreateOptimizedTrains.LOGGER.info(
-                    "Performance state: {} -> {} (TPS: {}, MSPT: {}, Peak: {})",
-                    state, newState,
-                    String.format("%.1f", currentTPS),
-                    String.format("%.1f", averageMSPT),
-                    String.format("%.1f", peakMSPT)
-            );
+            if (DebugLog.ENABLED) {
+                CreateOptimizedTrains.LOGGER.info(
+                        "Performance state: {} -> {} (TPS: {}, MSPT: {}, Peak: {})",
+                        state, newState,
+                        String.format("%.1f", currentTPS),
+                        String.format("%.1f", averageMSPT),
+                        String.format("%.1f", peakMSPT)
+                );
+            }
             state = newState;
         }
     }

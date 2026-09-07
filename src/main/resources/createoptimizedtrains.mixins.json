@@ -13,6 +13,7 @@
     "ContraptionCollisionMixin",
     "ContraptionColliderMixin",
     "ContraptionTickThrottleMixin",
+    "ContraptionWorldBlockEntityMixin",
     "ChunkMapMixin"
   ],
   "client": [
@@ -21,7 +22,13 @@
     "client.CarriageEntityClientMixin",
     "client.ContraptionEntityRendererMixin",
     "client.ContraptionVisualMaterialMixin",
+    "client.BufferSourceMixin",
+    "client.FullyBufferedMultiBufferSourceMixin",
+    "client.ICompositeStateAccessor",
+    "client.IBufferSourceAccessor",
+    "client.IRenderTypeCompositeAccessor",
     "client.LevelRendererFlushMixin",
+    "client.LevelRendererPostFlywheelMixin",
     "client.OitDepthMixin"
   ],
   "injectors": {

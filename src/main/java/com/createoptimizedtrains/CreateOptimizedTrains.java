@@ -2,6 +2,7 @@ package com.createoptimizedtrains;
 
 import com.createoptimizedtrains.chunks.ChunkLoadManager;
 import com.createoptimizedtrains.chunks.RouteChunkPreloader;
+import com.createoptimizedtrains.compat.DistantHorizonsThrottle;
 import com.createoptimizedtrains.config.ModConfig;
 import com.createoptimizedtrains.events.TrainEventHandler;
 import com.createoptimizedtrains.grouping.TrainGroupManager;
@@ -63,6 +64,7 @@ public class CreateOptimizedTrains {
         ProxyEntityManager.ENTITIES.register(modBus);
 
         MinecraftForge.EVENT_BUS.register(new TrainEventHandler());
+        MinecraftForge.EVENT_BUS.register(DistantHorizonsThrottle.class);
 
         LOGGER.info("Create Optimized Trains a inicializar...");
     }

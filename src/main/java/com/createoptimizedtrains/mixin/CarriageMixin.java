@@ -58,7 +58,12 @@ public abstract class CarriageMixin {
 
     @Inject(method = "updateConductors", at = @At("HEAD"), cancellable = true)
     private void preserveConductorsIfEntityUnavailable(CallbackInfo ci) {
-        CarriageContraptionEntity entity = anyAvailableEntity();
+        CarriageContraptionEntity entity;
+        try {
+            entity = anyAvailableEntity();
+        } catch (java.util.ConcurrentModificationException ignored) {
+            return; // mapa entities modificado concorrentemente; saltar esta verificação
+        }
         if (entity != null && !entity.isAlive()) {
             ci.cancel();
         }
@@ -90,20 +95,22 @@ public abstract class CarriageMixin {
     /**
      * Período de graça antes de permitir remoção da entidade.
      *
-     * MOVING (>0.001 blocks/tick): 5 ticks = 250ms
+     * MOVING (>0.001 blocks/tick): 10 ticks = 500ms
      *   O ChunkLoadManager pré-carrega chunks à frente com prioridade;
-     *   chunks force-loaded ficam entity-ticking em 1-3 ticks.
-     *   Grace curto evita que o cliente veja a entidade "congelada"
-     *   na fronteira do chunk enquanto o comboio continua a andar no servidor.
-     *   Se os 5 ticks esgotarem sem o chunk carregar, a entidade é removida e
-     *   recriada no novo chunk (pop de ≤5 ticks vs lag de 20 ticks).
+     *   chunks force-loaded ficam entity-ticking em 1-5 ticks normalmente.
+     *   10 ticks cobre 99%+ dos casos sem entidade a ser removida/recriada.
+     *   Reduzido de 20→5 na v1.3.1 causou mais engasgos porque 5 ticks é
+     *   insuficiente em servidores carregados — entidades eram removidas e
+     *   recriadas frequentemente, causando derailing falso por AnchorDiff=0.
+     *   10 ticks é o equilíbrio: chunks carregam a tempo, JourneyMap drift
+     *   máximo de 10 blocos (vs 20 antes, vs stutter constante com 5).
      *
      * STOPPED (speed≈0): 20 ticks = 1 segundo
      *   Comboios parados não causam lag de posição visível; o grace longo
      *   previne destroys/spawns desnecessários por variações de chunk ticking.
      */
     @Unique
-    private static final int CHUNK_ENTITY_GRACE_TICKS_MOVING = 5;
+    private static final int CHUNK_ENTITY_GRACE_TICKS_MOVING = 10;
     @Unique
     private static final int CHUNK_ENTITY_GRACE_TICKS_STOPPED = 20;
 

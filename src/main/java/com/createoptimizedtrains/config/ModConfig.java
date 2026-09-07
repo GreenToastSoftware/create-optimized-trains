@@ -83,9 +83,15 @@ public class ModConfig {
     public static final BooleanValue DH_REDUCE_VIEW_DISTANCE;
     public static final IntValue DH_MIN_VIEW_DISTANCE;
     public static final BooleanValue DH_REDUCE_FORCE_LOAD;
+    public static final BooleanValue DH_STARTUP_THROTTLE_ENABLED;
+    public static final IntValue DH_STARTUP_THROTTLE_TICKS;
 
     // --- Debug Overlay ---
     public static final BooleanValue DEBUG_OVERLAY_ENABLED;
+
+    // --- Diagnostic Logging ---
+    public static final BooleanValue DIAGNOSTIC_LOGGING;
+    public static final IntValue DIAGNOSTIC_LOG_INTERVAL;
 
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
@@ -238,9 +244,9 @@ public class ModConfig {
                 .defineInRange("simulationDistance", 16, 0, 128);
         MAX_FORCED_CHUNKS = builder
                 .comment("Cap máximo de chunks force-loaded em simultâneo (todos os comboios combinados)",
-                         "Aumenta este valor se tiveres vários comboios ou simulationDistance alto.",
-                         "Cada chunk force-loaded usa ~16 MB de heap. 80 chunks ≈ 1.3 GB.")
-                .defineInRange("maxForcedChunks", 80, 20, 400);
+                         "Com ghost mode, apenas comboios próximos do jogador usam este cap.",
+                         "300 cobre o comboio do jogador (11 carr. + 16 lookahead) + 5-6 comboios vizinhos.")
+                .defineInRange("maxForcedChunks", 300, 20, 1000);
         builder.pop(); // fecha simulation
 
         builder.pop(); // fecha chunks
@@ -329,6 +335,14 @@ public class ModConfig {
         DH_REDUCE_FORCE_LOAD = builder
                 .comment("Reduzir número de chunks force-loaded quando DH cobre o visual")
                 .define("reduceForceLoad", true);
+        DH_STARTUP_THROTTLE_ENABLED = builder
+                .comment("Reduzir drasticamente threads/geração de mundo distante do DH",
+                         "durante o arranque, para o terreno real (chunks vanilla) carregar primeiro.",
+                         "Os valores originais do DH são restaurados após startupThrottleTicks.")
+                .define("startupThrottleEnabled", true);
+        DH_STARTUP_THROTTLE_TICKS = builder
+                .comment("Duração do throttle de arranque do DH, em ticks (20 ticks = 1 segundo)")
+                .defineInRange("startupThrottleTicks", 200, 20, 1200);
         builder.pop();
 
         // Debug Overlay
@@ -337,6 +351,27 @@ public class ModConfig {
                 .comment("Mostrar informações do mod no ecrã de debug (F3)",
                          "Inclui memória, threads, TPS/MSPT, FPS, chunks forçados")
                 .define("enabled", false);
+        builder.pop();
+
+        // Diagnostic Logging
+        builder.comment(
+                "Logging de diagnóstico de movimento de comboios.",
+                "Regista no log do servidor (latest.log) o estado de cada comboio,",
+                "indicando porque certos comboios têm engasgos e outros não.",
+                "Procura por linhas [COT] STUTTER para encontrar comboios problemáticos.",
+                "Linhas [COT] SMOOTH indicam comboios a funcionar normalmente."
+        ).push("diagnostics");
+        DIAGNOSTIC_LOGGING = builder
+                .comment("Ativar logging de diagnóstico de comboios",
+                         "true = ativo por padrão para diagnosticar engasgos",
+                         "false = desativar quando o problema estiver resolvido")
+                .define("enabled", true);
+        DIAGNOSTIC_LOG_INTERVAL = builder
+                .comment("Intervalo (em ticks) entre logs de comboios SMOOTH (a funcionar bem)",
+                         "Anomalias (STUTTER) são sempre registadas imediatamente e depois",
+                         "repetidas a cada 20 ticks (1 segundo) enquanto persistirem.",
+                         "200 = log de estado normal a cada 10 segundos por comboio")
+                .defineInRange("logInterval", 200, 20, 2000);
         builder.pop();
 
         builder.pop(); // general

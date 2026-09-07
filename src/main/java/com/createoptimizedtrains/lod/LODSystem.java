@@ -2,6 +2,7 @@ package com.createoptimizedtrains.lod;
 
 import com.createoptimizedtrains.config.ModConfig;
 import com.createoptimizedtrains.monitor.PerformanceMonitor;
+import com.createoptimizedtrains.util.CarriageUtils;
 import com.simibubi.create.content.trains.entity.Carriage;
 import com.simibubi.create.content.trains.entity.CarriageContraptionEntity;
 import com.simibubi.create.content.trains.entity.Train;
@@ -153,7 +154,7 @@ public class LODSystem {
      * comboios perto do jogador parecem estar em LOD distante até a entidade spawnar.
      */
     private Vec3 resolveCarriagePosition(Carriage carriage, Iterable<ServerPlayer> players) {
-        CarriageContraptionEntity entity = carriage.anyAvailableEntity();
+        CarriageContraptionEntity entity = CarriageUtils.safeAnyAvailableEntity(carriage);
         if (entity != null) {
             return entity.position();
         }
@@ -267,12 +268,12 @@ public class LODSystem {
         }
         int midIndex = train.carriages.size() / 2;
         var midCarriage = train.carriages.get(midIndex);
-        CarriageContraptionEntity entity = midCarriage.anyAvailableEntity();
+        CarriageContraptionEntity entity = CarriageUtils.safeAnyAvailableEntity(midCarriage);
         if (entity != null) {
             return entity.position();
         }
         for (var carriage : train.carriages) {
-            entity = carriage.anyAvailableEntity();
+            entity = CarriageUtils.safeAnyAvailableEntity(carriage);
             if (entity != null) {
                 return entity.position();
             }

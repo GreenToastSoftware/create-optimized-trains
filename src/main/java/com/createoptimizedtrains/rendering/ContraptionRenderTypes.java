@@ -34,29 +34,60 @@ public class ContraptionRenderTypes extends RenderType {
 
     /**
      * RenderType translúcido SEM escrita de profundidade.
-     *
-     * Idêntico a RenderType.translucent() excepto:
-     * - WriteMaskState = COLOR_WRITE em vez de COLOR_DEPTH_WRITE
-     *
-     * Isto significa:
-     * - Cor do vidro é renderizada normalmente (tint, transparência) ✓
-     * - Blocos opacos da contraption ainda ocluem correctamente (usam solid/cutout) ✓
-     * - Entidades atrás do vidro visíveis (sem oclusão de depth pelo vidro) ✓
-     * - Entidades à frente do vidro visíveis (mesmo raciocínio) ✓
+     * Idêntico a RenderType.translucent() excepto WriteMaskState = COLOR_WRITE.
+     * Usado no path non-Flywheel para vidros estruturais da contraption.
      */
     public static final RenderType TRANSLUCENT_NO_DEPTH = create(
         "create_optimized_trains:contraption_translucent",
         DefaultVertexFormat.BLOCK,
         VertexFormat.Mode.QUADS,
-        2097152,  // Mesmo tamanho de buffer que translucent (2MB)
-        true,     // affectsOutline
-        true,     // sortOnUpload (necessário para blending correcto)
+        2097152,
+        true,
+        true,
         CompositeState.builder()
             .setShaderState(RENDERTYPE_TRANSLUCENT_SHADER)
             .setTextureState(BLOCK_SHEET_MIPPED)
             .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
             .setOutputState(TRANSLUCENT_TARGET)
-            .setWriteMaskState(COLOR_WRITE) // ← A CORREÇÃO: só escreve cor, não depth
+            .setWriteMaskState(COLOR_WRITE)
             .createCompositeState(true)
+    );
+
+    /**
+     * RenderType para blocos em movimento SEM escrita de profundidade.
+     *
+     * Idêntico a RenderType.translucentMovingBlock() excepto WriteMaskState = COLOR_WRITE.
+     *
+     * Porquê necessário:
+     *   CopycatSlidingDoorRenderer usa translucentMovingBlock() para renderizar as
+     *   partes animadas das portas Copycats+. Este render type usa:
+     *     - RENDERTYPE_TRANSLUCENT_MOVING_BLOCK_SHADER (shader correcto)
+     *     - ITEM_ENTITY_TARGET (render target correcto)
+     *   Sem esta substituição, a porta escreve no depth buffer ANTES dos blocos
+     *   sólidos GPU-instanced do Flywheel serem submetidos, causando que esses
+     *   blocos falhem o depth test e fiquem invisíveis.
+     *
+     *   TRANSLUCENT_NO_DEPTH não serve para este caso porque usa TRANSLUCENT_TARGET
+     *   e RENDERTYPE_TRANSLUCENT_SHADER — shaders e targets diferentes fazem a
+     *   porta aparecer preta e na "camada de fundo".
+     *
+     *   Esta versão usa o mesmo shader e target que translucentMovingBlock(),
+     *   apenas sem escrita de depth — a porta renderiza correctamente sem
+     *   corromper o depth buffer.
+     */
+    public static final RenderType TRANSLUCENT_MOVING_BLOCK_NO_DEPTH = create(
+        "create_optimized_trains:contraption_translucent_moving_block",
+        DefaultVertexFormat.BLOCK,
+        VertexFormat.Mode.QUADS,
+        786432,   // Mesmo tamanho que translucentMovingBlock (768KB)
+        false,    // affectsOutline = false (igual a translucentMovingBlock)
+        true,     // sortOnUpload
+        CompositeState.builder()
+            .setShaderState(RENDERTYPE_TRANSLUCENT_MOVING_BLOCK_SHADER) // shader correcto
+            .setTextureState(BLOCK_SHEET_MIPPED)
+            .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+            .setOutputState(ITEM_ENTITY_TARGET)  // target correcto (não TRANSLUCENT_TARGET)
+            .setWriteMaskState(COLOR_WRITE)      // ← só cor, sem depth write
+            .createCompositeState(false)
     );
 }

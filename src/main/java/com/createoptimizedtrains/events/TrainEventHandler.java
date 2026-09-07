@@ -5,8 +5,10 @@ import com.createoptimizedtrains.chunks.ChunkLoadManager;
 import com.createoptimizedtrains.chunks.DirectionalChunkShaper;
 import com.createoptimizedtrains.chunks.RouteChunkPreloader;
 import com.createoptimizedtrains.config.ModConfig;
+import com.createoptimizedtrains.diagnostics.DebugLog;
 import com.createoptimizedtrains.grouping.TrainGroupManager;
 import com.createoptimizedtrains.util.PlayerTrainTracker;
+import com.createoptimizedtrains.util.CarriageUtils;
 import com.createoptimizedtrains.lod.LODLevel;
 import com.createoptimizedtrains.lod.LODSystem;
 import com.createoptimizedtrains.monitor.PerformanceMonitor;
@@ -21,6 +23,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -31,10 +35,13 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class TrainEventHandler {
 
+    private static final Logger PERF_LOGGER = LogManager.getLogger("COT/Perf");
+    private static volatile long lastPerfLog = 0;
+
     private static final int LOD_UPDATE_INTERVAL = 10;
     private static final int CONFLICT_CHECK_INTERVAL = 40;
     private static final int CHUNK_UPDATE_INTERVAL = 1; // Cada tick: chunk loading é crítico para velocidade máxima
-    private static final int ROUTE_PRELOAD_INTERVAL = 3; // Route pre-load a cada 3 ticks (mais agressivo para comboios rápidos)
+    private static final int ROUTE_PRELOAD_INTERVAL = 5; // Route pre-load a cada 5 ticks (rota muda lentamente)
     private static final int PROXY_UPDATE_INTERVAL = 10;
 
     // Intervalo para verificar zona de buffer e trigger de fade-out (cada 5 ticks)
@@ -42,10 +49,13 @@ public class TrainEventHandler {
 
     // Atraso de arranque: não processar chunks nos primeiros ticks após o servidor iniciar.
     // Isto evita um pico de memória enorme ao competir com spawn chunks + Distant Horizons.
-    private static final int STARTUP_DELAY_TICKS = 40; // 2 segundos
+    private static final int STARTUP_DELAY_TICKS = 100; // 5 segundos — evita competir com DH no pico de init
     // Durante o período de ramp-up (após o delay), processar poucos comboios por tick
-    private static final int RAMP_UP_TICKS = 100; // 5 segundos de ramp-up gradual
-    private static final int RAMP_UP_BATCH_SIZE = 5; // 5 comboios por tick durante ramp-up
+    private static final int RAMP_UP_TICKS = 200; // 10 segundos de ramp-up gradual
+    private static final int RAMP_UP_BATCH_SIZE = 2; // 2 comboios por tick durante ramp-up (menos pressão no IO)
+    // Comboios parados sem passageiros: atualizar chunks muito menos frequentemente
+    // A posição não muda, logo as chunks necessárias também não mudam
+    private static final int STOPPED_CHUNK_UPDATE_INTERVAL = 10;
 
     // Stagger: distribuir updates de chunks/proxies ao longo dos ticks
     // Em vez de atualizar TODOS os comboios num só tick, dividir em batches
@@ -134,13 +144,11 @@ public class TrainEventHandler {
             }
         }
 
-        // 7. Chunks — atraso de arranque APENAS para chunk operations (pesadas em memória)
-        // LOD, proxies e shaper correm desde o tick 1 (são leves)
+        // 7. Chunks
+        long t7Start = System.nanoTime();
         if (tickCounter % CHUNK_UPDATE_INTERVAL == 0 && tickCounter > STARTUP_DELAY_TICKS) {
             List<Train> chunkBatch = getChunkBatch(trainListCache);
-            updateChunkLoadingAll(mod, chunkBatch, server.overworld());
-            // Buffer de proximidade: pré-carregar chunks para carruagens perto de jogadores
-            // Isto garante que entidades são spawned e posicionadas ANTES de entrarem no view distance
+            updateChunkLoadingAll(mod, chunkBatch, server.overworld(), players);
             ChunkLoadManager chunks = mod.getChunkLoadManager();
             if (chunks != null) {
                 for (Train train : chunkBatch) {
@@ -148,6 +156,7 @@ public class TrainEventHandler {
                 }
             }
         }
+        long t7Ms = (System.nanoTime() - t7Start) / 1_000_000L;
 
         // 7b. Verificar zona de buffer e trigger de fade-out (a cada 5 ticks)
         // Usa background thread para não atrasar o server tick
@@ -156,12 +165,22 @@ public class TrainEventHandler {
         }
 
         // 8. Route chunk pre-loading — atraso extra para rota estabilizar
-        if (tickCounter % ROUTE_PRELOAD_INTERVAL == 0 && tickCounter > STARTUP_DELAY_TICKS + 20) {
+        if (tickCounter % ROUTE_PRELOAD_INTERVAL == 0 && tickCounter > STARTUP_DELAY_TICKS + 40) {
             RouteChunkPreloader preloader = mod.getRouteChunkPreloader();
             if (preloader != null) {
                 List<Train> batch = getChunkBatch(trainListCache);
                 for (Train train : batch) {
                     if (train.speed != 0) {
+                        // Não pré-carregar rotas de comboios fantasma (longe do jogador, todas entidades ausentes)
+                        // — desperdiçaria I/O de disco para comboios que o jogador não verá cedo.
+                        boolean allMissing = true;
+                        for (var carriage : train.carriages) {
+                            if (CarriageUtils.safeAnyAvailableEntity(carriage) != null) { allMissing = false; break; }
+                        }
+                        if (allMissing && !PlayerTrainTracker.isOccupied(train.id)
+                                && !isTrainNearAnyPlayer(train, players, server.overworld(), 400.0 * 400.0)) {
+                            continue;
+                        }
                         preloader.preloadRouteChunks(train, server.overworld());
                     }
                 }
@@ -181,6 +200,16 @@ public class TrainEventHandler {
             LODSystem lod = mod.getLODSystem();
             if (lod != null) {
                 lod.recalculateDistances();
+            }
+        }
+
+        // Log de performance: logar o passo mais pesado quando ultrapassar 15ms
+        if (DebugLog.ENABLED && t7Ms > 15) {
+            long now = System.currentTimeMillis();
+            if (now - lastPerfLog > 3_000) {
+                lastPerfLog = now;
+                PERF_LOGGER.warn("[COT/Perf] Tick lento: chunks={}ms, trains={}",
+                    t7Ms, trainListCache.size());
             }
         }
     }
@@ -285,19 +314,88 @@ public class TrainEventHandler {
     }
 
     /**
-     * Atualizar chunks de TODOS os comboios sem staggering.
-     * Chunk loading é crítico para evitar o stutter de 1 segundo.
-     * Corre para comboios em movimento E parados — carruagens paradas
-     * também precisam de ter os seus chunks forçados (especialmente as traseiras).
+     * Atualizar chunks de comboios relevantes (próximos do jogador ou ocupados).
+     *
+     * GHOST MODE: Comboios com TODAS as carruagens sem entidade + longe de todos os
+     * jogadores + não ocupados entram em "modo fantasma":
+     *   - Train.tick() continua a correr via track graph (sem entidades)
+     *   - DimensionalCarriageEntity mantém positionAnchor atualizado
+     *   - carriageWaitingForChunks é sempre -1 (TrainMixin) — não param
+     *   - Imunidade de stress ativa (isMoving && missingCount > 0) — não derailam
+     *   - Não competem pelo cap de chunks com o comboio do jogador
+     *   - Quando o jogador se aproxima (≤300 blocos), chunk loading é retomado
+     *     e as entidades são criadas na posição correta (DCE positionAnchor)
+     *
+     * Comboios parados sem passageiros: atualizar a cada STOPPED_CHUNK_UPDATE_INTERVAL ticks.
      */
     private void updateChunkLoadingAll(CreateOptimizedTrains mod,
-                                        List<Train> trains, ServerLevel level) {
+                                        List<Train> trains, ServerLevel level,
+                                        List<ServerPlayer> players) {
         ChunkLoadManager chunks = mod.getChunkLoadManager();
         if (chunks == null) return;
 
+        boolean isStoppedTick = (tickCounter % STOPPED_CHUNK_UPDATE_INTERVAL == 0);
+
         for (Train train : trains) {
+            boolean isStopped = train.speed == 0;
+            if (isStopped && !PlayerTrainTracker.isOccupied(train.id) && !isStoppedTick) {
+                continue;
+            }
+
+            if (!PlayerTrainTracker.isOccupied(train.id)) {
+                boolean allMissing = true;
+                for (var carriage : train.carriages) {
+                    if (CarriageUtils.safeAnyAvailableEntity(carriage) != null) { allMissing = false; break; }
+                }
+                if (allMissing && !isTrainNearAnyPlayer(train, players, level, 300.0 * 300.0)) {
+                    chunks.releaseTrainChunks(train.id, level);
+                    continue;
+                }
+            }
+
+            long trainStart = System.nanoTime();
             chunks.updateTrainChunks(train, level);
+            long trainMs = (System.nanoTime() - trainStart) / 1_000_000L;
+            if (DebugLog.ENABLED && trainMs > 10) {
+                long now = System.currentTimeMillis();
+                if (now - lastPerfLog > 2_000) {
+                    lastPerfLog = now;
+                    String nameStr = train.id.toString().substring(0, 8);
+                    PERF_LOGGER.warn("[COT/Perf] Comboio lento: id={}, chunk_update={}ms, speed={}, carriages={}",
+                        nameStr, trainMs, String.format("%.1f", train.speed), train.carriages.size());
+                }
+            }
         }
+    }
+
+    /**
+     * Verifica se alguma carruagem do comboio está dentro de maxDistSq blocos^2 de qualquer jogador.
+     * Usa positionAnchor do DCE como fallback para carruagens sem entidade.
+     */
+    private boolean isTrainNearAnyPlayer(Train train, List<ServerPlayer> players,
+                                          ServerLevel level, double maxDistSq) {
+        for (var carriage : train.carriages) {
+            double cx = Double.NaN, cy = Double.NaN, cz = Double.NaN;
+            var entity = CarriageUtils.safeAnyAvailableEntity(carriage);
+            if (entity != null) {
+                cx = entity.getX(); cy = entity.getY(); cz = entity.getZ();
+            } else {
+                try {
+                    var dce = carriage.getDimensional(level);
+                    if (dce != null && dce.positionAnchor != null) {
+                        cx = dce.positionAnchor.x;
+                        cy = dce.positionAnchor.y;
+                        cz = dce.positionAnchor.z;
+                    }
+                } catch (Exception ignored) {}
+            }
+            if (Double.isNaN(cx)) continue;
+            for (var player : players) {
+                double dx = player.getX() - cx, dy = player.getY() - cy, dz = player.getZ() - cz;
+                if (dx * dx + dy * dy + dz * dz <= maxDistSq) return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -334,7 +432,7 @@ public class TrainEventHandler {
             double cx = 0, cy = 0, cz = 0;
             int count = 0;
             for (var carriage : train.carriages) {
-                var entity = carriage.anyAvailableEntity();
+                var entity = CarriageUtils.safeAnyAvailableEntity(carriage);
                 if (entity != null) {
                     cx += entity.getX();
                     cy += entity.getY();
@@ -394,27 +492,43 @@ public class TrainEventHandler {
     private record TrainVisData(UUID trainId, double x, double y, double z) {}
     private record VisibilityResult(List<UUID> inBuffer, List<UUID> notInBuffer) {}
 
-    /**
-     * Durante o período de ramp-up após o arranque, retornar apenas um subconjunto
-     * de comboios para processar. Isto evita picos de memória ao carregar o mundo.
-     * Após o ramp-up, retorna a lista completa.
-     */
+    // Comboios não-ocupados: actualizar a cada N ticks (reduz carga agregada de setChunkForced).
+    private static final int NON_OCCUPIED_CHUNK_STRIDE = 3;
+    // Máximo de comboios não-ocupados por batch; o resto roda para o próximo stride.
+    private static final int NON_OCCUPIED_BATCH_SIZE = 5;
+
     private List<Train> getChunkBatch(List<Train> allTrains) {
         long ticksSinceReady = tickCounter - STARTUP_DELAY_TICKS;
-        if (ticksSinceReady > RAMP_UP_TICKS) {
-            // Ramp-up completo: processar todos os comboios
-            return allTrains;
+
+        if (ticksSinceReady <= RAMP_UP_TICKS) {
+            if (allTrains.size() <= RAMP_UP_BATCH_SIZE) return allTrains;
+            int batchIndex = (int) ((ticksSinceReady / CHUNK_UPDATE_INTERVAL) % Math.max(1, (allTrains.size() + RAMP_UP_BATCH_SIZE - 1) / RAMP_UP_BATCH_SIZE));
+            int start = batchIndex * RAMP_UP_BATCH_SIZE;
+            int end = Math.min(start + RAMP_UP_BATCH_SIZE, allTrains.size());
+            return allTrains.subList(start, end);
         }
 
-        // Durante ramp-up: processar poucos comboios por tick, com rotação
-        if (allTrains.size() <= RAMP_UP_BATCH_SIZE) {
-            return allTrains;
+        // Após ramp-up: comboios ocupados a cada tick + não-ocupados staggered.
+        // Com 20 comboios e stride=3: ~5 não-ocupados/tick em vez de 20 → 3× menos I/O.
+        List<Train> occupied = new ArrayList<>();
+        List<Train> nonOccupied = new ArrayList<>();
+        for (Train train : allTrains) {
+            if (PlayerTrainTracker.isOccupied(train.id)) {
+                occupied.add(train);
+            } else {
+                nonOccupied.add(train);
+            }
         }
 
-        int batchIndex = (int) ((ticksSinceReady / CHUNK_UPDATE_INTERVAL) % Math.max(1, (allTrains.size() + RAMP_UP_BATCH_SIZE - 1) / RAMP_UP_BATCH_SIZE));
-        int start = batchIndex * RAMP_UP_BATCH_SIZE;
-        int end = Math.min(start + RAMP_UP_BATCH_SIZE, allTrains.size());
-        return allTrains.subList(start, end);
+        List<Train> result = new ArrayList<>(occupied);
+        if (!nonOccupied.isEmpty()) {
+            int numBatches = Math.max(1, (nonOccupied.size() + NON_OCCUPIED_BATCH_SIZE - 1) / NON_OCCUPIED_BATCH_SIZE);
+            int batchIdx = (int) ((ticksSinceReady / NON_OCCUPIED_CHUNK_STRIDE) % numBatches);
+            int start = batchIdx * NON_OCCUPIED_BATCH_SIZE;
+            int end = Math.min(start + NON_OCCUPIED_BATCH_SIZE, nonOccupied.size());
+            result.addAll(nonOccupied.subList(start, end));
+        }
+        return result;
     }
 
     private Collection<Train> getActiveTrains() {

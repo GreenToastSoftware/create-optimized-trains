@@ -1,5 +1,161 @@
 # Changelog
 
+## v1.3.2
+
+### Focus
+
+- Fixes the remaining Copycats+ bit lag, a critical world-load freeze, and last-carriage movement stutter
+- All fixes are follow-ups discovered while stress-testing v1.3.1 on maps with 40+ trains and Copycats+ bit-heavy contraptions
+
+### Bug Fixes
+
+#### Copycats+ Periodic Lag (Bit Blocks with BlockEntity)
+- Contraptions containing Copycats+ "bits" (sub-block sized pieces with a BlockEntity, unlike plain slabs/panels) caused periodic lag spikes every few seconds
+- Root cause: `ContraptionWorld` does not override `getBlockEntity()`, so it fell back to `WrappedLevel.getBlockEntity()`, which queried the **real world** using the contraption's **local** coordinates (e.g. 5,1,3) — forcing the server to load/query the chunk at real-world (0,0) on every call
+- Fix: `ContraptionWorldBlockEntityMixin` intercepts `getBlockEntity()` on `Level` (filtered to `ContraptionWorld` instances) and always serves the BlockEntity from `contraption.getBlocks()`, with a lazy per-instance cache — never touching the real world with local coordinates
+
+#### World Freeze on Startup (Memory Pressure)
+- On some world loads, especially after the server had been running a while, the game would hang completely at the loading screen (no crash, just a full freeze)
+- Root cause: heap memory pressure genuinely reaching 90%+ during startup, mainly from Distant Horizons' distant world generation competing with ~40 Create contraptions being assembled simultaneously — triggering long stop-the-world GC pauses (minutes-long in the worst case)
+- Fix: `DistantHorizonsThrottle` temporarily reduces DH's distant world generation and worker thread count for the first `startupThrottleTicks` (default 200 ticks / 10s) after the server starts, giving vanilla terrain and contraption assembly priority. DH's original settings are restored automatically afterwards. Uses DH's public API via reflection — no hard dependency
+
+#### Last-Carriage Movement Stutter
+- Long trains (10+ carriages) without a player on board showed irregular movement — the stutter would noticeably improve once the rearmost carriage's entity finally loaded
+- Root cause: `ChunkLoadManager`'s per-tick chunk load rate limit applied to *every* needed chunk indiscriminately, including the exact chunk each carriage physically occupies. On unoccupied trains, that chunk competed with lookahead/trailing chunks for the same 6-per-tick budget, so the last carriage in line could take several ticks just to get its own chunk loaded — delaying its entity creation
+- Fix: chunk requests are now split into **critical** (the exact chunk under each carriage — always loaded immediately, no rate limit, regardless of occupancy) and **soft** (LOD comfort radius, directional lookahead, trailing buffer — still rate-limited). No carriage, including the rearmost one, waits behind empty pre-load chunks anymore
+
+#### Chunks Not Unloading When a Train Stops
+- Chunks along a train's previous travel direction could remain force-loaded indefinitely after the train stopped, accumulating over a session and degrading performance over time
+- Root cause: the anti-thrash "recently loaded" deque only advances when new chunks are loaded; once a train stops, nothing loads, so old lookahead chunks stayed protected from unloading forever
+- Fix: the anti-thrash deque is cleared as soon as a train's speed drops below the movement threshold, letting unneeded chunks unload immediately
+
+### Improvements
+
+#### Chunk Loading Tuning
+- Adaptive lookahead margin increased from ~2s to ~5s of travel time, to reliably cover cold-terrain chunk generation (which can take 2-3s) — default cap raised from 10 to 20 chunks
+- Per-tick chunk load budget reduced to 6 chunks with a 5ms time budget per train, preventing a single train's chunk update from blocking the whole server tick
+- Non-occupied trains now have their chunk updates staggered across ticks (5 trains per batch, every 3 ticks) instead of all being processed every tick, reducing aggregate `setChunkForced` calls per tick on maps with many trains
+
+#### Diagnostics
+- Added granular performance logging (`[COT/Perf]`, `[COT] updateTrainChunks detalhe`) to break down slow ticks by train and by phase (chunk calculation, unload, load)
+- Added `[COT/ContraptionWorldBE]` activity counter to confirm the Copycats+ BlockEntity fix is intercepting calls as expected
+
+### Configuration
+
+New config section in `create_optimized_trains-common.toml`:
+- `[distant_horizons]` — `startupThrottleEnabled` (default `true`), `startupThrottleTicks` (default `200`, range 20-1200)
+
+## v1.3.1
+
+### Focus
+
+- Movement smoothness, simulation distance, LOD chunk radius, and rendering correctness
+- Rendering fixes target entity visibility and depth layering with Oculus/Embeddium + Flywheel OIT
+- Chunk loading and directional filtering improved for smoother train travel
+- Distant Horizons compatibility groundwork added
+
+### New Features
+
+#### Train Simulation Distance
+- New `simulation` config section: `simulationDistance` (0–128 chunks) extends the directional chunk lookahead beyond the previous hardcoded 10-chunk limit
+- `maxForcedChunks` (20–400): configurable global cap for force-loaded chunks
+- Designed for use with Distant Horizons for smooth far-train visibility
+
+#### Per-LOD Carriage Chunk Radius
+- New `lod_radius` config section: `radiusFull`, `radiusMedium`, `radiusLow`, `radiusGhost`
+- Load a larger or smaller chunk area around carriages depending on their LOD level
+- Replaces the single `CARRIAGE_CHUNK_RADIUS` option with fine-grained per-LOD control
+
+#### Distant Horizons Compatibility
+- Added `DistantHorizonsCompat` to detect DH and coordinate chunk loading so the two systems do not conflict
+- Added `ShaderCompat` for lightweight detection of active shader packs (used by LOD and render decisions)
+
+#### Player Train Tracker
+- Added `PlayerTrainTracker` utility to track which players are currently riding which trains
+- Used by chunk loading and LOD systems for proximity-aware decisions
+
+### Improvements
+
+#### Movement Smoothness
+- Chunk boundary grace period is now adaptive: 5 ticks while moving, 20 ticks while stopped
+- Eliminates JourneyMap position lag and entity freeze at chunk boundaries
+- `ContraptionTickThrottleMixin` added to throttle `tickContraption()` safely without visual desync
+
+#### Chunk Loading
+- `ChunkMapMixin`: added a 5-chunk minimum radius — directional filtering is now disabled entirely when the player is close to the train, preventing nearby chunks from being skipped
+- `ChunkLoadManager`: global forced-chunk cap increased from 30 to 60; lookahead cap increased from 6 to 10
+- `TrainEventHandler`: startup delay reduced from 100 to 40 ticks; ramp-up batch increased from 2 to 5
+- `DirectionalChunkShaper`: direction response made faster (smooth factor 0.3 → 0.5)
+- Default `sideChunks` increased from 3 to 5 in `ModConfig`
+
+#### LOD System
+- LOD distances restored to v1.2.0 baseline (`shaderLodShift` default back to 0)
+- Fixed `resolveCarriagePosition` to use `positionAnchor` as a fallback when a carriage entity is not yet available
+- `shouldAnimate` now allows `LOW` LOD to animate; only `GHOST` skips animation
+- `shouldSkipRender` threshold lowered from 40 to 20 FPS
+
+#### Rendering Performance
+- Removed Flywheel frame skipping from `RenderOptimizer` — positions now update every frame, eliminating position drift under load
+- `CarriageRendererMixin`: culling distance increased from 256 to 512 blocks
+
+### Bug Fixes
+
+#### Camera Shake
+- Removed the `isActiveChunkOrLoadedInManage` Redirect that was causing camera shake when sitting in a moving carriage
+
+#### Visual Throttle
+- Added `NEAR_VISUAL_SKIP_RADIUS_SQ` proximity guard so the visual throttle never fires for trains near the player/camera
+
+#### Collision Throttle Intervals
+- `TrainMixin`: reduced collision throttle tick intervals from 4/8/12 to 2/4/8, making collisions more responsive
+
+#### Chunk Grace Periods
+- `CarriageMixin`: chunk grace period reduced from 60 to 20 ticks
+- `CarriageEntityMixin`: bind grace period reduced from 40 to 15 ticks
+
+#### Entity Visibility Through Contraption Glass (Oculus/Embeddium)
+- Entities were invisible when viewed through glass blocks on contraptions (trains with glass windows/doors)
+- Root cause: Flywheel's OIT pipeline writes its glass composite to the `itemEntityTarget` FBO. With Oculus, entity rendering is deferred into `FullyBufferedMultiBufferSource` — entities were not in the framebuffer when `composite()` ran
+- Fix: inject a flush of the Iris/Oculus batched entity source at `popPush("blockentities")` (priority 500, before Flywheel's priority 1000 hook), so entities are in the framebuffer when OIT composites the glass tint
+
+#### Copycats+ Door Not Following Camera
+- Animated doors from Copycats+ were moving with the camera when mounted in a contraption
+- Root cause: `translucentMovingBlock` was routed through `bufferSource()`, which Oculus replaces with `FullyBufferedMultiBufferSource`. The Iris source is flushed at a different time, causing the door geometry to be drawn relative to camera movement
+- Fix: `ContraptionBufferSourceWrapper` now routes `translucentMovingBlock` to `BufferSourceResolver.getRawMainBufferSource()` — the vanilla raw `BufferSource` not replaced by Oculus — avoiding the infinite recursion that the Oculus getter substitution would otherwise cause
+
+#### Entity Ghost / Wrong Layer Effect
+- Entities appeared ghost-like or at the wrong depth layer relative to block entities rendered after them
+- Root cause: the early entity flush was using `depthMask(false)`, so entities did not write their own depth to the main FBO. Block entities rendered after Flywheel's OIT hook would pass the depth test where they shouldn't, appearing on top of entities
+- Fix: removed `depthMask(false)` from the entity flush — entities now write correct depth, giving proper layering
+
+#### Copycats+ Door Wrong Depth Layer
+- With the entity flush corrected, the door remained at the wrong layer relative to contraption solid blocks
+- Root cause: the door was flushed with `depthMask(false)` before OIT, then OIT `prepare()` overwrote the item entity FBO depth — the door had no depth information when Iris composited `itemEntityTarget` onto the main FBO
+- Fix: the door is now flushed by `OitFramebufferMixin` at `@HEAD` of `composite()` (with `depthMask(true)` by default) and by `LevelRendererPostFlywheelMixin` (priority 1500) as a fallback when no OIT is active
+
+#### Entities Invisible Through Copycats+ Door + Glass Combination
+- When a contraption had both Copycats+ doors and glass blocks, all entities seen through the door were invisible
+- Root cause: flushing the door to `ITEM_ENTITY_TARGET` before `prepare()` with `depthMask(true)` wrote door depth into the item entity FBO, interfering with the shared depth texture between the OIT FBO and item entity FBO
+- Fix: `OitFramebufferMixin @HEAD` flush fires after `prepare()` has already run, so the item entity FBO depth is clean before the door writes its own depth
+
+### Technical Details (Rendering)
+
+- Added `BufferSourceResolver` (reflection-based) to access `RenderBuffers.f_110094_` directly, bypassing the Oculus getter substitution
+- Added `ContraptionBufferSourceWrapper` to centralise `translucentMovingBlock` and `translucent` rerouting during contraption render
+- Added `FullyBufferedMultiBufferSourceMixin` (`@Pseudo`) targeting both `net.irisshaders` and `net.coderbot` namespaces
+- `OitDepthMixin`: cancels `renderDepthFromTransmittance()` to prevent Flywheel OIT from writing synthetic glass depths
+- `oit_composite_fix.js` coremod: patches `OitFramebuffer.composite()` from `depthMask(true)` to `depthMask(false)`
+
+### Configuration
+
+New config sections in `create_optimized_trains-common.toml`:
+- `[simulation]` — `simulationDistance`, `maxForcedChunks`
+- `[lod_radius]` — `radiusFull`, `radiusMedium`, `radiusLow`, `radiusGhost`
+- `sideChunks` default changed from 3 to 5
+- `shaderLodShift` default restored to 0
+
+##  Thank you so much to all of you for making this mod a success! And let's keep growing!
+
 ## v1.3.0
 
 ### Focus
