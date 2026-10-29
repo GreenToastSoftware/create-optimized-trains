@@ -60,6 +60,9 @@ public class ChunkLoadManager {
     private static final int MAX_CHUNK_LOADS_PER_TRAIN_PER_TICK = 6;
     // Budget máximo por comboio por tick — impede que setChunkForced bloqueie o tick inteiro.
     private static final long BUDGET_NS_PER_TRAIN = 5_000_000L; // 5ms
+    // Lookahead forçado (entity-ticking) mínimo; o resto é só pré-aquecido
+    private static final int FORCED_LOOKAHEAD_MIN_CHUNKS = 3;
+    private static final double FORCED_LOOKAHEAD_SECONDS = 1.5;
 
     /**
      * Registar o callback de validação de tickets do Forge. Chamar no FMLCommonSetupEvent.
@@ -125,7 +128,8 @@ public class ChunkLoadManager {
 
         long tCalc = System.nanoTime();
         Set<ChunkPos> criticalChunks = new LinkedHashSet<>();
-        Set<ChunkPos> needed = calculateNeededChunks(train, level, criticalChunks);
+        Set<ChunkPos> prewarmChunks = new LinkedHashSet<>();
+        Set<ChunkPos> needed = calculateNeededChunks(train, level, criticalChunks, prewarmChunks);
         needed.removeIf(pos -> !shouldForceTrainChunk(pos, level));
         criticalChunks.removeIf(pos -> !shouldForceTrainChunk(pos, level));
         long calcMs = (System.nanoTime() - tCalc) / 1_000_000L;
@@ -267,6 +271,14 @@ public class ChunkLoadManager {
             }
         }
 
+        // Lookahead distante: só pré-aquecido (FULL, sem entity-ticking). Quando o comboio
+        // se aproxima, estas chunks passam para o lookahead forçado e a promoção a
+        // entity-ticking é imediata porque o terreno já está carregado.
+        for (ChunkPos pos : prewarmChunks) {
+            if (actuallyForced.contains(pos)) continue;
+            if (!ChunkPrewarmer.request(level, pos.x, pos.z)) break;
+        }
+
         // CRÍTICO: só guardar chunks que foram REALMENTE forçadas no servidor
         // Atualizar cache incremental: subtrair tamanho anterior, adicionar novo
         int prevCount = current.size();
@@ -276,7 +288,8 @@ public class ChunkLoadManager {
         trainChunks.put(trainId, actuallyForced);
     }
 
-    private Set<ChunkPos> calculateNeededChunks(Train train, ServerLevel level, Set<ChunkPos> criticalChunksOut) {
+    private Set<ChunkPos> calculateNeededChunks(Train train, ServerLevel level, Set<ChunkPos> criticalChunksOut,
+                                               Set<ChunkPos> prewarmOut) {
         // LinkedHashSet preserva a ordem de inserção.
         // Prioridade 1 (inseridas primeiro): chunks exatas de cada carruagem (também
         // colocadas em criticalChunksOut, sempre carregadas sem rate limit).
@@ -300,7 +313,7 @@ public class ChunkLoadManager {
         // Prioridade 2: lookahead direcional + trailing buffer.
         // Só corre quando o comboio está em movimento.
         if (train.speed != 0) {
-            addDirectionalLookahead(train, chunks, lookahead, level);
+            addDirectionalLookahead(train, chunks, prewarmOut, lookahead, level);
         }
 
         return chunks;
@@ -317,7 +330,8 @@ public class ChunkLoadManager {
      * total do comboio. Isto garante que carruagens traseiras (ex: composição 4+3+4)
      * nunca ficam em chunks descarregados, evitando stutters de física.
      */
-    private void addDirectionalLookahead(Train train, Set<ChunkPos> chunks, int lookahead, ServerLevel level) {
+    private void addDirectionalLookahead(Train train, Set<ChunkPos> chunks, Set<ChunkPos> prewarmOut,
+                                         int lookahead, ServerLevel level) {
         // Obter posição atual da carruagem da frente
         // Usa entidade se disponível, senão positionAnchor do DCE
         var frontCarriage = train.carriages.get(0);
@@ -370,6 +384,17 @@ public class ChunkLoadManager {
         int cap = simDist > 0 ? simDist : 20;
         adaptiveLookahead = Math.min(adaptiveLookahead, cap);
 
+        // Só as chunks mais próximas precisam de entity-ticking (forçadas): a carruagem da
+        // frente entra nelas a seguir. As restantes vão para pré-aquecimento (FULL), que
+        // não corre entidades/redstone/mobs — antes eram até 16 chunks forçadas à frente.
+        // Margem forçada: pelo menos 3 chunks ou ~1,5 s de viagem.
+        // Com o pré-aquecimento desligado mantém-se o comportamento antigo (tudo forçado).
+        int forcedAhead = Math.max(FORCED_LOOKAHEAD_MIN_CHUNKS,
+            (int) Math.ceil(speedBlocks * FORCED_LOOKAHEAD_SECONDS / 16.0));
+        if (!safePrewarmEnabled()) {
+            forcedAhead = adaptiveLookahead;
+        }
+
         // Pré-carregar na direção de movimento
         // Chunks mais próximas têm lados (para curvas), distantes só centro
         // Chunks até 5 de distância: centro + lados (curvas)
@@ -379,6 +404,11 @@ public class ChunkLoadManager {
             double projZ = currentZ + dirZ * ahead * 16;
             int projChunkX = (int) Math.floor(projX) >> 4;
             int projChunkZ = (int) Math.floor(projZ) >> 4;
+
+            if (ahead > forcedAhead) {
+                prewarmOut.add(new ChunkPos(projChunkX, projChunkZ));
+                continue;
+            }
 
             chunks.add(new ChunkPos(projChunkX, projChunkZ));
 
@@ -473,6 +503,10 @@ public class ChunkLoadManager {
             }
         } catch (Exception ignored) {}
         return LODLevel.FULL;
+    }
+
+    private boolean safePrewarmEnabled() {
+        try { return ModConfig.PREWARM_ENABLED.get(); } catch (Exception e) { return false; }
     }
 
     private int safeGetSimulationDistance() {

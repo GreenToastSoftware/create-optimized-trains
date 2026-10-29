@@ -3,6 +3,7 @@ package com.createoptimizedtrains.events;
 import com.createoptimizedtrains.CreateOptimizedTrains;
 import com.createoptimizedtrains.chunks.ChunkLoadManager;
 import com.createoptimizedtrains.chunks.DeferredChunkTracker;
+import com.createoptimizedtrains.chunks.ChunkPrewarmer;
 import com.createoptimizedtrains.chunks.DirectionalChunkShaper;
 import com.createoptimizedtrains.chunks.RouteChunkPreloader;
 import com.createoptimizedtrains.config.ModConfig;
@@ -150,6 +151,10 @@ public class TrainEventHandler {
             }
         }
         PlayerTrainTracker.setOccupiedTrains(occupiedTrainIds);
+
+        // 4b. Pré-aquecer o campo de visão à frente dos jogadores em comboios. Primeiro a
+        // consumir o orçamento de chunks novas do tick — é o que o jogador vê.
+        ChunkPrewarmer.tick(server, players);
 
         // 5. LOD — no main thread (lê estado do Create, que não é thread-safe)
         if (tickCounter % LOD_UPDATE_INTERVAL == 0) {
@@ -564,6 +569,7 @@ public class TrainEventHandler {
             }
 
             DirectionalChunkShaper.clear();
+            ChunkPrewarmer.clear();
             PlayerTrainTracker.setOccupiedTrains(Set.of());
 
             // Os sistemas continuam vivos para o próximo mundo (singleplayer reutiliza o processo)
