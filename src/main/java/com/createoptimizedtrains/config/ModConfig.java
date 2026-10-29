@@ -63,6 +63,12 @@ public class ModConfig {
     public static final IntValue DIRECTIONAL_BACKWARD_CHUNKS;
     public static final IntValue DIRECTIONAL_SIDE_CHUNKS;
 
+    // Pré-aquecimento de chunks
+    public static final BooleanValue PREWARM_ENABLED;
+    public static final IntValue PREWARM_SECONDS_AHEAD;
+    public static final IntValue PREWARM_MAX_CHUNKS_AHEAD;
+    public static final IntValue PREWARM_MAX_NEW_PER_TICK;
+
     // --- Física ---
     public static final BooleanValue PHYSICS_OPTIMIZATION_ENABLED;
     public static final BooleanValue DISABLE_DISTANT_COLLISIONS;
@@ -288,6 +294,28 @@ public class ModConfig {
         DIRECTIONAL_SIDE_CHUNKS = builder
                 .comment("Chunks a carregar para os lados do comboio")
                 .defineInRange("sideChunks", 5, 1, 16);
+        builder.pop();
+
+        // Pré-aquecimento de chunks
+        builder.comment("Pré-aquecimento de Chunks",
+                "Carrega (sem entity-ticking) as chunks que vão entrar no campo de visão do",
+                "jogador quando está num comboio em movimento, antes de lá chegar.",
+                "O Minecraft só processa 4 chunks do jogador de cada vez; isto contorna esse limite",
+                "para que o terreno à frente apareça a tempo a velocidades altas.",
+                "Terreno nunca gerado continua limitado pela CPU — pré-gerar com Chunky ajuda.").push("prewarm");
+        PREWARM_ENABLED = builder
+                .comment("Ativar pré-aquecimento de chunks à frente do comboio do jogador")
+                .define("enabled", true);
+        PREWARM_SECONDS_AHEAD = builder
+                .comment("Segundos de viagem à frente a pré-aquecer (para além da view distance)")
+                .defineInRange("secondsAhead", 6, 1, 30);
+        PREWARM_MAX_CHUNKS_AHEAD = builder
+                .comment("Máximo de chunks à frente da view distance a pré-aquecer")
+                .defineInRange("maxChunksAhead", 12, 1, 64);
+        PREWARM_MAX_NEW_PER_TICK = builder
+                .comment("Máximo de chunks NOVAS pedidas por tick (todos os comboios e jogadores).",
+                         "Valores altos carregam mais depressa mas aumentam a carga do worldgen/disco.")
+                .defineInRange("maxNewPerTick", 16, 1, 128);
         builder.pop();
 
         // Física
