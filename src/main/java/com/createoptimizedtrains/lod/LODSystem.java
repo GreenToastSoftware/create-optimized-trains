@@ -6,7 +6,9 @@ import com.createoptimizedtrains.util.CarriageUtils;
 import com.simibubi.create.content.trains.entity.Carriage;
 import com.simibubi.create.content.trains.entity.CarriageContraptionEntity;
 import com.simibubi.create.content.trains.entity.Train;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.*;
@@ -23,7 +25,9 @@ public class LODSystem {
     private volatile double ghostDistanceSq;
 
     // Cache de posições de jogadores — refrescado uma vez por ciclo de LOD
-    private volatile double[][] cachedPlayerPositions = new double[0][];
+    private volatile List<PlayerSnapshot> cachedPlayerPositions = List.of();
+
+    private record PlayerSnapshot(ResourceKey<Level> dimension, double x, double y, double z) {}
 
     // Histerese: evitar flip-flop de LOD entre frames adjacentes
     private static final double HYSTERESIS_FACTOR = 0.9;
@@ -63,34 +67,39 @@ public class LODSystem {
      * de LOD de múltiplos comboios. Chamar uma vez antes de calcular LOD de todos os comboios.
      */
     public void cachePlayerPositions(List<ServerPlayer> players) {
-        double[][] positions = new double[players.size()][3];
-        for (int i = 0; i < players.size(); i++) {
-            Vec3 pos = players.get(i).position();
-            positions[i][0] = pos.x;
-            positions[i][1] = pos.y;
-            positions[i][2] = pos.z;
+        List<PlayerSnapshot> positions = new ArrayList<>(players.size());
+        for (ServerPlayer player : players) {
+            Vec3 pos = player.position();
+            positions.add(new PlayerSnapshot(player.level().dimension(), pos.x, pos.y, pos.z));
         }
         this.cachedPlayerPositions = positions;
     }
 
     /**
-     * Calcula o LOD para um comboio. Thread-safe — usa apenas dados imutáveis/voláteis.
-     * Pode ser chamado de threads secundárias com segurança.
+     * Calcula o LOD para um comboio. Chamar só no main thread: lê entidades e o
+     * mapa entities das carruagens do Create, que não são thread-safe.
      */
     public LODLevel calculateLODForTrain(Train train, Iterable<ServerPlayer> players) {
         double minDistanceSq = Double.MAX_VALUE;
-        double[][] playerPos = this.cachedPlayerPositions;
+        List<PlayerSnapshot> playerPos = this.cachedPlayerPositions;
+
+        // Só jogadores na mesma dimensão do comboio contam para a distância
+        ResourceKey<Level> dimension = CarriageUtils.getTrainDimension(train);
+        if (dimension == null) {
+            return LODLevel.FULL;
+        }
 
         // Usar posições cacheadas se disponíveis (mais rápido, sem lock de entidade)
-        if (playerPos.length > 0) {
-            minDistanceSq = calculateMinDistanceWithCache(train, playerPos, players);
+        if (!playerPos.isEmpty()) {
+            minDistanceSq = calculateMinDistanceWithCache(train, dimension, playerPos);
         } else {
             // Fallback: usar iterador de jogadores diretamente
             for (var carriage : train.carriages) {
-                Vec3 carriagePos = resolveCarriagePosition(carriage, players);
+                Vec3 carriagePos = CarriageUtils.getCarriagePosition(carriage, dimension);
                 if (carriagePos == null) continue;
 
                 for (ServerPlayer player : players) {
+                    if (player.level().dimension() != dimension) continue;
                     double distSq = player.position().distanceToSqr(carriagePos);
                     if (distSq < minDistanceSq) {
                         minDistanceSq = distSq;
@@ -119,22 +128,23 @@ public class LODSystem {
      * Cálculo de distância mínima usando posições cacheadas.
      * Sem lock de entidades — usa apenas doubles.
      */
-    private double calculateMinDistanceWithCache(Train train, double[][] playerPos,
-                                                 Iterable<ServerPlayer> players) {
+    private double calculateMinDistanceWithCache(Train train, ResourceKey<Level> dimension,
+                                                 List<PlayerSnapshot> playerPos) {
         double minDistSq = Double.MAX_VALUE;
 
         for (var carriage : train.carriages) {
-            Vec3 carriagePos = resolveCarriagePosition(carriage, players);
+            Vec3 carriagePos = CarriageUtils.getCarriagePosition(carriage, dimension);
             if (carriagePos == null) continue;
 
             double cx = carriagePos.x;
             double cy = carriagePos.y;
             double cz = carriagePos.z;
 
-            for (double[] pp : playerPos) {
-                double dx = pp[0] - cx;
-                double dy = pp[1] - cy;
-                double dz = pp[2] - cz;
+            for (PlayerSnapshot pp : playerPos) {
+                if (pp.dimension() != dimension) continue;
+                double dx = pp.x() - cx;
+                double dy = pp.y() - cy;
+                double dz = pp.z() - cz;
                 double distSq = dx * dx + dy * dy + dz * dz;
                 if (distSq < minDistSq) {
                     minDistSq = distSq;
@@ -143,33 +153,6 @@ public class LODSystem {
         }
 
         return minDistSq;
-    }
-
-    /**
-     * Obter a melhor posição conhecida de uma carruagem.
-     *
-     * Depois do fix do camera shake, entidades já não são criadas em chunks apenas
-     * force-loaded; por isso carruagens próximas podem existir temporariamente só via
-     * DimensionalCarriageEntity.positionAnchor. Se o LOD usar apenas anyAvailableEntity(),
-     * comboios perto do jogador parecem estar em LOD distante até a entidade spawnar.
-     */
-    private Vec3 resolveCarriagePosition(Carriage carriage, Iterable<ServerPlayer> players) {
-        CarriageContraptionEntity entity = CarriageUtils.safeAnyAvailableEntity(carriage);
-        if (entity != null) {
-            return entity.position();
-        }
-
-        for (ServerPlayer player : players) {
-            try {
-                var dce = carriage.getDimensional(player.serverLevel());
-                if (dce != null && dce.positionAnchor != null) {
-                    return dce.positionAnchor;
-                }
-            } catch (Exception ignored) {
-            }
-        }
-
-        return null;
     }
 
     /**
@@ -256,6 +239,14 @@ public class LODSystem {
         trainLODLevels.remove(trainId);
         lodChangeTimestamps.remove(trainId);
         bufferZoneTrains.remove(trainId);
+    }
+
+    /** Limpar todo o estado por-mundo (chamado quando o servidor pára). */
+    public void clear() {
+        trainLODLevels.clear();
+        lodChangeTimestamps.clear();
+        bufferZoneTrains.clear();
+        cachedPlayerPositions = List.of();
     }
 
     public Map<UUID, LODLevel> getAllLODLevels() {

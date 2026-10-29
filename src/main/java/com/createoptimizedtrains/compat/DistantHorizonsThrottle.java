@@ -2,6 +2,7 @@ package com.createoptimizedtrains.compat;
 
 import com.createoptimizedtrains.CreateOptimizedTrains;
 import com.createoptimizedtrains.config.ModConfig;
+import com.createoptimizedtrains.monitor.WorldLoadPhaseManager;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModList;
@@ -61,7 +62,9 @@ public class DistantHorizonsThrottle {
             return;
         }
 
-        if (!restored && tickCounter >= ModConfig.DH_STARTUP_THROTTLE_TICKS.get()) {
+        // Restaurar assim que o carregamento faseado chegar a FULL (sinais saudáveis),
+        // ou ao atingir o tecto de ticks de segurança — o que ocorrer primeiro.
+        if (!restored && (WorldLoadPhaseManager.isFull() || tickCounter >= ModConfig.DH_STARTUP_THROTTLE_TICKS.get())) {
             restoreOriginal();
         }
     }

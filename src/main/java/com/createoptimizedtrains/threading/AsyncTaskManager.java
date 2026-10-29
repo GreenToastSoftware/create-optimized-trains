@@ -209,6 +209,14 @@ public class AsyncTaskManager {
         return executor.getQueuedSubmissionCount();
     }
 
+    /**
+     * Descartar callbacks pendentes para o main thread. Chamado quando o servidor pára:
+     * os callbacks referenciam comboios/níveis do mundo anterior.
+     */
+    public void clearPendingTasks() {
+        mainThreadQueue.clear();
+    }
+
     public void shutdown() {
         executor.shutdown();
         try {

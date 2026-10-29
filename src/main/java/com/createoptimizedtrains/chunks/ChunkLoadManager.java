@@ -9,10 +9,14 @@ import com.createoptimizedtrains.util.CarriageUtils;
 import com.simibubi.create.content.trains.entity.Carriage;
 import com.simibubi.create.content.trains.entity.CarriageContraptionEntity;
 import com.simibubi.create.content.trains.entity.Train;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.common.world.ForgeChunkManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -30,8 +34,11 @@ public class ChunkLoadManager {
     private final Map<UUID, Deque<ChunkPos>> recentChunks = new ConcurrentHashMap<>();
     // Cache da última posição conhecida por comboio (para calcular direção de movimento)
     private final Map<UUID, double[]> lastKnownPositions = new ConcurrentHashMap<>();
+    // Dimensão onde as chunks de cada comboio foram forçadas (para libertar no nível certo)
+    private final Map<UUID, ResourceKey<Level>> trainDimensions = new ConcurrentHashMap<>();
 
     private static final int THRASH_HISTORY_SIZE = 12;
+    private static final int SPAWN_CHUNK_RADIUS = 10;
 
     // Cache do total de chunks forçadas em todos os comboios.
     // Atualizada incrementalmente em updateTrainChunks/release para evitar
@@ -55,6 +62,50 @@ public class ChunkLoadManager {
     private static final long BUDGET_NS_PER_TRAIN = 5_000_000L; // 5ms
 
     /**
+     * Registar o callback de validação de tickets do Forge. Chamar no FMLCommonSetupEvent.
+     *
+     * Usamos tickets do ForgeChunkManager (dono = UUID do comboio) em vez de
+     * ServerLevel.setChunkForced():
+     *   - setChunkForced partilha o estado com /forceload e com outros mods — libertar
+     *     uma chunk removia também o forceload do jogador, e dois comboios na mesma
+     *     chunk libertavam-na um ao outro.
+     *   - Os tickets do Forge também são gravados em chunks.dat, mas este callback
+     *     remove-os todos ao carregar o mundo, por isso nunca ficam órfãos após um crash.
+     */
+    public static void registerTicketValidation() {
+        ForgeChunkManager.setForcedChunkLoadingCallback(CreateOptimizedTrains.MOD_ID, (level, ticketHelper) -> {
+            Set<UUID> owners = new HashSet<>(ticketHelper.getEntityTickets().keySet());
+            for (UUID owner : owners) {
+                ticketHelper.removeAllTickets(owner);
+            }
+            if (!owners.isEmpty()) {
+                LOGGER.info("[COT] Removidos tickets de chunk órfãos de {} comboio(s) em {}",
+                    owners.size(), level.dimension().location());
+            }
+        });
+    }
+
+    /**
+     * Forçar/libertar uma chunk em nome de um comboio. ticking=false equivale ao nível
+     * de setChunkForced (entity-ticking), sem random ticks forçados.
+     */
+    private static void force(ServerLevel level, UUID trainId, int chunkX, int chunkZ, boolean add) {
+        ForgeChunkManager.forceChunk(level, CreateOptimizedTrains.MOD_ID, trainId, chunkX, chunkZ, add, false);
+    }
+
+    /**
+     * Se o comboio mudou de dimensão (portal), libertar as chunks que tinha na anterior.
+     */
+    private void trackDimension(UUID trainId, ServerLevel level) {
+        ResourceKey<Level> previous = trainDimensions.put(trainId, level.dimension());
+        if (previous != null && previous != level.dimension()) {
+            releaseChunksIn(trainId, level.getServer().getLevel(previous));
+            recentChunks.remove(trainId);
+            lastKnownPositions.remove(trainId);
+        }
+    }
+
+    /**
      * Atualizar chunks carregados para um comboio.
      * Usa direção de movimento real para pré-carregar à frente.
      * Usa positionAnchor do DCE para carruagens sem entidade (em chunks descarregados).
@@ -70,10 +121,13 @@ public class ChunkLoadManager {
 
         UUID trainId = train.id;
         long budgetStart = System.nanoTime();
+        trackDimension(trainId, level);
 
         long tCalc = System.nanoTime();
         Set<ChunkPos> criticalChunks = new LinkedHashSet<>();
         Set<ChunkPos> needed = calculateNeededChunks(train, level, criticalChunks);
+        needed.removeIf(pos -> !shouldForceTrainChunk(pos, level));
+        criticalChunks.removeIf(pos -> !shouldForceTrainChunk(pos, level));
         long calcMs = (System.nanoTime() - tCalc) / 1_000_000L;
         Set<ChunkPos> current = trainChunks.getOrDefault(trainId, Collections.emptySet());
 
@@ -107,7 +161,7 @@ public class ChunkLoadManager {
         for (ChunkPos pos : toUnload) {
             if (unloaded >= MAX_CHUNK_LOADS_PER_TRAIN_PER_TICK) break;
             if (System.nanoTime() - budgetStart > BUDGET_NS_PER_TRAIN) break;
-            level.setChunkForced(pos.x, pos.z, false);
+            force(level, trainId, pos.x, pos.z, false);
             unloaded++;
         }
         long unloadMs = (System.nanoTime() - tUnload) / 1_000_000L;
@@ -124,7 +178,7 @@ public class ChunkLoadManager {
         // específica e causando SEM_ENTIDADE temporário + movimento irregular.
         for (ChunkPos pos : criticalChunks) {
             if (actuallyForced.contains(pos)) continue;
-            level.setChunkForced(pos.x, pos.z, true);
+            force(level, trainId, pos.x, pos.z, true);
             actuallyForced.add(pos);
             toLoad.remove(pos);
             recent.addLast(pos);
@@ -141,8 +195,9 @@ public class ChunkLoadManager {
                 int cx = (int) Math.floor(pos.x) >> 4;
                 int cz = (int) Math.floor(pos.z) >> 4;
                 ChunkPos pChunk = new ChunkPos(cx, cz);
+                if (!shouldForceTrainChunk(pChunk, level)) continue;
                 if (!actuallyForced.contains(pChunk)) {
-                    level.setChunkForced(cx, cz, true);
+                    force(level, trainId, cx, cz, true);
                     actuallyForced.add(pChunk);
                     toLoad.remove(pChunk);
                     recent.addLast(pChunk);
@@ -165,8 +220,9 @@ public class ChunkLoadManager {
                 int cx = (int) Math.floor(cce.getX()) >> 4;
                 int cz = (int) Math.floor(cce.getZ()) >> 4;
                 ChunkPos pChunk = new ChunkPos(cx, cz);
+                if (!shouldForceTrainChunk(pChunk, level)) continue;
                 if (!actuallyForced.contains(pChunk)) {
-                    level.setChunkForced(cx, cz, true);
+                    force(level, trainId, cx, cz, true);
                     actuallyForced.add(pChunk);
                     toLoad.remove(pChunk);
                     recent.addLast(pChunk);
@@ -190,7 +246,7 @@ public class ChunkLoadManager {
         for (ChunkPos pos : toLoad) {
             if (loaded >= maxThisTick) break;
             if (System.nanoTime() - budgetStart > BUDGET_NS_PER_TRAIN) break;
-            level.setChunkForced(pos.x, pos.z, true);
+            force(level, trainId, pos.x, pos.z, true);
             actuallyForced.add(pos);
             recent.addLast(pos);
             if (recent.size() > THRASH_HISTORY_SIZE) {
@@ -441,19 +497,7 @@ public class ChunkLoadManager {
      * porque Train.tick() corre sempre (carriageWaitingForChunks = -1).
      */
     private Vec3 getCarriagePosition(Carriage carriage, ServerLevel level) {
-        var entity = CarriageUtils.safeAnyAvailableEntity(carriage);
-        if (entity != null) {
-            return entity.position();
-        }
-        try {
-            var dce = carriage.getDimensional(level);
-            if (dce != null && dce.positionAnchor != null) {
-                return dce.positionAnchor;
-            }
-        } catch (Exception e) {
-            // API pode diferir entre versões do Create
-        }
-        return null;
+        return CarriageUtils.getCarriagePosition(carriage, level.dimension());
     }
 
     /**
@@ -465,6 +509,7 @@ public class ChunkLoadManager {
      */
     public void updatePlayerProximityBuffer(Train train, ServerLevel level, List<ServerPlayer> players) {
         if (players.isEmpty() || train.carriages.isEmpty()) return;
+        trackDimension(train.id, level);
 
         int viewDist = level.getServer().getPlayerList().getViewDistance();
         // Buffer: 1-2 chunks depois do view distance (em blocos)
@@ -478,18 +523,22 @@ public class ChunkLoadManager {
             if (pos == null) continue;
 
             for (ServerPlayer player : players) {
+                if (player.level() != level) continue;
                 double distSq = player.distanceToSqr(pos.x, pos.y, pos.z);
                 // Carruagem está na zona de buffer (entre view distance e view distance + 3)
                 if (distSq > innerSq && distSq < outerSq) {
                     int cx = (int) Math.floor(pos.x) >> 4;
                     int cz = (int) Math.floor(pos.z) >> 4;
+                    ChunkPos chunkPos = new ChunkPos(cx, cz);
+                    if (!shouldForceTrainChunk(chunkPos, level)) continue;
                     // Adicionar ao tracking deste comboio para ser gerido normalmente
                     Set<ChunkPos> current = trainChunks.computeIfAbsent(train.id, k -> new HashSet<>());
-                    if (!current.contains(new ChunkPos(cx, cz))) {
+                    if (!current.contains(chunkPos)) {
                         int globalCount = getLoadedChunkCount();
                         if (globalCount < DistantHorizonsCompat.getAdjustedGlobalChunkCap(safeGetMaxForcedChunks())) {
-                            level.setChunkForced(cx, cz, true);
-                            current.add(new ChunkPos(cx, cz));
+                            force(level, train.id, cx, cz, true);
+                            current.add(chunkPos);
+                            cachedTotalChunks++;
                         }
                     }
                     break; // Basta estar perto de um jogador
@@ -498,26 +547,65 @@ public class ChunkLoadManager {
         }
     }
 
-    public void releaseTrainChunks(UUID trainId, ServerLevel level) {
-        Set<ChunkPos> chunks = trainChunks.remove(trainId);
-        if (chunks != null) {
-            cachedTotalChunks -= chunks.size();
-            if (cachedTotalChunks < 0) cachedTotalChunks = 0;
-            for (ChunkPos pos : chunks) {
-                level.setChunkForced(pos.x, pos.z, false);
+    private boolean shouldForceTrainChunk(ChunkPos chunk, ServerLevel level) {
+        if (!ModConfig.IGNORE_SPAWN_CHUNKS.get() || level.dimension() != Level.OVERWORLD) return true;
+
+        ChunkPos spawnChunk = new ChunkPos(level.getSharedSpawnPos());
+        if (Math.abs(chunk.x - spawnChunk.x) > SPAWN_CHUNK_RADIUS
+                || Math.abs(chunk.z - spawnChunk.z) > SPAWN_CHUNK_RADIUS) {
+            return true;
+        }
+
+        int viewDistance = level.getServer().getPlayerList().getViewDistance();
+        for (ServerPlayer player : level.players()) {
+            ChunkPos playerChunk = player.chunkPosition();
+            if (Math.abs(chunk.x - playerChunk.x) <= viewDistance
+                    && Math.abs(chunk.z - playerChunk.z) <= viewDistance) {
+                return true;
             }
         }
+        return false;
+    }
+
+    /** Libertar todas as chunks de um comboio, na dimensão onde foram forçadas. */
+    public void releaseTrainChunks(UUID trainId, MinecraftServer server) {
+        ResourceKey<Level> dimension = trainDimensions.remove(trainId);
+        releaseChunksIn(trainId, dimension != null ? server.getLevel(dimension) : null);
         recentChunks.remove(trainId);
         lastKnownPositions.remove(trainId);
     }
 
-    public void releaseAll(ServerLevel level) {
-        for (var entry : trainChunks.entrySet()) {
-            for (ChunkPos pos : entry.getValue()) {
-                level.setChunkForced(pos.x, pos.z, false);
+    private void releaseChunksIn(UUID trainId, ServerLevel level) {
+        Set<ChunkPos> chunks = trainChunks.remove(trainId);
+        if (chunks == null) return;
+        cachedTotalChunks -= chunks.size();
+        if (cachedTotalChunks < 0) cachedTotalChunks = 0;
+        // Nível pode não existir (dimensão de mod removida): o callback de validação
+        // limpa os tickets no próximo carregamento do mundo.
+        if (level == null) return;
+        for (ChunkPos pos : chunks) {
+            force(level, trainId, pos.x, pos.z, false);
+        }
+    }
+
+    /**
+     * Libertar chunks de comboios que já não existem (desmontados, destruídos).
+     * Sem isto, as chunks de um comboio removido ficavam forçadas até o servidor parar.
+     */
+    public void pruneRemovedTrains(Set<UUID> activeTrainIds, MinecraftServer server) {
+        for (UUID trainId : new ArrayList<>(trainChunks.keySet())) {
+            if (!activeTrainIds.contains(trainId)) {
+                releaseTrainChunks(trainId, server);
             }
         }
+    }
+
+    public void releaseAll(MinecraftServer server) {
+        for (UUID trainId : new ArrayList<>(trainChunks.keySet())) {
+            releaseTrainChunks(trainId, server);
+        }
         trainChunks.clear();
+        trainDimensions.clear();
         recentChunks.clear();
         lastKnownPositions.clear();
         cachedTotalChunks = 0;

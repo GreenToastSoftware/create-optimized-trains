@@ -183,6 +183,8 @@ public class RouteChunkPreloader {
     public void shutdown() {
         if (preloadExecutor != null) {
             preloadExecutor.shutdownNow();
+            // Recriado de forma lazy em getExecutor() no próximo mundo
+            preloadExecutor = null;
         }
         lastRequestedChunks.clear();
     }

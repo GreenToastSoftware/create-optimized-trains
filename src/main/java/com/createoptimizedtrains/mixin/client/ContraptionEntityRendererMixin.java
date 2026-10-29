@@ -3,8 +3,8 @@ package com.createoptimizedtrains.mixin.client;
 import com.createoptimizedtrains.diagnostics.DebugLog;
 import com.createoptimizedtrains.rendering.ContraptionBufferSourceWrapper;
 import com.createoptimizedtrains.rendering.BufferSourceResolver;
-import com.createoptimizedtrains.rendering.RenderDeferFlags;
-import com.mojang.blaze3d.systems.RenderSystem;
+import com.createoptimizedtrains.rendering.ContraptionRenderTypes;
+import com.createoptimizedtrains.rendering.RenderDeferFlags;import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.content.contraptions.AbstractContraptionEntity;
 import com.simibubi.create.content.contraptions.render.ContraptionEntityRenderer;
@@ -118,6 +118,21 @@ public abstract class ContraptionEntityRendererMixin {
         bs.endBatch(Objects.requireNonNull(Sheets.hangingSignSheet()));
         bs.endBatch(Objects.requireNonNull(Sheets.chestSheet()));
         bs.endBatch(Objects.requireNonNull(Sheets.bannerSheet()));
+
+        // Flush genérico: qualquer RenderType dinâmico de terceiros (ex: Armourers Workshop,
+        // GeckoLib, skins de jogador) que esteja a usar o builder partilhado da BufferSource
+        // fica pendente até à próxima troca de tipo. Sem isto, esse buffer só é desenhado
+        // DEPOIS do composite OIT do Flywheel já ter feito blend do vidro, tornando esses
+        // blocos/entidades invisíveis quando vistos através de zonas translúcidas — a mesma
+        // causa raiz do bug de vidro/portas, só que para RenderTypes não reconhecidos aqui.
+        // EXCLUI os tipos da porta Copycats+: esses são deferidos de propósito para o
+        // LevelRendererFlushMixin/OitFramebufferMixin — fazer flush aqui reintroduz o bug da porta.
+        if (bs instanceof IBufferSourceAccessor accessor) {
+            accessor.getLastState()
+                .filter(type -> type != RenderType.translucentMovingBlock()
+                             && type != ContraptionRenderTypes.TRANSLUCENT_MOVING_BLOCK_NO_DEPTH)
+                .ifPresent(bs::endBatch);
+        }
 
         // A porta (translucentMovingBlock) é agora flushed no LevelRendererFlushMixin,
         // DEPOIS do flush Iris, para que depth das entidades já esteja no buffer.
