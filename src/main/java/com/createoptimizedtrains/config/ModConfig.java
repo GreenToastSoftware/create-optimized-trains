@@ -42,8 +42,10 @@ public class ModConfig {
 
     // --- Chunk Loading ---
     public static final BooleanValue SMART_CHUNK_LOADING;
+        public static final BooleanValue IGNORE_SPAWN_CHUNKS;
     public static final IntValue CHUNK_LOOKAHEAD;
     public static final IntValue CHUNK_TRAIL_KEEP;
+    public static final IntValue MAX_CHUNK_WAIT_TICKS;
         public static final IntValue CARRIAGE_CHUNK_RADIUS;
     // Raio de chunks por nível LOD (substitui CARRIAGE_CHUNK_RADIUS globalmente)
     public static final IntValue LOD_CHUNK_RADIUS_FULL;
@@ -85,6 +87,14 @@ public class ModConfig {
     public static final BooleanValue DH_REDUCE_FORCE_LOAD;
     public static final BooleanValue DH_STARTUP_THROTTLE_ENABLED;
     public static final IntValue DH_STARTUP_THROTTLE_TICKS;
+
+    // --- Staged World Loading ---
+    public static final BooleanValue STAGED_LOADING_ENABLED;
+    public static final IntValue STAGED_LOADING_TPS_THRESHOLD;
+    public static final IntValue STAGED_LOADING_MEMORY_THRESHOLD;
+    public static final IntValue STAGED_LOADING_STABLE_TICKS;
+    public static final IntValue STAGED_LOADING_MAX_CORE_TICKS;
+    public static final IntValue STAGED_LOADING_MAX_RAMPING_TICKS;
 
     // --- Debug Overlay ---
     public static final BooleanValue DEBUG_OVERLAY_ENABLED;
@@ -193,6 +203,9 @@ public class ModConfig {
         SMART_CHUNK_LOADING = builder
                 .comment("Ativar gestão inteligente de chunks")
                 .define("enabled", true);
+        IGNORE_SPAWN_CHUNKS = builder
+                .comment("Não forçar chunks da área de spawn para comboios sem jogadores por perto")
+                .define("ignoreSpawnChunks", false);
         CHUNK_LOOKAHEAD = builder
                 .comment("Chunks mínimos a pré-carregar à frente do comboio (adaptativo por velocidade)",
                          "Recomendado: 6 para comboios rápidos (>20 bl/s), 4 para comboios lentos")
@@ -200,6 +213,13 @@ public class ModConfig {
         CHUNK_TRAIL_KEEP = builder
                 .comment("Chunks a manter atrás do comboio antes de descarregar")
                 .defineInRange("trailKeep", 1, 0, 4);
+        MAX_CHUNK_WAIT_TICKS = builder
+                .comment("Ticks máximos que um comboio espera parado quando a chunk de uma carruagem",
+                         "ainda não carregou (comportamento original do Create: espera sem limite).",
+                         "  0  = nunca esperar — movimento contínuo, pode 'flutuar' sobre chunks vazias",
+                         "  20 = esperar até 1 segundo, depois continuar mesmo sem a chunk",
+                         "Valores > 0 reduzem dessincronizações de carruagens em discos lentos.")
+                .defineInRange("maxChunkWaitTicks", 0, 0, 200);
         CARRIAGE_CHUNK_RADIUS = builder
                 .comment("[LEGADO] Raio de chunks por carruagem — substituído por lod_radius abaixo.",
                          "Mantido para compatibilidade com configs antigas. Ignorado se lod_radius ativo.")
@@ -343,6 +363,33 @@ public class ModConfig {
         DH_STARTUP_THROTTLE_TICKS = builder
                 .comment("Duração do throttle de arranque do DH, em ticks (20 ticks = 1 segundo)")
                 .defineInRange("startupThrottleTicks", 200, 20, 1200);
+        builder.pop();
+
+        // Staged World Loading
+        builder.comment("Carregamento do mundo em etapas",
+                "Em vez de carregar todos os comboios + Distant Horizons em simultâneo no",
+                "arranque (causa congelamentos e picos de RAM), o mapa é carregado por fases:",
+                "CORE (só o comboio do jogador) -> RAMPING (resto em lotes) -> FULL (normal).",
+                "O avanço de fase depende de sinais reais (TPS, % de memória), não só de tempo.").push("staged_loading");
+        STAGED_LOADING_ENABLED = builder
+                .comment("Activar o carregamento faseado do mundo")
+                .define("enabled", true);
+        STAGED_LOADING_TPS_THRESHOLD = builder
+                .comment("TPS mínimo considerado saudável para avançar de fase")
+                .defineInRange("tpsHealthyThreshold", 19, 10, 20);
+        STAGED_LOADING_MEMORY_THRESHOLD = builder
+                .comment("% máximo de heap usado considerado saudável para avançar de fase")
+                .defineInRange("memoryHealthyPercent", 75, 50, 95);
+        STAGED_LOADING_STABLE_TICKS = builder
+                .comment("Número de ticks consecutivos saudáveis exigidos antes de avançar de fase")
+                .defineInRange("stableTicksRequired", 40, 10, 200);
+        STAGED_LOADING_MAX_CORE_TICKS = builder
+                .comment("Tecto máximo de ticks na fase CORE antes de avançar por segurança",
+                         "(evita bloquear o mapa indefinidamente se o servidor nunca estabilizar)")
+                .defineInRange("maxCoreDurationTicks", 100, 20, 1200);
+        STAGED_LOADING_MAX_RAMPING_TICKS = builder
+                .comment("Tecto máximo de ticks na fase RAMPING antes de avançar por segurança")
+                .defineInRange("maxRampingDurationTicks", 300, 20, 2400);
         builder.pop();
 
         // Debug Overlay

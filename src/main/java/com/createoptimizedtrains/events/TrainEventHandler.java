@@ -2,6 +2,7 @@ package com.createoptimizedtrains.events;
 
 import com.createoptimizedtrains.CreateOptimizedTrains;
 import com.createoptimizedtrains.chunks.ChunkLoadManager;
+import com.createoptimizedtrains.chunks.DeferredChunkTracker;
 import com.createoptimizedtrains.chunks.DirectionalChunkShaper;
 import com.createoptimizedtrains.chunks.RouteChunkPreloader;
 import com.createoptimizedtrains.config.ModConfig;
@@ -12,14 +13,19 @@ import com.createoptimizedtrains.util.CarriageUtils;
 import com.createoptimizedtrains.lod.LODLevel;
 import com.createoptimizedtrains.lod.LODSystem;
 import com.createoptimizedtrains.monitor.PerformanceMonitor;
+import com.createoptimizedtrains.monitor.WorldLoadPhaseManager;
 import com.createoptimizedtrains.priority.PriorityScheduler;
 import com.createoptimizedtrains.proxy.ProxyEntityManager;
 import com.createoptimizedtrains.threading.AsyncTaskManager;
 import com.simibubi.create.content.trains.GlobalRailwayManager;
 import com.simibubi.create.content.trains.entity.Train;
 import com.simibubi.create.infrastructure.config.AllConfigs;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -43,15 +49,19 @@ public class TrainEventHandler {
     private static final int CHUNK_UPDATE_INTERVAL = 1; // Cada tick: chunk loading é crítico para velocidade máxima
     private static final int ROUTE_PRELOAD_INTERVAL = 5; // Route pre-load a cada 5 ticks (rota muda lentamente)
     private static final int PROXY_UPDATE_INTERVAL = 10;
+    // Libertar chunks de comboios removidos a cada 5 segundos
+    private static final int PRUNE_INTERVAL = 100;
+    // Reenviar chunks bloqueadas pelo filtro direcional a cada meio segundo
+    private static final int DEFERRED_CHUNK_RESEND_INTERVAL = 10;
 
     // Intervalo para verificar zona de buffer e trigger de fade-out (cada 5 ticks)
     private static final int VISIBILITY_CHECK_INTERVAL = 5;
 
-    // Atraso de arranque: não processar chunks nos primeiros ticks após o servidor iniciar.
-    // Isto evita um pico de memória enorme ao competir com spawn chunks + Distant Horizons.
-    private static final int STARTUP_DELAY_TICKS = 100; // 5 segundos — evita competir com DH no pico de init
-    // Durante o período de ramp-up (após o delay), processar poucos comboios por tick
-    private static final int RAMP_UP_TICKS = 200; // 10 segundos de ramp-up gradual
+    // Atraso de segurança mínimo: só para deixar estruturas internas (GlobalRailwayManager)
+    // ficarem disponíveis. A priorização real de QUEM carrega primeiro já não depende deste
+    // valor — é feita pelo WorldLoadPhaseManager (fase CORE = só o comboio do jogador).
+    private static final int STARTUP_DELAY_TICKS = 20; // 1 segundo
+    // Durante o período de ramp-up (fase RAMPING), processar poucos comboios por tick
     private static final int RAMP_UP_BATCH_SIZE = 2; // 2 comboios por tick durante ramp-up (menos pressão no IO)
     // Comboios parados sem passageiros: atualizar chunks muito menos frequentemente
     // A posição não muda, logo as chunks necessárias também não mudam
@@ -100,6 +110,17 @@ public class TrainEventHandler {
         var server = event.getServer();
         if (server == null) return;
 
+        // 3a. Reenviar chunks que o filtro direcional bloqueou e que voltaram a ser
+        // permitidas. Antes do check de comboios: o jogador pode sair do comboio e este
+        // ser desmontado, e as chunks bloqueadas têm de chegar na mesma.
+        if (tickCounter % DEFERRED_CHUNK_RESEND_INTERVAL == 0) {
+            for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+                if (player.serverLevel().getChunkSource().chunkMap instanceof DeferredChunkTracker tracker) {
+                    tracker.cot$resendDeferredChunks(player);
+                }
+            }
+        }
+
         Collection<Train> trains = getActiveTrains();
         if (trains == null || trains.isEmpty()) return;
 
@@ -130,9 +151,9 @@ public class TrainEventHandler {
         }
         PlayerTrainTracker.setOccupiedTrains(occupiedTrainIds);
 
-        // 5. LOD — cálculo PARALELO em threads secundárias
+        // 5. LOD — no main thread (lê estado do Create, que não é thread-safe)
         if (tickCounter % LOD_UPDATE_INTERVAL == 0) {
-            updateLODLevelsParallel(mod, trainListCache, players);
+            updateLODLevels(mod, trainListCache, players);
         }
 
         // 6. Grouping/Proxies — staggered (só se pelo menos um estiver ativo)
@@ -140,37 +161,54 @@ public class TrainEventHandler {
             boolean proxyOn = ModConfig.PROXY_ENABLED.get();
             boolean groupOn = ModConfig.GROUPING_ENABLED.get();
             if (proxyOn || groupOn) {
-                updateGroupingAndProxiesStaggered(mod, trainListCache, server.overworld());
+                updateGroupingAndProxiesStaggered(mod, trainListCache, server);
             }
         }
 
-        // 7. Chunks
+        // 7. Chunks — cada comboio no nível da sua dimensão (comboios atravessam portais)
         long t7Start = System.nanoTime();
         if (tickCounter % CHUNK_UPDATE_INTERVAL == 0 && tickCounter > STARTUP_DELAY_TICKS) {
             List<Train> chunkBatch = getChunkBatch(trainListCache);
-            updateChunkLoadingAll(mod, chunkBatch, server.overworld(), players);
+            updateChunkLoadingAll(mod, chunkBatch, server, players);
             ChunkLoadManager chunks = mod.getChunkLoadManager();
             if (chunks != null) {
                 for (Train train : chunkBatch) {
-                    chunks.updatePlayerProximityBuffer(train, server.overworld(), players);
+                    ServerLevel trainLevel = CarriageUtils.getTrainLevel(train, server);
+                    if (trainLevel != null) {
+                        chunks.updatePlayerProximityBuffer(train, trainLevel, players);
+                    }
                 }
             }
         }
         long t7Ms = (System.nanoTime() - t7Start) / 1_000_000L;
 
+        // 7a. Libertar chunks de comboios que deixaram de existir (desmontados/destruídos)
+        if (tickCounter % PRUNE_INTERVAL == 0) {
+            ChunkLoadManager chunks = mod.getChunkLoadManager();
+            if (chunks != null) {
+                Set<UUID> activeIds = new HashSet<>();
+                for (Train train : trainListCache) activeIds.add(train.id);
+                chunks.pruneRemovedTrains(activeIds, server);
+            }
+        }
+
         // 7b. Verificar zona de buffer e trigger de fade-out (a cada 5 ticks)
         // Usa background thread para não atrasar o server tick
         if (tickCounter % VISIBILITY_CHECK_INTERVAL == 0 && tickCounter > STARTUP_DELAY_TICKS) {
-            updateVisibilityZones(mod, trainListCache, players, server.overworld());
+            updateVisibilityZones(mod, trainListCache, players, server);
         }
 
-        // 8. Route chunk pre-loading — atraso extra para rota estabilizar
-        if (tickCounter % ROUTE_PRELOAD_INTERVAL == 0 && tickCounter > STARTUP_DELAY_TICKS + 40) {
+        // 8. Route chunk pre-loading — só fora da fase CORE (comboios distantes não são
+        // prioridade enquanto o carregamento faseado ainda está a estabilizar o essencial).
+        if (tickCounter % ROUTE_PRELOAD_INTERVAL == 0 && tickCounter > STARTUP_DELAY_TICKS + 40
+                && !WorldLoadPhaseManager.isCore()) {
             RouteChunkPreloader preloader = mod.getRouteChunkPreloader();
             if (preloader != null) {
                 List<Train> batch = getChunkBatch(trainListCache);
                 for (Train train : batch) {
                     if (train.speed != 0) {
+                        ServerLevel trainLevel = CarriageUtils.getTrainLevel(train, server);
+                        if (trainLevel == null) continue;
                         // Não pré-carregar rotas de comboios fantasma (longe do jogador, todas entidades ausentes)
                         // — desperdiçaria I/O de disco para comboios que o jogador não verá cedo.
                         boolean allMissing = true;
@@ -178,10 +216,10 @@ public class TrainEventHandler {
                             if (CarriageUtils.safeAnyAvailableEntity(carriage) != null) { allMissing = false; break; }
                         }
                         if (allMissing && !PlayerTrainTracker.isOccupied(train.id)
-                                && !isTrainNearAnyPlayer(train, players, server.overworld(), 400.0 * 400.0)) {
+                                && !isTrainNearAnyPlayer(train, players, trainLevel, 400.0 * 400.0)) {
                             continue;
                         }
-                        preloader.preloadRouteChunks(train, server.overworld());
+                        preloader.preloadRouteChunks(train, trainLevel);
                     }
                 }
             }
@@ -215,66 +253,29 @@ public class TrainEventHandler {
     }
 
     /**
-     * Cálculo de LOD paralelo: cacheia posições dos jogadores, depois submete
-     * cálculo de todos os comboios para o ForkJoinPool.
-     * Resultados são aplicados no main thread via callback.
+     * Cálculo de LOD no main thread.
+     *
+     * Antes era paralelo (ForkJoinPool) para mais de 8 comboios, mas o cálculo lê
+     * entidades e o mapa entities das carruagens do Create, que não são thread-safe,
+     * e iterava trainListCache enquanto o tick seguinte a reescrevia. O custo é
+     * carruagens × jogadores distâncias ao quadrado a cada 10 ticks — desprezável.
      */
-    private void updateLODLevelsParallel(CreateOptimizedTrains mod, List<Train> trains,
-                                           List<ServerPlayer> players) {
+    private void updateLODLevels(CreateOptimizedTrains mod, List<Train> trains,
+                                 List<ServerPlayer> players) {
         LODSystem lodSystem = mod.getLODSystem();
-        AsyncTaskManager async = mod.getAsyncTaskManager();
-        if (lodSystem == null || async == null) return;
+        if (lodSystem == null) return;
 
-        // Cachear posições dos jogadores uma vez (main thread, rápido)
+        // Cachear posições dos jogadores uma vez por ciclo
         lodSystem.cachePlayerPositions(players);
 
-        // Para poucos comboios (<= 8), calcular no main thread (overhead de threading > benefício)
-        if (trains.size() <= 8) {
-            for (Train train : trains) {
-                LODLevel level = lodSystem.calculateLODForTrain(train, players);
-                LODLevel previous = lodSystem.getTrainLOD(train.id);
-                lodSystem.updateTrainLOD(train.id, level);
-                if (previous != level) {
-                    onTrainLODChanged(mod, train, previous, level);
-                }
-            }
-            return;
-        }
-
-        // Para muitos comboios: paralelo via ForkJoinPool
-        // Snapshot dos dados necessários (thread-safe)
-        Map<UUID, LODLevel> previousLevels = new HashMap<>(trains.size());
         for (Train train : trains) {
-            previousLevels.put(train.id, lodSystem.getTrainLOD(train.id));
-        }
-
-        async.submitParallelBatch(trains, train -> {
             LODLevel level = lodSystem.calculateLODForTrain(train, players);
-            return new LODResult(train.id, level);
-        }).thenAccept(results -> {
-            // Aplicar resultados no main thread
-            async.runOnMainThreadPriority(() -> {
-                Map<UUID, LODLevel> newLevels = new HashMap<>(results.size());
-                for (LODResult r : results) {
-                    newLevels.put(r.trainId, r.level);
-                }
-                lodSystem.batchUpdateLOD(newLevels);
-
-                // Disparar ações de mudança de LOD
-                for (LODResult r : results) {
-                    LODLevel previous = previousLevels.get(r.trainId);
-                    if (previous != null && previous != r.level) {
-                        // Encontrar o Train correspondente
-                        for (Train train : trains) {
-                            if (train.id.equals(r.trainId)) {
-                                onTrainLODChanged(mod, train, previous, r.level);
-                                break;
-                            }
-                        }
-                    }
-                }
-            });
-        });
+            LODLevel previous = lodSystem.getTrainLOD(train.id);
+            lodSystem.updateTrainLOD(train.id, level);
+            if (previous != level) {
+                onTrainLODChanged(mod, train, previous, level);
+            }
+        }
     }
 
     private void onTrainLODChanged(CreateOptimizedTrains mod, Train train,
@@ -300,7 +301,7 @@ public class TrainEventHandler {
      * Atualizar proxies em batches staggered para distribuir carga.
      */
     private void updateGroupingAndProxiesStaggered(CreateOptimizedTrains mod,
-                                                     List<Train> trains, ServerLevel level) {
+                                                     List<Train> trains, MinecraftServer server) {
         ProxyEntityManager proxies = mod.getProxyEntityManager();
         if (proxies == null) return;
 
@@ -309,7 +310,11 @@ public class TrainEventHandler {
         int end = Math.min(start + BATCH_SIZE, trains.size());
 
         for (int i = start; i < end; i++) {
-            proxies.updateProxy(trains.get(i), level);
+            Train train = trains.get(i);
+            ServerLevel trainLevel = CarriageUtils.getTrainLevel(train, server);
+            if (trainLevel != null) {
+                proxies.updateProxy(train, trainLevel);
+            }
         }
     }
 
@@ -329,7 +334,7 @@ public class TrainEventHandler {
      * Comboios parados sem passageiros: atualizar a cada STOPPED_CHUNK_UPDATE_INTERVAL ticks.
      */
     private void updateChunkLoadingAll(CreateOptimizedTrains mod,
-                                        List<Train> trains, ServerLevel level,
+                                        List<Train> trains, MinecraftServer server,
                                         List<ServerPlayer> players) {
         ChunkLoadManager chunks = mod.getChunkLoadManager();
         if (chunks == null) return;
@@ -342,13 +347,19 @@ public class TrainEventHandler {
                 continue;
             }
 
+            ServerLevel level = CarriageUtils.getTrainLevel(train, server);
+            if (level == null) {
+                chunks.releaseTrainChunks(train.id, server);
+                continue;
+            }
+
             if (!PlayerTrainTracker.isOccupied(train.id)) {
                 boolean allMissing = true;
                 for (var carriage : train.carriages) {
                     if (CarriageUtils.safeAnyAvailableEntity(carriage) != null) { allMissing = false; break; }
                 }
                 if (allMissing && !isTrainNearAnyPlayer(train, players, level, 300.0 * 300.0)) {
-                    chunks.releaseTrainChunks(train.id, level);
+                    chunks.releaseTrainChunks(train.id, server);
                     continue;
                 }
             }
@@ -371,27 +382,16 @@ public class TrainEventHandler {
     /**
      * Verifica se alguma carruagem do comboio está dentro de maxDistSq blocos^2 de qualquer jogador.
      * Usa positionAnchor do DCE como fallback para carruagens sem entidade.
+     * Só conta jogadores na mesma dimensão do comboio.
      */
     private boolean isTrainNearAnyPlayer(Train train, List<ServerPlayer> players,
                                           ServerLevel level, double maxDistSq) {
         for (var carriage : train.carriages) {
-            double cx = Double.NaN, cy = Double.NaN, cz = Double.NaN;
-            var entity = CarriageUtils.safeAnyAvailableEntity(carriage);
-            if (entity != null) {
-                cx = entity.getX(); cy = entity.getY(); cz = entity.getZ();
-            } else {
-                try {
-                    var dce = carriage.getDimensional(level);
-                    if (dce != null && dce.positionAnchor != null) {
-                        cx = dce.positionAnchor.x;
-                        cy = dce.positionAnchor.y;
-                        cz = dce.positionAnchor.z;
-                    }
-                } catch (Exception ignored) {}
-            }
-            if (Double.isNaN(cx)) continue;
+            Vec3 pos = CarriageUtils.getCarriagePosition(carriage, level.dimension());
+            if (pos == null) continue;
             for (var player : players) {
-                double dx = player.getX() - cx, dy = player.getY() - cy, dz = player.getZ() - cz;
+                if (player.level() != level) continue;
+                double dx = player.getX() - pos.x, dy = player.getY() - pos.y, dz = player.getZ() - pos.z;
                 if (dx * dx + dy * dy + dz * dz <= maxDistSq) return true;
             }
         }
@@ -408,50 +408,39 @@ public class TrainEventHandler {
     private void updateVisibilityZones(CreateOptimizedTrains mod,
                                         List<Train> trains,
                                         List<ServerPlayer> players,
-                                        ServerLevel level) {
+                                        MinecraftServer server) {
         LODSystem lodSystem = mod.getLODSystem();
         AsyncTaskManager async = mod.getAsyncTaskManager();
         if (lodSystem == null || async == null) return;
 
-        int viewDist = level.getServer().getPlayerList().getViewDistance();
+        int viewDist = server.getPlayerList().getViewDistance();
         double viewDistBlocks = viewDist * 16.0;
         double bufferInnerSq = viewDistBlocks * viewDistBlocks;
         double bufferOuterSq = (viewDistBlocks + 48.0) * (viewDistBlocks + 48.0); // +3 chunks
 
         // Snapshot de posições de jogadores (thread-safe)
-        double[][] playerPos = new double[players.size()][3];
-        for (int i = 0; i < players.size(); i++) {
-            playerPos[i][0] = players.get(i).getX();
-            playerPos[i][1] = players.get(i).getY();
-            playerPos[i][2] = players.get(i).getZ();
+        List<PlayerVisData> playerData = new ArrayList<>(players.size());
+        for (ServerPlayer player : players) {
+            playerData.add(new PlayerVisData(player.level().dimension(), player.getX(), player.getY(), player.getZ()));
         }
 
         // Snapshot de dados de comboios (thread-safe)
         List<TrainVisData> trainData = new ArrayList<>(trains.size());
         for (Train train : trains) {
+            ResourceKey<Level> dimension = CarriageUtils.getTrainDimension(train);
+            if (dimension == null) continue;
             double cx = 0, cy = 0, cz = 0;
             int count = 0;
             for (var carriage : train.carriages) {
-                var entity = CarriageUtils.safeAnyAvailableEntity(carriage);
-                if (entity != null) {
-                    cx += entity.getX();
-                    cy += entity.getY();
-                    cz += entity.getZ();
-                    count++;
-                } else {
-                    try {
-                        var dce = carriage.getDimensional(level);
-                        if (dce != null && dce.positionAnchor != null) {
-                            cx += dce.positionAnchor.x;
-                            cy += dce.positionAnchor.y;
-                            cz += dce.positionAnchor.z;
-                            count++;
-                        }
-                    } catch (Exception ignored) {}
-                }
+                Vec3 pos = CarriageUtils.getCarriagePosition(carriage, dimension);
+                if (pos == null) continue;
+                cx += pos.x;
+                cy += pos.y;
+                cz += pos.z;
+                count++;
             }
             if (count > 0) {
-                trainData.add(new TrainVisData(train.id, cx / count, cy / count, cz / count));
+                trainData.add(new TrainVisData(train.id, dimension, cx / count, cy / count, cz / count));
             }
         }
 
@@ -462,10 +451,11 @@ public class TrainEventHandler {
 
             for (TrainVisData td : trainData) {
                 double minDistSq = Double.MAX_VALUE;
-                for (double[] pp : playerPos) {
-                    double dx = pp[0] - td.x;
-                    double dy = pp[1] - td.y;
-                    double dz = pp[2] - td.z;
+                for (PlayerVisData pp : playerData) {
+                    if (pp.dimension != td.dimension) continue;
+                    double dx = pp.x - td.x;
+                    double dy = pp.y - td.y;
+                    double dz = pp.z - td.z;
                     double distSq = dx * dx + dy * dy + dz * dz;
                     if (distSq < minDistSq) minDistSq = distSq;
                 }
@@ -489,7 +479,8 @@ public class TrainEventHandler {
         });
     }
 
-    private record TrainVisData(UUID trainId, double x, double y, double z) {}
+    private record TrainVisData(UUID trainId, ResourceKey<Level> dimension, double x, double y, double z) {}
+    private record PlayerVisData(ResourceKey<Level> dimension, double x, double y, double z) {}
     private record VisibilityResult(List<UUID> inBuffer, List<UUID> notInBuffer) {}
 
     // Comboios não-ocupados: actualizar a cada N ticks (reduz carga agregada de setChunkForced).
@@ -498,9 +489,24 @@ public class TrainEventHandler {
     private static final int NON_OCCUPIED_BATCH_SIZE = 5;
 
     private List<Train> getChunkBatch(List<Train> allTrains) {
+        WorldLoadPhaseManager.Phase phase = WorldLoadPhaseManager.getPhase();
+
+        // Fase CORE: só o(s) comboio(s) com o jogador a bordo. Todo o resto do mapa
+        // (comboios distantes, fantasmas) espera — é o que prolonga naturalmente o ecrã
+        // de loading do jogador de forma segura, em vez de competir logo por tudo.
+        if (phase == WorldLoadPhaseManager.Phase.CORE) {
+            List<Train> occupiedOnly = new ArrayList<>();
+            for (Train train : allTrains) {
+                if (PlayerTrainTracker.isOccupied(train.id)) {
+                    occupiedOnly.add(train);
+                }
+            }
+            return occupiedOnly;
+        }
+
         long ticksSinceReady = tickCounter - STARTUP_DELAY_TICKS;
 
-        if (ticksSinceReady <= RAMP_UP_TICKS) {
+        if (phase == WorldLoadPhaseManager.Phase.RAMPING) {
             if (allTrains.size() <= RAMP_UP_BATCH_SIZE) return allTrains;
             int batchIndex = (int) ((ticksSinceReady / CHUNK_UPDATE_INTERVAL) % Math.max(1, (allTrains.size() + RAMP_UP_BATCH_SIZE - 1) / RAMP_UP_BATCH_SIZE));
             int start = batchIndex * RAMP_UP_BATCH_SIZE;
@@ -549,7 +555,7 @@ public class TrainEventHandler {
         if (mod != null) {
             ChunkLoadManager chunks = mod.getChunkLoadManager();
             if (chunks != null) {
-                chunks.releaseAll(event.getServer().overworld());
+                chunks.releaseAll(event.getServer());
             }
 
             ProxyEntityManager proxies = mod.getProxyEntityManager();
@@ -557,16 +563,17 @@ public class TrainEventHandler {
                 proxies.removeAllProxies();
             }
 
-            RouteChunkPreloader preloader = mod.getRouteChunkPreloader();
-            if (preloader != null) {
-                preloader.shutdown();
-            }
-
             DirectionalChunkShaper.clear();
+            PlayerTrainTracker.setOccupiedTrains(Set.of());
 
-            mod.shutdown();
+            // Os sistemas continuam vivos para o próximo mundo (singleplayer reutiliza o processo)
+            mod.resetWorldState();
         }
+
+        // Reiniciar contadores: o atraso de arranque e o batching dependem de tickCounter
+        tickCounter = 0;
+        trainListCache.clear();
+        originalViewDistances.clear();
     }
 
-    private record LODResult(UUID trainId, LODLevel level) {}
 }

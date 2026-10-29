@@ -182,6 +182,13 @@ public class PriorityScheduler {
         reservedSegments.remove(trainId);
     }
 
+    public void clear() {
+        trainPriorities.clear();
+        activeConflicts.clear();
+        yieldingTrains.clear();
+        reservedSegments.clear();
+    }
+
     // --- Tipos internos ---
 
     private record TrainSnapshot(UUID trainId, double posX, double posY, double posZ,

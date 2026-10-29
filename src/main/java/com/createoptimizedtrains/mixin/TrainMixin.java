@@ -66,6 +66,10 @@ public abstract class TrainMixin {
     @Unique
     private int lastRealWaitingForChunks = -1;
 
+    /** Ticks consecutivos em que o Create quis parar o comboio por chunk em falta. */
+    @Unique
+    private int chunkWaitTicks = 0;
+
     @Unique
     private int collisionTickCounter = -1;
 
@@ -101,6 +105,9 @@ public abstract class TrainMixin {
     private static final int COLLISION_CHECK_CRITICAL = 8;
     @Unique
     private static final double NEAR_PLAYER_RADIUS = 96.0;
+    // Distância máxima (blocos, velocidade relativa) percorrida entre verificações de colisão
+    @Unique
+    private static final double MAX_TRAVEL_BETWEEN_CHECKS = 2.0;
 
     /**
      * Redirect da leitura do campo carriageWaitingForChunks em tick().
@@ -124,9 +131,30 @@ public abstract class TrainMixin {
         // Capturar valor real ANTES de limpar, para o logger de diagnóstico.
         // O logger lê lastRealWaitingForChunks no próximo tick (1 tick de desfasamento
         // aceitável para fins de diagnóstico).
-        lastRealWaitingForChunks = train.carriageWaitingForChunks;
+        int real = train.carriageWaitingForChunks;
+        lastRealWaitingForChunks = real;
 
-        // Sempre devolver -1 = "não há chunk waiting" → speed nunca é zerada
+        if (real == -1) {
+            chunkWaitTicks = 0;
+            return -1;
+        }
+
+        // Espera limitada (config maxChunkWaitTicks): deixar o Create parar o comboio
+        // durante N ticks para dar tempo à chunk de carregar; depois continuar.
+        // O contador só volta a 0 quando a chunk carrega, para não alternar
+        // parado/andar enquanto a mesma chunk continua em falta.
+        int maxWait;
+        try {
+            maxWait = ModConfig.MAX_CHUNK_WAIT_TICKS.get();
+        } catch (Exception e) {
+            maxWait = 0;
+        }
+        if (chunkWaitTicks < maxWait) {
+            chunkWaitTicks++;
+            return real;
+        }
+
+        // Devolver -1 = "não há chunk waiting" → speed não é zerada
         // Se o campo estava set, limpá-lo para não acumular estado stale
         if (train.carriageWaitingForChunks != -1) {
             train.carriageWaitingForChunks = -1;
@@ -217,6 +245,16 @@ public abstract class TrainMixin {
             interval = getAdaptiveInterval() * 2; // Dobro do intervalo normal
         } else {
             interval = getAdaptiveInterval();
+        }
+
+        // Limitar o intervalo pela velocidade: entre duas verificações o comboio não pode
+        // avançar mais do que MAX_TRAVEL_BETWEEN_CHECKS blocos, senão dois comboios
+        // (de frente, velocidade relativa ×2) podiam atravessar-se sem colisão detetada.
+        // speed está em blocos/tick. Comboios parados são detetados pelo que se move.
+        double relativeTravelPerTick = Math.abs(speed) * 2.0;
+        if (relativeTravelPerTick > 0.0) {
+            int maxBySpeed = (int) (MAX_TRAVEL_BETWEEN_CHECKS / relativeTravelPerTick);
+            interval = Math.max(1, Math.min(interval, maxBySpeed));
         }
 
         if (collisionTickCounter % interval != 0) {

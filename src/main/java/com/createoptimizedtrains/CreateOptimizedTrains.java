@@ -8,6 +8,8 @@ import com.createoptimizedtrains.events.TrainEventHandler;
 import com.createoptimizedtrains.grouping.TrainGroupManager;
 import com.createoptimizedtrains.lod.LODSystem;
 import com.createoptimizedtrains.monitor.PerformanceMonitor;
+import com.createoptimizedtrains.monitor.WorldLoadPhaseManager;
+import com.createoptimizedtrains.monitor.LoadingProgressBar;
 import com.createoptimizedtrains.networking.NetworkOptimizer;
 import com.createoptimizedtrains.physics.PhysicsOptimizer;
 import com.createoptimizedtrains.priority.PriorityScheduler;
@@ -65,6 +67,8 @@ public class CreateOptimizedTrains {
 
         MinecraftForge.EVENT_BUS.register(new TrainEventHandler());
         MinecraftForge.EVENT_BUS.register(DistantHorizonsThrottle.class);
+        MinecraftForge.EVENT_BUS.register(WorldLoadPhaseManager.class);
+        MinecraftForge.EVENT_BUS.register(LoadingProgressBar.class);
 
         LOGGER.info("Create Optimized Trains a inicializar...");
     }
@@ -82,6 +86,11 @@ public class CreateOptimizedTrains {
             physicsOptimizer = new PhysicsOptimizer(lodSystem);
             networkOptimizer = new NetworkOptimizer(lodSystem);
             priorityScheduler = new PriorityScheduler(asyncTaskManager);
+
+            // Tickets de chunk são persistidos pelo Forge em chunks.dat. Ao carregar um
+            // mundo, descartar todos os nossos: o estado dos comboios é recalculado do zero
+            // e tickets órfãos (ex: após crash) ficariam carregados para sempre.
+            ChunkLoadManager.registerTicketValidation();
 
             LOGGER.info("Create Optimized Trains: todos os sistemas inicializados.");
         });
@@ -148,22 +157,30 @@ public class CreateOptimizedTrains {
         return performanceMonitor;
     }
 
-    public void shutdown() {
+    /**
+     * Limpar o estado por-mundo quando o servidor pára.
+     *
+     * Os sistemas são criados uma única vez (FMLCommonSetupEvent) e reutilizados entre
+     * mundos: em singleplayer, sair para o menu e entrar noutro mundo corre no mesmo
+     * processo. Por isso NÃO se anulam referências nem se desligam executores aqui —
+     * apenas se descarta o estado que pertence ao mundo anterior.
+     */
+    public void resetWorldState() {
         if (asyncTaskManager != null) {
-            asyncTaskManager.shutdown();
+            asyncTaskManager.clearPendingTasks();
         }
         if (routeChunkPreloader != null) {
             routeChunkPreloader.shutdown();
         }
-        lodSystem = null;
-        groupManager = null;
-        tickThrottler = null;
-        proxyEntityManager = null;
-        chunkLoadManager = null;
-        physicsOptimizer = null;
-        networkOptimizer = null;
-        priorityScheduler = null;
-        performanceMonitor = null;
-        LOGGER.info("Create Optimized Trains: encerrado.");
+        if (lodSystem != null) {
+            lodSystem.clear();
+        }
+        if (groupManager != null) {
+            groupManager.clear();
+        }
+        if (priorityScheduler != null) {
+            priorityScheduler.clear();
+        }
+        LOGGER.info("Create Optimized Trains: estado do mundo limpo.");
     }
 }
