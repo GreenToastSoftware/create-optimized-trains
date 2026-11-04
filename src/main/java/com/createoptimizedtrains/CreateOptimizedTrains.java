@@ -4,6 +4,7 @@ import com.createoptimizedtrains.chunks.ChunkLoadManager;
 import com.createoptimizedtrains.chunks.RouteChunkPreloader;
 import com.createoptimizedtrains.compat.DistantHorizonsThrottle;
 import com.createoptimizedtrains.config.ModConfig;
+import com.createoptimizedtrains.diagnostics.DebugLog;
 import com.createoptimizedtrains.events.TrainEventHandler;
 import com.createoptimizedtrains.grouping.TrainGroupManager;
 import com.createoptimizedtrains.lod.LODSystem;
@@ -13,6 +14,9 @@ import com.createoptimizedtrains.monitor.LoadingProgressBar;
 import com.createoptimizedtrains.networking.NetworkOptimizer;
 import com.createoptimizedtrains.physics.PhysicsOptimizer;
 import com.createoptimizedtrains.priority.PriorityScheduler;
+import com.createoptimizedtrains.profiler.PerfCommand;
+import com.createoptimizedtrains.profiler.PerfRecorder;
+import com.createoptimizedtrains.profiler.client.PerfClientSetup;
 import com.createoptimizedtrains.proxy.ProxyEntityManager;
 import com.createoptimizedtrains.rendering.RenderOptimizer;
 import com.createoptimizedtrains.rendering.DebugOverlay;
@@ -21,10 +25,13 @@ import com.createoptimizedtrains.throttling.TickThrottler;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.NoopRenderer;
 import net.minecraftforge.client.event.EntityRenderersEvent;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig.Type;
+import net.minecraftforge.fml.event.config.ModConfigEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -61,6 +68,9 @@ public class CreateOptimizedTrains {
         modBus.addListener(this::onCommonSetup);
         modBus.addListener(this::onClientSetup);
         modBus.addListener(this::onRegisterRenderers);
+        // Atualizar DebugLog quando a config é carregada/alterada
+        modBus.addListener((ModConfigEvent.Loading e) -> DebugLog.refreshFromConfig());
+        modBus.addListener((ModConfigEvent.Reloading e) -> DebugLog.refreshFromConfig());
 
         // Registar entidades (Proxy Train)
         ProxyEntityManager.ENTITIES.register(modBus);
@@ -69,6 +79,11 @@ public class CreateOptimizedTrains {
         MinecraftForge.EVENT_BUS.register(DistantHorizonsThrottle.class);
         MinecraftForge.EVENT_BUS.register(WorldLoadPhaseManager.class);
         MinecraftForge.EVENT_BUS.register(LoadingProgressBar.class);
+        MinecraftForge.EVENT_BUS.register(PerfRecorder.class);
+        MinecraftForge.EVENT_BUS.register(PerfCommand.class);
+
+        // Analisador de Desempenho: ecrã, indicador de gravação e amostras do cliente
+        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> PerfClientSetup.register(modBus));
 
         LOGGER.info("Create Optimized Trains a inicializar...");
     }

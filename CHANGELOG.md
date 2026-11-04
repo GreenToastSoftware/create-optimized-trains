@@ -1,5 +1,68 @@
 # Changelog
 
+## v1.4.0
+
+### Focus
+
+- Fixes leaked force-loaded chunks (#8), server lag from synchronous chunk loading, and slow chunk loading for players on foot
+- Adds an in-game **Performance Analyzer** to make reporting problems easy
+
+### Bug Fixes
+
+#### Leaked force-loaded chunks (#8)
+- The rate-limited unload loop removed *all* pending chunks from tracking, even the ones it had not released yet — those chunks stayed force-loaded forever with no owner, retaining thousands of ChunkHolders over time
+- Fix: only chunks that were actually released are removed from tracking; the rest are released on the next ticks
+- Chunks of trains that are removed or disassembled are now released too
+- **Existing worlds:** older versions used vanilla `/forceload`, which is saved in the world. If you used v1.3.2 or older, run `/forceload remove all` once in each dimension (this also removes any forceloads you created yourself)
+
+#### Chunk tickets
+- Train chunks now use the mod's own region tickets instead of vanilla `/forceload`: they are not saved to the world, never conflict with player forceloads, and two trains in the same chunk no longer release it for each other
+
+#### Server lag spikes while trains move
+- Forcing a chunk loaded/generated it **synchronously** on the server thread (12–180 ms per train update). Chunks are now requested asynchronously
+
+#### Slow chunk loading for players on foot
+- Trains that had entities kept their chunks force-loaded wherever they went, so after a while every train on the map was loading chunks and the server tick had no spare time left for the player's chunks (pausing the game "fixed" it)
+- Unoccupied trains far from every player (beyond `ghostDistance`, min. view distance + 4 chunks) now release their chunks and keep running on the track without entities
+
+#### Multi-dimension trains
+- Trains in the Nether or other dimensions were handled as if they were in the Overworld (chunks forced in the wrong dimension, wrong distances)
+
+#### Leaving and re-entering a world
+- All optimization systems were shut down on the first world exit and never restarted in singleplayer
+
+#### Carriages appearing with stutter
+- New carriages had movement interpolation disabled for 5 ticks, making them jump at 20 Hz when entering view; interpolation is now only skipped on real position corrections
+- Stress immunity now also covers carriages that just appeared, so their alignment no longer stops the train
+
+#### Other
+- Collision checks between trains are no longer skipped at high speed (trains could pass through each other)
+- Directional chunk loading no longer leaves permanent holes when you leave the train or it turns
+- LOD is computed on the main thread only (it read non-thread-safe Create state)
+- `chunks.maxChunkWaitTicks` now actually works
+- The mod version shown in the mods list is now correct
+
+### New Features
+
+#### Performance Analyzer
+- Open it from the Esc menu, from Mods → Create Optimized Trains → Config, or with a key (Options → Controls, unbound by default)
+- Records FPS, frame times, server MSPT, trains, chunk loading and memory while you play (max 5 minutes), then saves a JSON report to `.minecraft/cot-reports/`
+- One-click buttons to open the folder, copy the report to Downloads, open a pre-filled GitHub issue, or join the Discord
+- No personal data is recorded (no name, UUID, IP, seed or coordinates)
+- Server owners: `/cot profiler start | stop | discard | status` (operators only)
+
+#### Create-style config screen
+- The mod's config can now be edited in-game with the same screen as Create
+
+#### Chunk prewarming
+- Chunks entering the view of a player riding a train are loaded ahead of time, bypassing vanilla's limit of 4 player chunks at a time. New `prewarm` config section
+- Never more than `prewarm.maxPending` (default 24) prewarmed chunks waiting to load/generate at once, and prewarming pauses while the server is lagging, so it can't flood world generation and stall the server tick
+
+### Config
+- New: `prewarm.*`, `chunks.maxChunkWaitTicks`, `diagnostics.verboseLogging`
+- `diagnostics.enabled` now defaults to `false`
+- Create dependency limited to `[6.0, 6.1)`
+
 ## v1.3.2
 
 ### Focus

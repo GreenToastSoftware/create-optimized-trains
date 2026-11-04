@@ -5,7 +5,7 @@ issueTrackerURL = "https://github.com/GreenToastSoftware/create-optimized-trains
 
 [[mods]]
 modId = "create_optimized_trains"
-version = "1.2.0"
+version = "${file.jarVersion}"
 displayName = "Create Optimized Trains"
 logoFile = "Create_Optimized_Trains_logo.png"
 credits = "GreenToastSoftware Games"

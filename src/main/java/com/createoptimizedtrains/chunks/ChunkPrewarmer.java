@@ -1,10 +1,14 @@
 package com.createoptimizedtrains.chunks;
 
+import com.createoptimizedtrains.CreateOptimizedTrains;
 import com.createoptimizedtrains.config.ModConfig;
+import com.createoptimizedtrains.monitor.PerformanceMonitor;
 import com.simibubi.create.content.trains.entity.CarriageContraptionEntity;
 import it.unimi.dsi.fastutil.longs.Long2LongMap;
 import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -50,6 +54,11 @@ public final class ChunkPrewarmer {
 
     // Tick em que cada chunk recebeu/renovou o ticket, por dimensão. Só main thread.
     private static final Map<ResourceKey<Level>, Long2LongMap> issued = new HashMap<>();
+    // Chunks pedidas que ainda não chegaram a FULL (a carregar do disco ou a gerar).
+    private static final Map<ResourceKey<Level>, LongSet> pending = new HashMap<>();
+    private static int pendingCount = 0;
+    // Servidor atrasado (MSPT alto): não pedir chunks novas, só renovar as que já temos
+    private static boolean paused = false;
 
     private static long tick = 0;
     private static int newTicketsThisTick = 0;
@@ -68,6 +77,8 @@ public final class ChunkPrewarmer {
         if (tick % TICKET_TIMEOUT_TICKS == 0) {
             pruneExpired();
         }
+        updatePending(server);
+        paused = isServerLagging();
 
         boolean enabled;
         try {
@@ -106,18 +117,74 @@ public final class ChunkPrewarmer {
             return true;
         }
 
-        if (newTicketsThisTick >= safeMaxNewTicketsPerTick()) {
+        // Limites para chunks NOVAS:
+        //  - por tick (maxNewPerTick);
+        //  - em voo (maxPending): nunca mais do que N chunks nossas à espera de gerar.
+        //    Sem este limite a fila de worldgen enchia (centenas de chunks), e qualquer
+        //    getChunk síncrono no tick do servidor esperava atrás delas — congelamentos
+        //    de 60 s+ num servidor dedicado ao entrar um jogador perto de comboios.
+        //  - pausa enquanto o servidor estiver atrasado.
+        if (paused
+                || newTicketsThisTick >= safeMaxNewTicketsPerTick()
+                || pendingCount >= safeMaxPending()) {
             return false;
         }
         newTicketsThisTick++;
         addTicket(level, chunkX, chunkZ);
         levelIssued.put(key, tick);
+        if (pending.computeIfAbsent(level.dimension(), k -> new LongOpenHashSet()).add(key)) {
+            pendingCount++;
+        }
         return true;
+    }
+
+    /** Retirar de "pendentes" as chunks que já carregaram ou cujo ticket expirou. */
+    private static void updatePending(MinecraftServer server) {
+        if (pendingCount == 0) return;
+        int count = 0;
+        var it = pending.entrySet().iterator();
+        while (it.hasNext()) {
+            var entry = it.next();
+            ServerLevel level = server.getLevel(entry.getKey());
+            Long2LongMap levelIssued = issued.get(entry.getKey());
+            LongSet keys = entry.getValue();
+            if (level == null || levelIssued == null) {
+                it.remove();
+                continue;
+            }
+            keys.removeIf((long key) -> !levelIssued.containsKey(key)
+                || level.getChunkSource().getChunkNow(ChunkPos.getX(key), ChunkPos.getZ(key)) != null);
+            count += keys.size();
+        }
+        pendingCount = count;
+    }
+
+    private static boolean isServerLagging() {
+        CreateOptimizedTrains mod = CreateOptimizedTrains.getInstance();
+        PerformanceMonitor monitor = mod != null ? mod.getPerformanceMonitor() : null;
+        return monitor != null && monitor.getState() != PerformanceMonitor.PerformanceState.NORMAL;
+    }
+
+    /** Número de chunks com ticket de pré-aquecimento ativo (todas as dimensões). */
+    public static int getIssuedCount() {
+        int total = 0;
+        for (Long2LongMap levelIssued : issued.values()) {
+            total += levelIssued.size();
+        }
+        return total;
+    }
+
+    /** Chunks pré-aquecidas ainda à espera de carregar. */
+    public static int getPendingCount() {
+        return pendingCount;
     }
 
     /** Esquecer todo o estado (servidor a parar). Os tickets expiram sozinhos. */
     public static void clear() {
         issued.clear();
+        pending.clear();
+        pendingCount = 0;
+        paused = false;
         tick = 0;
         newTicketsThisTick = 0;
     }
@@ -206,7 +273,15 @@ public final class ChunkPrewarmer {
         try {
             return ModConfig.PREWARM_MAX_NEW_PER_TICK.get();
         } catch (Exception e) {
-            return 16;
+            return 8;
+        }
+    }
+
+    private static int safeMaxPending() {
+        try {
+            return ModConfig.PREWARM_MAX_PENDING.get();
+        } catch (Exception e) {
+            return 24;
         }
     }
 }
