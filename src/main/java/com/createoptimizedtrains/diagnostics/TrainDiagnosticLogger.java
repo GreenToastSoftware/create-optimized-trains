@@ -1,5 +1,7 @@
 package com.createoptimizedtrains.diagnostics;
 
+import com.createoptimizedtrains.profiler.PerfRecorder;
+
 import com.createoptimizedtrains.CreateOptimizedTrains;
 import com.createoptimizedtrains.util.CarriageUtils;
 import com.simibubi.create.content.trains.entity.Carriage;
@@ -83,7 +85,8 @@ public class TrainDiagnosticLogger {
             boolean enabled,
             int normalInterval
     ) {
-        if (!enabled || !DebugLog.ENABLED) return;
+        boolean recording = PerfRecorder.isRecording();
+        if (!enabled && !recording) return;
         if (carriages == null || carriages.isEmpty()) return;
 
         boolean isMoving = Math.abs(speed) > 0.001;
@@ -107,10 +110,11 @@ public class TrainDiagnosticLogger {
 
         // Classificar o estado do comboio
         //
-        // LOADING: TODAS as carruagens sem entidade E sem imunidade activa.
-        //   → Comboio em zona distante, nunca teve entidades nesta sessão.
-        //   → Não causa stutter visual (jogador não está perto para ver).
-        //   → Imunidade == 0 confirma que não houve perda RECENTE (count estável).
+        // LOADING: TODAS as carruagens sem entidade (comboio fantasma, longe dos jogadores).
+        //   → Anda na via sem entidades; não causa stutter visual (ninguém o vê).
+        //   → A imunidade NÃO entra no critério: o TrainMixin mantém-na sempre ativa
+        //     enquanto um comboio anda sem entidades, o que fazia todos os comboios
+        //     fantasma aparecerem como STUTTER (~85% das linhas STUTTER no log).
         //
         // STUTTER: Em movimento com ALGUMA anomalia que pode causar stutter visível.
         //   → SEM_ENTIDADE parcial (chunk boundary), FORA_CHUNK, stalled, blocked, etc.
@@ -118,7 +122,7 @@ public class TrainDiagnosticLogger {
         //
         // SMOOTH: Comboio sem anomalias ou parado.
         boolean allMissing     = (missingEntity == carriages.size());
-        boolean isLoadingTrain = allMissing && immuneTicks == 0;  // distante, count estável
+        boolean isLoadingTrain = allMissing;
 
         boolean hasAnomaly = isMoving && !isLoadingTrain && (
                 realChunkWaitId != -1 ||
@@ -128,6 +132,13 @@ public class TrainDiagnosticLogger {
                 stalled         >   0 ||
                 blocked         >   0
         );
+
+        // Analisador de Desempenho (independente do logging no ficheiro)
+        if (recording) {
+            PerfRecorder.recordTrainTick(trainId, hasAnomaly, leftTicking,
+                isLoadingTrain ? 0 : missingEntity, immuneTicks, realChunkWaitId != -1);
+        }
+        if (!enabled) return;
 
         boolean prevAnomaly = prevWasAnomalous.getOrDefault(trainId, false);
         prevWasAnomalous.put(trainId, hasAnomaly);

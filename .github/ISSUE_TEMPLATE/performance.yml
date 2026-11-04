@@ -1,0 +1,32 @@
+name: Performance problem
+description: Lag, stutter or slow chunk loading — attach a Performance Analyzer report
+title: "[Performance] "
+labels: ["performance"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! The **Performance Analyzer** (Esc menu → *Performance Analyzer*, or Mods → Create Optimized Trains → Config) records a report file in `.minecraft/cot-reports/`.
+        Please **drag that file into the "Report file" box below**.
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the problem
+      description: What happened, where (on a train, walking, at a station) and when.
+    validations:
+      required: true
+  - type: textarea
+    id: report
+    attributes:
+      label: Report file
+      description: Drag the `cot-report-....json` (or `.json.gz`) file here.
+    validations:
+      required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary (filled in by the analyzer)
+  - type: textarea
+    id: versions
+    attributes:
+      label: Versions (filled in by the analyzer)

@@ -1,5 +1,6 @@
 package com.createoptimizedtrains.mixin;
 
+import com.createoptimizedtrains.config.ModConfig;
 import com.simibubi.create.content.trains.entity.Carriage;
 import com.simibubi.create.content.trains.entity.CarriageEntityHandler;
 import net.minecraft.core.BlockPos;
@@ -47,6 +48,16 @@ public class DimensionalCarriageEntityMixin {
         at = @At(value = "INVOKE",
             target = "Lcom/simibubi/create/content/trains/entity/CarriageEntityHandler;isActiveChunk(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)Z"))
     private boolean alwaysActiveForAlignment(Level level, BlockPos pos) {
+        // Com chunks.maxChunkWaitTicks > 0 o utilizador quer que o comboio possa esperar
+        // pela chunk: usar a verificação original para que o Create marque
+        // carriageWaitingForChunks (o TrainMixin limita a espera a N ticks).
+        try {
+            if (ModConfig.MAX_CHUNK_WAIT_TICKS.get() > 0) {
+                return CarriageEntityHandler.isActiveChunk(level, pos);
+            }
+        } catch (Exception ignored) {
+            // Config ainda não carregada
+        }
         return true;
     }
 }

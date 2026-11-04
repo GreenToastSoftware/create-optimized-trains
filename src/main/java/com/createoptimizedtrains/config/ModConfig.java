@@ -68,6 +68,7 @@ public class ModConfig {
     public static final IntValue PREWARM_SECONDS_AHEAD;
     public static final IntValue PREWARM_MAX_CHUNKS_AHEAD;
     public static final IntValue PREWARM_MAX_NEW_PER_TICK;
+    public static final IntValue PREWARM_MAX_PENDING;
 
     // --- Física ---
     public static final BooleanValue PHYSICS_OPTIMIZATION_ENABLED;
@@ -108,6 +109,7 @@ public class ModConfig {
     // --- Diagnostic Logging ---
     public static final BooleanValue DIAGNOSTIC_LOGGING;
     public static final IntValue DIAGNOSTIC_LOG_INTERVAL;
+    public static final BooleanValue VERBOSE_LOGGING;
 
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
@@ -128,7 +130,10 @@ public class ModConfig {
         GHOST_DISTANCE = builder
                 .comment("Distância (em blocos) a partir da qual comboios entram em modo fantasma",
                          "Modo fantasma reduz significativamente o render para poupar FPS",
-                         "Aumenta este valor se queres ver comboios mais longe antes de ficarem fantasma")
+                         "Aumenta este valor se queres ver comboios mais longe antes de ficarem fantasma",
+                         "Também é o raio à volta dos jogadores onde comboios sem passageiros mantêm",
+                         "chunks carregadas e entidades (mínimo: view distance + 4 chunks). Mais longe,",
+                         "o comboio continua a andar na via mas sem carregar chunks.")
                 .defineInRange("ghostDistance", 256, 32, 2048);
         builder.pop();
 
@@ -315,7 +320,13 @@ public class ModConfig {
         PREWARM_MAX_NEW_PER_TICK = builder
                 .comment("Máximo de chunks NOVAS pedidas por tick (todos os comboios e jogadores).",
                          "Valores altos carregam mais depressa mas aumentam a carga do worldgen/disco.")
-                .defineInRange("maxNewPerTick", 16, 1, 128);
+                .defineInRange("maxNewPerTick", 8, 1, 128);
+        PREWARM_MAX_PENDING = builder
+                .comment("Máximo de chunks pré-aquecidas ainda à espera de carregar/gerar, em simultâneo.",
+                         "Impede que o pré-aquecimento encha a fila de geração de terreno: com a fila cheia,",
+                         "qualquer carregamento síncrono (do vanilla ou de outro mod) bloqueia o tick do",
+                         "servidor até chegar a sua vez. Baixar em servidores com CPU fraca.")
+                .defineInRange("maxPending", 24, 4, 256);
         builder.pop();
 
         // Física
@@ -437,16 +448,21 @@ public class ModConfig {
                 "Linhas [COT] SMOOTH indicam comboios a funcionar normalmente."
         ).push("diagnostics");
         DIAGNOSTIC_LOGGING = builder
-                .comment("Ativar logging de diagnóstico de comboios",
-                         "true = ativo por padrão para diagnosticar engasgos",
-                         "false = desativar quando o problema estiver resolvido")
-                .define("enabled", true);
+                .comment("Ativar logging de diagnóstico de comboios ([COT] STUTTER / SMOOTH / LOADING)",
+                         "Desligado por padrão: com muitos comboios escreve centenas de linhas por minuto.",
+                         "Ligar só para diagnosticar engasgos.")
+                .define("enabled", false);
         DIAGNOSTIC_LOG_INTERVAL = builder
                 .comment("Intervalo (em ticks) entre logs de comboios SMOOTH (a funcionar bem)",
                          "Anomalias (STUTTER) são sempre registadas imediatamente e depois",
                          "repetidas a cada 20 ticks (1 segundo) enquanto persistirem.",
                          "200 = log de estado normal a cada 10 segundos por comboio")
                 .defineInRange("logInterval", 200, 20, 2000);
+        VERBOSE_LOGGING = builder
+                .comment("Logging verboso de desenvolvimento: pipeline de render (endBatch, flush),",
+                         "tempos de chunk loading (COT/Perf) e contadores internos.",
+                         "Escreve várias linhas por segundo na thread de render — manter desligado.")
+                .define("verboseLogging", false);
         builder.pop();
 
         builder.pop(); // general

@@ -16,6 +16,7 @@ import com.createoptimizedtrains.lod.LODSystem;
 import com.createoptimizedtrains.monitor.PerformanceMonitor;
 import com.createoptimizedtrains.monitor.WorldLoadPhaseManager;
 import com.createoptimizedtrains.priority.PriorityScheduler;
+import com.createoptimizedtrains.profiler.PerfRecorder;
 import com.createoptimizedtrains.proxy.ProxyEntityManager;
 import com.createoptimizedtrains.threading.AsyncTaskManager;
 import com.simibubi.create.content.trains.GlobalRailwayManager;
@@ -75,13 +76,30 @@ public class TrainEventHandler {
     private long tickCounter = 0;
     // Tracking de view distance original para restaurar quando o jogador sai do comboio
     private final Map<UUID, Integer> originalViewDistances = new ConcurrentHashMap<>();
+    // Comboios em modo fantasma (chunks libertadas por estarem longe de todos os jogadores)
+    private final Set<UUID> releasedTrains = new HashSet<>();
+    // Margem extra antes de libertar um comboio que se está a afastar (evita alternância)
+    private static final double RELEASE_HYSTERESIS_BLOCKS = 48.0;
     // Cache para evitar recriação de listas a cada tick
     private List<Train> trainListCache = new ArrayList<>();
 
     @SubscribeEvent
     public void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
+        if (!PerfRecorder.isRecording()) {
+            tickInner(event);
+            return;
+        }
+        // Analisador de Desempenho: medir o tempo total do mod neste tick
+        long start = System.nanoTime();
+        try {
+            tickInner(event);
+        } finally {
+            PerfRecorder.addModNanos(System.nanoTime() - start);
+        }
+    }
 
+    private void tickInner(TickEvent.ServerTickEvent event) {
         CreateOptimizedTrains mod = CreateOptimizedTrains.getInstance();
         if (mod == null) return;
 
@@ -214,14 +232,9 @@ public class TrainEventHandler {
                     if (train.speed != 0) {
                         ServerLevel trainLevel = CarriageUtils.getTrainLevel(train, server);
                         if (trainLevel == null) continue;
-                        // Não pré-carregar rotas de comboios fantasma (longe do jogador, todas entidades ausentes)
-                        // — desperdiçaria I/O de disco para comboios que o jogador não verá cedo.
-                        boolean allMissing = true;
-                        for (var carriage : train.carriages) {
-                            if (CarriageUtils.safeAnyAvailableEntity(carriage) != null) { allMissing = false; break; }
-                        }
-                        if (allMissing && !PlayerTrainTracker.isOccupied(train.id)
-                                && !isTrainNearAnyPlayer(train, players, trainLevel, 400.0 * 400.0)) {
+                        // Não pré-carregar rotas de comboios fantasma (longe de todos os jogadores)
+                        // — desperdiçaria I/O de disco e worldgen para comboios que ninguém vê.
+                        if (!PlayerTrainTracker.isOccupied(train.id) && releasedTrains.contains(train.id)) {
                             continue;
                         }
                         preloader.preloadRouteChunks(train, trainLevel);
@@ -326,15 +339,23 @@ public class TrainEventHandler {
     /**
      * Atualizar chunks de comboios relevantes (próximos do jogador ou ocupados).
      *
-     * GHOST MODE: Comboios com TODAS as carruagens sem entidade + longe de todos os
-     * jogadores + não ocupados entram em "modo fantasma":
+     * GHOST MODE: Comboios não ocupados e longe de todos os jogadores (mais do que
+     * getSimulationRadius() + histerese) entram em "modo fantasma" — as chunks são
+     * libertadas MESMO que as carruagens ainda tenham entidade:
      *   - Train.tick() continua a correr via track graph (sem entidades)
      *   - DimensionalCarriageEntity mantém positionAnchor atualizado
      *   - carriageWaitingForChunks é sempre -1 (TrainMixin) — não param
      *   - Imunidade de stress ativa (isMoving && missingCount > 0) — não derailam
      *   - Não competem pelo cap de chunks com o comboio do jogador
-     *   - Quando o jogador se aproxima (≤300 blocos), chunk loading é retomado
-     *     e as entidades são criadas na posição correta (DCE positionAnchor)
+     *   - Quando o jogador se aproxima (≤ getSimulationRadius()), chunk loading é
+     *     retomado e as entidades são criadas na posição correta (DCE positionAnchor)
+     *
+     * Antes só se libertavam comboios que JÁ não tinham entidades. Mas um comboio com
+     * entidades mantinha as suas chunks forçadas, o que mantinha as entidades vivas —
+     * nunca saía desse estado. Ao fim de algum tempo todos os comboios do mapa tinham
+     * centenas de chunks entity-ticking à volta do mapa, enchendo o tick do servidor e
+     * deixando sem tempo o carregamento das chunks do jogador (que só "recuperava" com o
+     * jogo em pausa, quando o servidor deixa de fazer tick).
      *
      * Comboios parados sem passageiros: atualizar a cada STOPPED_CHUNK_UPDATE_INTERVAL ticks.
      */
@@ -345,6 +366,7 @@ public class TrainEventHandler {
         if (chunks == null) return;
 
         boolean isStoppedTick = (tickCounter % STOPPED_CHUNK_UPDATE_INTERVAL == 0);
+        double simulationRadius = getSimulationRadius(server);
 
         for (Train train : trains) {
             boolean isStopped = train.speed == 0;
@@ -359,15 +381,18 @@ public class TrainEventHandler {
             }
 
             if (!PlayerTrainTracker.isOccupied(train.id)) {
-                boolean allMissing = true;
-                for (var carriage : train.carriages) {
-                    if (CarriageUtils.safeAnyAvailableEntity(carriage) != null) { allMissing = false; break; }
-                }
-                if (allMissing && !isTrainNearAnyPlayer(train, players, level, 300.0 * 300.0)) {
+                // Histerese: libertar só além de raio + margem, retomar só dentro do raio,
+                // para não alternar quando o comboio anda perto da fronteira.
+                double radius = releasedTrains.contains(train.id)
+                    ? simulationRadius
+                    : simulationRadius + RELEASE_HYSTERESIS_BLOCKS;
+                if (!isTrainNearAnyPlayer(train, players, level, radius * radius)) {
                     chunks.releaseTrainChunks(train.id, server);
+                    releasedTrains.add(train.id);
                     continue;
                 }
             }
+            releasedTrains.remove(train.id);
 
             long trainStart = System.nanoTime();
             chunks.updateTrainChunks(train, level);
@@ -382,6 +407,23 @@ public class TrainEventHandler {
                 }
             }
         }
+    }
+
+    /**
+     * Raio (blocos) à volta dos jogadores dentro do qual comboios não ocupados mantêm
+     * chunks forçadas e entidades. Nunca menor do que a view distance + 4 chunks, para
+     * cobrir a zona de buffer (view distance + 3) onde as carruagens são preparadas
+     * antes de ficarem visíveis.
+     */
+    private static double getSimulationRadius(MinecraftServer server) {
+        double viewBased = (server.getPlayerList().getViewDistance() + 4) * 16.0;
+        int ghost;
+        try {
+            ghost = ModConfig.GHOST_DISTANCE.get();
+        } catch (Exception e) {
+            ghost = 0;
+        }
+        return Math.max(viewBased, ghost);
     }
 
     /**
@@ -580,6 +622,7 @@ public class TrainEventHandler {
         tickCounter = 0;
         trainListCache.clear();
         originalViewDistances.clear();
+        releasedTrains.clear();
     }
 
 }

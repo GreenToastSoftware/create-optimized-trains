@@ -13,6 +13,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.TicketType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.Vec3;
@@ -53,27 +54,33 @@ public class ChunkLoadManager {
     // Cap global (padrão de segurança); o valor efetivo vem de ModConfig.MAX_FORCED_CHUNKS
     private static final int MAX_GLOBAL_FORCED_CHUNKS_FALLBACK = 300;
 
-    // Limite de novas chamadas setChunkForced por comboio por tick.
+    // Limite de novos tickets forçados por comboio por tick.
     // Evita picos de CPU/IO quando um novo comboio aparece e precisa de carregar
     // dezenas de chunks em simultâneo. As chunks de carruagem imediatas são
     // prioritárias (carregam primeiro) graças ao LinkedHashSet em calculateNeededChunks.
     private static final int MAX_CHUNK_LOADS_PER_TRAIN_PER_TICK = 6;
-    // Budget máximo por comboio por tick — impede que setChunkForced bloqueie o tick inteiro.
+    // Budget máximo por comboio por tick — impede que o chunk loading bloqueie o tick inteiro.
     private static final long BUDGET_NS_PER_TRAIN = 5_000_000L; // 5ms
     // Lookahead forçado (entity-ticking) mínimo; o resto é só pré-aquecido
     private static final int FORCED_LOOKAHEAD_MIN_CHUNKS = 3;
     private static final double FORCED_LOOKAHEAD_SECONDS = 1.5;
 
     /**
+     * Ticket de região por comboio (valor = UUID do comboio, por isso dois comboios na
+     * mesma chunk têm tickets distintos e não se libertam um ao outro). Sem timeout:
+     * removido explicitamente em force(..., false). Tickets de região não são gravados
+     * em disco, por isso nunca ficam órfãos após um crash.
+     */
+    private static final TicketType<UUID> TRAIN_TICKET = TicketType.create("cot_train", UUID::compareTo);
+    // Distância 2 → nível 31 = entity-ticking (o mesmo nível de setChunkForced)
+    private static final int TRAIN_TICKET_DISTANCE = 2;
+
+    /**
      * Registar o callback de validação de tickets do Forge. Chamar no FMLCommonSetupEvent.
      *
-     * Usamos tickets do ForgeChunkManager (dono = UUID do comboio) em vez de
-     * ServerLevel.setChunkForced():
-     *   - setChunkForced partilha o estado com /forceload e com outros mods — libertar
-     *     uma chunk removia também o forceload do jogador, e dois comboios na mesma
-     *     chunk libertavam-na um ao outro.
-     *   - Os tickets do Forge também são gravados em chunks.dat, mas este callback
-     *     remove-os todos ao carregar o mundo, por isso nunca ficam órfãos após um crash.
+     * Já não criamos tickets do ForgeChunkManager, mas a versão anterior criava e
+     * gravava-os em chunks.dat. Este callback remove esses tickets antigos ao carregar
+     * o mundo.
      */
     public static void registerTicketValidation() {
         ForgeChunkManager.setForcedChunkLoadingCallback(CreateOptimizedTrains.MOD_ID, (level, ticketHelper) -> {
@@ -89,11 +96,24 @@ public class ChunkLoadManager {
     }
 
     /**
-     * Forçar/libertar uma chunk em nome de um comboio. ticking=false equivale ao nível
-     * de setChunkForced (entity-ticking), sem random ticks forçados.
+     * Forçar/libertar uma chunk (entity-ticking) em nome de um comboio, de forma ASSÍNCRONA.
+     *
+     * Tanto ServerLevel.setChunkForced como ForgeChunkManager.forceChunk chamam
+     * level.getChunk(x, z) ao adicionar — carregam/geram a chunk SÍNCRONAMENTE na thread
+     * do servidor. Era a origem dos picos de 12-180 ms em updateTrainChunks e dos
+     * "Can't keep up" durante viagens: o tick inteiro parava à espera do disco/worldgen,
+     * e todos os comboios engasgavam juntos.
+     *
+     * Um ticket de região só pede a chunk ao ChunkMap, que a carrega nas threads de
+     * worldgen/IO; ela chega a entity-ticking alguns ticks depois sem bloquear o servidor.
      */
     private static void force(ServerLevel level, UUID trainId, int chunkX, int chunkZ, boolean add) {
-        ForgeChunkManager.forceChunk(level, CreateOptimizedTrains.MOD_ID, trainId, chunkX, chunkZ, add, false);
+        ChunkPos pos = new ChunkPos(chunkX, chunkZ);
+        if (add) {
+            level.getChunkSource().addRegionTicket(TRAIN_TICKET, pos, TRAIN_TICKET_DISTANCE, trainId);
+        } else {
+            level.getChunkSource().removeRegionTicket(TRAIN_TICKET, pos, TRAIN_TICKET_DISTANCE, trainId);
+        }
     }
 
     /**
@@ -161,18 +181,24 @@ public class ChunkLoadManager {
         // Rate-limit de descarregamento: distribui trabalho como os loads.
         // Sem este limite, paragem de comboio descarrega 15+ chunks de só, bloqueando o tick.
         int unloaded = 0;
+        Set<ChunkPos> actuallyUnloaded = new HashSet<>();
         long tUnload = System.nanoTime();
         for (ChunkPos pos : toUnload) {
             if (unloaded >= MAX_CHUNK_LOADS_PER_TRAIN_PER_TICK) break;
             if (System.nanoTime() - budgetStart > BUDGET_NS_PER_TRAIN) break;
             force(level, trainId, pos.x, pos.z, false);
+            actuallyUnloaded.add(pos);
             unloaded++;
         }
         long unloadMs = (System.nanoTime() - tUnload) / 1_000_000L;
 
-        // Set de chunks REALMENTE forçadas após unload
+        // Set de chunks REALMENTE forçadas após unload.
+        // Só se remove do tracking o que o loop acima libertou de facto: as chunks que
+        // ficaram de fora por causa do rate limit/budget continuam forçadas e têm de
+        // continuar no tracking para serem libertadas nos ticks seguintes. Antes removia-se
+        // todo o toUnload, e essas chunks ficavam forçadas para sempre sem dono (issue #8).
         Set<ChunkPos> actuallyForced = new HashSet<>(current);
-        actuallyForced.removeAll(toUnload);
+        actuallyForced.removeAll(actuallyUnloaded);
 
         // PRIORIDADE CRÍTICA: a chunk EXACTA de cada carruagem (onde ela fisicamente está)
         // nunca fica sujeita ao rate limit, independentemente de o comboio estar ocupado.
@@ -448,7 +474,17 @@ public class ChunkLoadManager {
                 double projZ = lastPos.z - dirZ * behind * 16;
                 int projChunkX = (int) Math.floor(projX) >> 4;
                 int projChunkZ = (int) Math.floor(projZ) >> 4;
-                chunks.add(new ChunkPos(projChunkX, projChunkZ));
+                // Atrás da última carruagem só interessa se o comboio inverter o sentido.
+                // Cada carruagem já tem a sua chunk crítica forçada, por isso basta manter
+                // trailKeep chunks forçadas; o resto só pré-aquecido. Antes eram até 8
+                // chunks forçadas por comboio — com 20 comboios esgotava o cap global e
+                // deixava o lookahead À FRENTE sem chunks (carruagens a entrar em chunks
+                // não-ticking → FORA_CHUNK / SEM_ENTIDADE → engasgos).
+                if (behind > Math.max(1, trailKeep) && safePrewarmEnabled()) {
+                    prewarmOut.add(new ChunkPos(projChunkX, projChunkZ));
+                } else {
+                    chunks.add(new ChunkPos(projChunkX, projChunkZ));
+                }
             }
         }
     }

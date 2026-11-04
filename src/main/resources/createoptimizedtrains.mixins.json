@@ -27,6 +27,7 @@
     "client.ICompositeStateAccessor",
     "client.IBufferSourceAccessor",
     "client.IRenderTypeCompositeAccessor",
+    "client.IRenderTypeAccessor",
     "client.LevelRendererFlushMixin",
     "client.LevelRendererPostFlywheelMixin",
     "client.OitDepthMixin"

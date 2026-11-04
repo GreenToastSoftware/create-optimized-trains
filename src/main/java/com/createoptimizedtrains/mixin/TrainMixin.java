@@ -82,7 +82,7 @@ public abstract class TrainMixin {
      * Durante 5 ticks de imunidade, suprimimos a contribuição de stress falso.
      *
      * IMPORTANTE: A imunidade só é activada quando o count de entidades ausentes
-     * AUMENTA (nova perda de entidade). Comboios em zonas distantes que SEMPRE
+     * MUDA (entidade perdida ou recém-criada). Comboios em zonas distantes que SEMPRE
      * tiveram todas as carruagens sem entidade NÃO ativam imunidade (o count
      * é estável) — isto evita imunidade permanente que mascarava o estado real.
      */
@@ -91,7 +91,7 @@ public abstract class TrainMixin {
 
     /**
      * Número de carruagens sem entidade no tick anterior.
-     * Usado para detetar NOVA perda de entidade (count aumentou) vs estado estável.
+     * Usado para detetar perda/criação de entidade (count mudou) vs estado estável.
      * -1 no primeiro tick (valor inicial desconhecido).
      */
     @Unique
@@ -172,7 +172,7 @@ public abstract class TrainMixin {
         // Detetar carruagens sem entidade e atualizar imunidade contra derailing falso.
         //
         // LÓGICA: Imunidade ativa APENAS quando o count de carruagens sem entidade
-        // AUMENTA (nova perda). Comboios distantes com TODAS as carruagens sempre
+        // MUDA (perda ou criação). Comboios distantes com TODAS as carruagens sempre
         // ausentes têm count estável → imunidade fica em 0 → sem supressão de stress
         // permanente. O DCE mantém posições cacheadas correctas mesmo sem entidade
         // viva, por isso getAnchorDiff() funciona bem para carruagens distantes.
@@ -203,8 +203,10 @@ public abstract class TrainMixin {
         if (isMoving && currentMissingCount > 0) {
             // Comboio em movimento com entidades ausentes: manter imunidade ativa
             if (missingEntityImmuneTicks < 5) missingEntityImmuneTicks = 5;
-        } else if (prevMissingEntityCount >= 0 && currentMissingCount > prevMissingEntityCount) {
-            // Nova perda de entidade (comboio parado ou em movimento): 5 ticks de graça
+        } else if (prevMissingEntityCount >= 0 && currentMissingCount != prevMissingEntityCount) {
+            // Entidade perdida OU recém-criada: 5 ticks de graça. Uma carruagem que acabou
+            // de aparecer ainda está a ser alinhada (alignEntity) e as âncoras podem dar
+            // stress falso durante 1-3 ticks — sem graça, o comboio engasgava ao aparecer.
             missingEntityImmuneTicks = 5;
         } else if (missingEntityImmuneTicks > 0) {
             missingEntityImmuneTicks--;
