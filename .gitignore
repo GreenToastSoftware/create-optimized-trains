@@ -17,3 +17,11 @@ temp_120/
 temp_fw_classes/
 temp_flywheel/
 output/
+
+# Ficheiros locais de análise / uploads (não publicar)
+/com/
+/assets_upload/
+*_bytecode.txt
+cer_full.txt
+fw_*.txt
+/createoptimizedtrains.mixins.json

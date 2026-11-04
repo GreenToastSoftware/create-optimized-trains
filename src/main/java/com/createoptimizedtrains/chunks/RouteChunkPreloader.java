@@ -10,27 +10,23 @@ import com.simibubi.create.content.trains.graph.TrackGraph;
 import com.simibubi.create.content.trains.graph.TrackNode;
 import com.simibubi.create.content.trains.graph.TrackNodeLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.chunk.ChunkStatus;
 
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Route Chunk Preloader — pré-carrega chunks ao longo da rota ferroviária
  * em memória do servidor SEM force-loading (entity-ticking).
  *
  * Diferença chave vs ChunkLoadManager:
- * - ChunkLoadManager: setChunkForced() nos chunks imediatos (entity-ticking)
- * - RouteChunkPreloader: getChunkFuture(FULL) nos chunks da rota (só memória)
+ * - ChunkLoadManager: tickets forçados nos chunks imediatos (entity-ticking)
+ * - RouteChunkPreloader: tickets de pré-aquecimento nos chunks da rota (FULL, só memória)
  *
  * Isto garante que os chunks da rota estão em memória quando o comboio chega,
  * sem consumir CPU do server com entity-ticking de dezenas de chunks extra.
  */
 public class RouteChunkPreloader {
-
-    private volatile ExecutorService preloadExecutor;
 
     // Chunks já pedidas (para evitar re-pedir a mesma chunk várias vezes)
     private final Map<UUID, Set<ChunkPos>> lastRequestedChunks = new ConcurrentHashMap<>();
@@ -43,29 +39,9 @@ public class RouteChunkPreloader {
     // Máximo de chunks a pré-carregar por comboio
     private static final int MAX_PRELOAD_PER_TRAIN = 24;
 
-    public RouteChunkPreloader() {
-        // Lazy init — thread só é criada quando realmente precisa (após startup delay)
-    }
-
-    private ExecutorService getExecutor() {
-        if (preloadExecutor == null) {
-            synchronized (this) {
-                if (preloadExecutor == null) {
-                    preloadExecutor = Executors.newSingleThreadExecutor(r -> {
-                        Thread t = new Thread(r, "COT-RouteChunkPreloader");
-                        t.setDaemon(true);
-                        t.setPriority(Thread.NORM_PRIORITY);
-                        return t;
-                    });
-                }
-            }
-        }
-        return preloadExecutor;
-    }
-
     /**
-     * Calcular chunks de rota e pré-carregar em memória (sem force-load).
-     * Chamado do main thread, submete trabalho pesado para thread dedicada.
+     * Calcular chunks de rota e pré-aquecê-las (FULL, sem entity-ticking) via
+     * {@link ChunkPrewarmer}. Chamado do main thread.
      */
     public void preloadRouteChunks(Train train, ServerLevel level) {
         if (!ModConfig.SMART_CHUNK_LOADING.get()) return;
@@ -86,27 +62,18 @@ public class RouteChunkPreloader {
             if (routeChunks.size() >= MAX_PRELOAD_PER_TRAIN) break;
         }
 
-        // Filtrar chunks já pedidas
-        Set<ChunkPos> previous = lastRequestedChunks.getOrDefault(trainId, Collections.emptySet());
-        Set<ChunkPos> newChunks = new LinkedHashSet<>(routeChunks);
-        newChunks.removeAll(previous);
-
-        if (newChunks.isEmpty()) return;
+        // Pedir todas as chunks da rota em cada chamada: o ChunkPrewarmer ignora as já
+        // carregadas e renova os tickets das nossas antes de expirarem.
+        //
+        // Antes usava-se getChunkFuture(..., FULL, true), que cria um ticket UNKNOWN com
+        // timeout de 1 tick — chunks ainda não geradas eram descarregadas a meio do
+        // carregamento e o pré-carregamento praticamente não tinha efeito.
         lastRequestedChunks.put(trainId, routeChunks);
-
-        // Pré-carregar em memória (NÃO force-load) no main thread
-        level.getServer().execute(() -> {
-            try {
-                ServerChunkCache chunkSource = level.getChunkSource();
-                for (ChunkPos pos : newChunks) {
-                    // getChunkFuture: carrega o chunk para memória sem entity-ticking
-                    // O chunk fica em cache do ChunkMap, pronto para quando o jogador chegar
-                    chunkSource.getChunkFuture(pos.x, pos.z, ChunkStatus.FULL, true);
-                }
-            } catch (Exception e) {
-                // Best-effort
+        for (ChunkPos pos : routeChunks) {
+            if (!ChunkPrewarmer.request(level, pos.x, pos.z)) {
+                break; // orçamento do tick esgotado
             }
-        });
+        }
     }
 
     /**
@@ -181,9 +148,6 @@ public class RouteChunkPreloader {
     }
 
     public void shutdown() {
-        if (preloadExecutor != null) {
-            preloadExecutor.shutdownNow();
-        }
         lastRequestedChunks.clear();
     }
 

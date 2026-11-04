@@ -95,6 +95,16 @@ public class DirectionalChunkShaper {
             return hasDirection;
         }
 
+        /** Direção de movimento normalizada (eixo X). */
+        public double dirX() {
+            return smoothDirX;
+        }
+
+        /** Direção de movimento normalizada (eixo Z). */
+        public double dirZ() {
+            return smoothDirZ;
+        }
+
         private boolean hasPrevPos;
 
         void update(double x, double z) {

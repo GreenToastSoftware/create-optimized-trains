@@ -130,6 +130,10 @@ public class TrainGroupManager {
         groups.remove(trainId);
     }
 
+    public void clear() {
+        groups.clear();
+    }
+
     public TrainGroup getGroup(UUID trainId) {
         return groups.get(trainId);
     }

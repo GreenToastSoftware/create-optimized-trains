@@ -42,8 +42,10 @@ public class ModConfig {
 
     // --- Chunk Loading ---
     public static final BooleanValue SMART_CHUNK_LOADING;
+        public static final BooleanValue IGNORE_SPAWN_CHUNKS;
     public static final IntValue CHUNK_LOOKAHEAD;
     public static final IntValue CHUNK_TRAIL_KEEP;
+    public static final IntValue MAX_CHUNK_WAIT_TICKS;
         public static final IntValue CARRIAGE_CHUNK_RADIUS;
     // Raio de chunks por nível LOD (substitui CARRIAGE_CHUNK_RADIUS globalmente)
     public static final IntValue LOD_CHUNK_RADIUS_FULL;
@@ -60,6 +62,13 @@ public class ModConfig {
     public static final IntValue DIRECTIONAL_FORWARD_CHUNKS;
     public static final IntValue DIRECTIONAL_BACKWARD_CHUNKS;
     public static final IntValue DIRECTIONAL_SIDE_CHUNKS;
+
+    // Pré-aquecimento de chunks
+    public static final BooleanValue PREWARM_ENABLED;
+    public static final IntValue PREWARM_SECONDS_AHEAD;
+    public static final IntValue PREWARM_MAX_CHUNKS_AHEAD;
+    public static final IntValue PREWARM_MAX_NEW_PER_TICK;
+    public static final IntValue PREWARM_MAX_PENDING;
 
     // --- Física ---
     public static final BooleanValue PHYSICS_OPTIMIZATION_ENABLED;
@@ -86,12 +95,21 @@ public class ModConfig {
     public static final BooleanValue DH_STARTUP_THROTTLE_ENABLED;
     public static final IntValue DH_STARTUP_THROTTLE_TICKS;
 
+    // --- Staged World Loading ---
+    public static final BooleanValue STAGED_LOADING_ENABLED;
+    public static final IntValue STAGED_LOADING_TPS_THRESHOLD;
+    public static final IntValue STAGED_LOADING_MEMORY_THRESHOLD;
+    public static final IntValue STAGED_LOADING_STABLE_TICKS;
+    public static final IntValue STAGED_LOADING_MAX_CORE_TICKS;
+    public static final IntValue STAGED_LOADING_MAX_RAMPING_TICKS;
+
     // --- Debug Overlay ---
     public static final BooleanValue DEBUG_OVERLAY_ENABLED;
 
     // --- Diagnostic Logging ---
     public static final BooleanValue DIAGNOSTIC_LOGGING;
     public static final IntValue DIAGNOSTIC_LOG_INTERVAL;
+    public static final BooleanValue VERBOSE_LOGGING;
 
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
@@ -112,7 +130,10 @@ public class ModConfig {
         GHOST_DISTANCE = builder
                 .comment("Distância (em blocos) a partir da qual comboios entram em modo fantasma",
                          "Modo fantasma reduz significativamente o render para poupar FPS",
-                         "Aumenta este valor se queres ver comboios mais longe antes de ficarem fantasma")
+                         "Aumenta este valor se queres ver comboios mais longe antes de ficarem fantasma",
+                         "Também é o raio à volta dos jogadores onde comboios sem passageiros mantêm",
+                         "chunks carregadas e entidades (mínimo: view distance + 4 chunks). Mais longe,",
+                         "o comboio continua a andar na via mas sem carregar chunks.")
                 .defineInRange("ghostDistance", 256, 32, 2048);
         builder.pop();
 
@@ -193,6 +214,9 @@ public class ModConfig {
         SMART_CHUNK_LOADING = builder
                 .comment("Ativar gestão inteligente de chunks")
                 .define("enabled", true);
+        IGNORE_SPAWN_CHUNKS = builder
+                .comment("Não forçar chunks da área de spawn para comboios sem jogadores por perto")
+                .define("ignoreSpawnChunks", false);
         CHUNK_LOOKAHEAD = builder
                 .comment("Chunks mínimos a pré-carregar à frente do comboio (adaptativo por velocidade)",
                          "Recomendado: 6 para comboios rápidos (>20 bl/s), 4 para comboios lentos")
@@ -200,6 +224,13 @@ public class ModConfig {
         CHUNK_TRAIL_KEEP = builder
                 .comment("Chunks a manter atrás do comboio antes de descarregar")
                 .defineInRange("trailKeep", 1, 0, 4);
+        MAX_CHUNK_WAIT_TICKS = builder
+                .comment("Ticks máximos que um comboio espera parado quando a chunk de uma carruagem",
+                         "ainda não carregou (comportamento original do Create: espera sem limite).",
+                         "  0  = nunca esperar — movimento contínuo, pode 'flutuar' sobre chunks vazias",
+                         "  20 = esperar até 1 segundo, depois continuar mesmo sem a chunk",
+                         "Valores > 0 reduzem dessincronizações de carruagens em discos lentos.")
+                .defineInRange("maxChunkWaitTicks", 0, 0, 200);
         CARRIAGE_CHUNK_RADIUS = builder
                 .comment("[LEGADO] Raio de chunks por carruagem — substituído por lod_radius abaixo.",
                          "Mantido para compatibilidade com configs antigas. Ignorado se lod_radius ativo.")
@@ -268,6 +299,34 @@ public class ModConfig {
         DIRECTIONAL_SIDE_CHUNKS = builder
                 .comment("Chunks a carregar para os lados do comboio")
                 .defineInRange("sideChunks", 5, 1, 16);
+        builder.pop();
+
+        // Pré-aquecimento de chunks
+        builder.comment("Pré-aquecimento de Chunks",
+                "Carrega (sem entity-ticking) as chunks que vão entrar no campo de visão do",
+                "jogador quando está num comboio em movimento, antes de lá chegar.",
+                "O Minecraft só processa 4 chunks do jogador de cada vez; isto contorna esse limite",
+                "para que o terreno à frente apareça a tempo a velocidades altas.",
+                "Terreno nunca gerado continua limitado pela CPU — pré-gerar com Chunky ajuda.").push("prewarm");
+        PREWARM_ENABLED = builder
+                .comment("Ativar pré-aquecimento de chunks à frente do comboio do jogador")
+                .define("enabled", true);
+        PREWARM_SECONDS_AHEAD = builder
+                .comment("Segundos de viagem à frente a pré-aquecer (para além da view distance)")
+                .defineInRange("secondsAhead", 6, 1, 30);
+        PREWARM_MAX_CHUNKS_AHEAD = builder
+                .comment("Máximo de chunks à frente da view distance a pré-aquecer")
+                .defineInRange("maxChunksAhead", 12, 1, 64);
+        PREWARM_MAX_NEW_PER_TICK = builder
+                .comment("Máximo de chunks NOVAS pedidas por tick (todos os comboios e jogadores).",
+                         "Valores altos carregam mais depressa mas aumentam a carga do worldgen/disco.")
+                .defineInRange("maxNewPerTick", 8, 1, 128);
+        PREWARM_MAX_PENDING = builder
+                .comment("Máximo de chunks pré-aquecidas ainda à espera de carregar/gerar, em simultâneo.",
+                         "Impede que o pré-aquecimento encha a fila de geração de terreno: com a fila cheia,",
+                         "qualquer carregamento síncrono (do vanilla ou de outro mod) bloqueia o tick do",
+                         "servidor até chegar a sua vez. Baixar em servidores com CPU fraca.")
+                .defineInRange("maxPending", 24, 4, 256);
         builder.pop();
 
         // Física
@@ -345,6 +404,33 @@ public class ModConfig {
                 .defineInRange("startupThrottleTicks", 200, 20, 1200);
         builder.pop();
 
+        // Staged World Loading
+        builder.comment("Carregamento do mundo em etapas",
+                "Em vez de carregar todos os comboios + Distant Horizons em simultâneo no",
+                "arranque (causa congelamentos e picos de RAM), o mapa é carregado por fases:",
+                "CORE (só o comboio do jogador) -> RAMPING (resto em lotes) -> FULL (normal).",
+                "O avanço de fase depende de sinais reais (TPS, % de memória), não só de tempo.").push("staged_loading");
+        STAGED_LOADING_ENABLED = builder
+                .comment("Activar o carregamento faseado do mundo")
+                .define("enabled", true);
+        STAGED_LOADING_TPS_THRESHOLD = builder
+                .comment("TPS mínimo considerado saudável para avançar de fase")
+                .defineInRange("tpsHealthyThreshold", 19, 10, 20);
+        STAGED_LOADING_MEMORY_THRESHOLD = builder
+                .comment("% máximo de heap usado considerado saudável para avançar de fase")
+                .defineInRange("memoryHealthyPercent", 75, 50, 95);
+        STAGED_LOADING_STABLE_TICKS = builder
+                .comment("Número de ticks consecutivos saudáveis exigidos antes de avançar de fase")
+                .defineInRange("stableTicksRequired", 40, 10, 200);
+        STAGED_LOADING_MAX_CORE_TICKS = builder
+                .comment("Tecto máximo de ticks na fase CORE antes de avançar por segurança",
+                         "(evita bloquear o mapa indefinidamente se o servidor nunca estabilizar)")
+                .defineInRange("maxCoreDurationTicks", 100, 20, 1200);
+        STAGED_LOADING_MAX_RAMPING_TICKS = builder
+                .comment("Tecto máximo de ticks na fase RAMPING antes de avançar por segurança")
+                .defineInRange("maxRampingDurationTicks", 300, 20, 2400);
+        builder.pop();
+
         // Debug Overlay
         builder.comment("Overlay de debug no ecrã F3").push("debug_overlay");
         DEBUG_OVERLAY_ENABLED = builder
@@ -362,16 +448,21 @@ public class ModConfig {
                 "Linhas [COT] SMOOTH indicam comboios a funcionar normalmente."
         ).push("diagnostics");
         DIAGNOSTIC_LOGGING = builder
-                .comment("Ativar logging de diagnóstico de comboios",
-                         "true = ativo por padrão para diagnosticar engasgos",
-                         "false = desativar quando o problema estiver resolvido")
-                .define("enabled", true);
+                .comment("Ativar logging de diagnóstico de comboios ([COT] STUTTER / SMOOTH / LOADING)",
+                         "Desligado por padrão: com muitos comboios escreve centenas de linhas por minuto.",
+                         "Ligar só para diagnosticar engasgos.")
+                .define("enabled", false);
         DIAGNOSTIC_LOG_INTERVAL = builder
                 .comment("Intervalo (em ticks) entre logs de comboios SMOOTH (a funcionar bem)",
                          "Anomalias (STUTTER) são sempre registadas imediatamente e depois",
                          "repetidas a cada 20 ticks (1 segundo) enquanto persistirem.",
                          "200 = log de estado normal a cada 10 segundos por comboio")
                 .defineInRange("logInterval", 200, 20, 2000);
+        VERBOSE_LOGGING = builder
+                .comment("Logging verboso de desenvolvimento: pipeline de render (endBatch, flush),",
+                         "tempos de chunk loading (COT/Perf) e contadores internos.",
+                         "Escreve várias linhas por segundo na thread de render — manter desligado.")
+                .define("verboseLogging", false);
         builder.pop();
 
         builder.pop(); // general

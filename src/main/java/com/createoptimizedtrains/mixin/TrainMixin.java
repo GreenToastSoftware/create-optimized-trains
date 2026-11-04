@@ -66,6 +66,10 @@ public abstract class TrainMixin {
     @Unique
     private int lastRealWaitingForChunks = -1;
 
+    /** Ticks consecutivos em que o Create quis parar o comboio por chunk em falta. */
+    @Unique
+    private int chunkWaitTicks = 0;
+
     @Unique
     private int collisionTickCounter = -1;
 
@@ -78,7 +82,7 @@ public abstract class TrainMixin {
      * Durante 5 ticks de imunidade, suprimimos a contribuição de stress falso.
      *
      * IMPORTANTE: A imunidade só é activada quando o count de entidades ausentes
-     * AUMENTA (nova perda de entidade). Comboios em zonas distantes que SEMPRE
+     * MUDA (entidade perdida ou recém-criada). Comboios em zonas distantes que SEMPRE
      * tiveram todas as carruagens sem entidade NÃO ativam imunidade (o count
      * é estável) — isto evita imunidade permanente que mascarava o estado real.
      */
@@ -87,7 +91,7 @@ public abstract class TrainMixin {
 
     /**
      * Número de carruagens sem entidade no tick anterior.
-     * Usado para detetar NOVA perda de entidade (count aumentou) vs estado estável.
+     * Usado para detetar perda/criação de entidade (count mudou) vs estado estável.
      * -1 no primeiro tick (valor inicial desconhecido).
      */
     @Unique
@@ -101,6 +105,9 @@ public abstract class TrainMixin {
     private static final int COLLISION_CHECK_CRITICAL = 8;
     @Unique
     private static final double NEAR_PLAYER_RADIUS = 96.0;
+    // Distância máxima (blocos, velocidade relativa) percorrida entre verificações de colisão
+    @Unique
+    private static final double MAX_TRAVEL_BETWEEN_CHECKS = 2.0;
 
     /**
      * Redirect da leitura do campo carriageWaitingForChunks em tick().
@@ -124,9 +131,30 @@ public abstract class TrainMixin {
         // Capturar valor real ANTES de limpar, para o logger de diagnóstico.
         // O logger lê lastRealWaitingForChunks no próximo tick (1 tick de desfasamento
         // aceitável para fins de diagnóstico).
-        lastRealWaitingForChunks = train.carriageWaitingForChunks;
+        int real = train.carriageWaitingForChunks;
+        lastRealWaitingForChunks = real;
 
-        // Sempre devolver -1 = "não há chunk waiting" → speed nunca é zerada
+        if (real == -1) {
+            chunkWaitTicks = 0;
+            return -1;
+        }
+
+        // Espera limitada (config maxChunkWaitTicks): deixar o Create parar o comboio
+        // durante N ticks para dar tempo à chunk de carregar; depois continuar.
+        // O contador só volta a 0 quando a chunk carrega, para não alternar
+        // parado/andar enquanto a mesma chunk continua em falta.
+        int maxWait;
+        try {
+            maxWait = ModConfig.MAX_CHUNK_WAIT_TICKS.get();
+        } catch (Exception e) {
+            maxWait = 0;
+        }
+        if (chunkWaitTicks < maxWait) {
+            chunkWaitTicks++;
+            return real;
+        }
+
+        // Devolver -1 = "não há chunk waiting" → speed não é zerada
         // Se o campo estava set, limpá-lo para não acumular estado stale
         if (train.carriageWaitingForChunks != -1) {
             train.carriageWaitingForChunks = -1;
@@ -144,7 +172,7 @@ public abstract class TrainMixin {
         // Detetar carruagens sem entidade e atualizar imunidade contra derailing falso.
         //
         // LÓGICA: Imunidade ativa APENAS quando o count de carruagens sem entidade
-        // AUMENTA (nova perda). Comboios distantes com TODAS as carruagens sempre
+        // MUDA (perda ou criação). Comboios distantes com TODAS as carruagens sempre
         // ausentes têm count estável → imunidade fica em 0 → sem supressão de stress
         // permanente. O DCE mantém posições cacheadas correctas mesmo sem entidade
         // viva, por isso getAnchorDiff() funciona bem para carruagens distantes.
@@ -175,8 +203,10 @@ public abstract class TrainMixin {
         if (isMoving && currentMissingCount > 0) {
             // Comboio em movimento com entidades ausentes: manter imunidade ativa
             if (missingEntityImmuneTicks < 5) missingEntityImmuneTicks = 5;
-        } else if (prevMissingEntityCount >= 0 && currentMissingCount > prevMissingEntityCount) {
-            // Nova perda de entidade (comboio parado ou em movimento): 5 ticks de graça
+        } else if (prevMissingEntityCount >= 0 && currentMissingCount != prevMissingEntityCount) {
+            // Entidade perdida OU recém-criada: 5 ticks de graça. Uma carruagem que acabou
+            // de aparecer ainda está a ser alinhada (alignEntity) e as âncoras podem dar
+            // stress falso durante 1-3 ticks — sem graça, o comboio engasgava ao aparecer.
             missingEntityImmuneTicks = 5;
         } else if (missingEntityImmuneTicks > 0) {
             missingEntityImmuneTicks--;
@@ -217,6 +247,16 @@ public abstract class TrainMixin {
             interval = getAdaptiveInterval() * 2; // Dobro do intervalo normal
         } else {
             interval = getAdaptiveInterval();
+        }
+
+        // Limitar o intervalo pela velocidade: entre duas verificações o comboio não pode
+        // avançar mais do que MAX_TRAVEL_BETWEEN_CHECKS blocos, senão dois comboios
+        // (de frente, velocidade relativa ×2) podiam atravessar-se sem colisão detetada.
+        // speed está em blocos/tick. Comboios parados são detetados pelo que se move.
+        double relativeTravelPerTick = Math.abs(speed) * 2.0;
+        if (relativeTravelPerTick > 0.0) {
+            int maxBySpeed = (int) (MAX_TRAVEL_BETWEEN_CHECKS / relativeTravelPerTick);
+            interval = Math.max(1, Math.min(interval, maxBySpeed));
         }
 
         if (collisionTickCounter % interval != 0) {
